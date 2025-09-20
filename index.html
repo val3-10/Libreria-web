@@ -2,80 +2,27 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Booknest</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="styles.css"> <!-- Enlazar estilos -->
-</head>
-<body>
-  <!-- ==== ENCABEZADO ==== -->
-  <header class="site-header">
-    <h1 class="logo">📚 Booknest</h1>
-    <button onclick="logout()">Cerrar Sesión</button>
-  </header>
-
-  <!-- ==== CONTENEDOR PRINCIPAL ==== -->
-  <div class="container">
-    <!-- Panel Admin -->
-    <div id="adminPanel" style="display:none;">
-      <div class="seccion">
-        <h2>Registrar Libro</h2>
-        <label for="titulo">Título:</label>
-        <input type="text" id="titulo">
-        <label for="autor">Autor:</label>
-        <input type="text" id="autor">
-        <label for="estado">Estado:</label>
-        <select id="estado">
-          <option value="disponible">Disponible</option>
-          <option value="venta">En venta</option>
-          <option value="prestamo">En préstamo</option>
-        </select>
-        <button onclick="agregarLibro()">Agregar Libro</button>
-      </div>
-
-      <div class="seccion">
-        <h2>Lista de Libros (Todos)</h2>
-        <table id="tablaLibrosAdmin">
-          <thead>
-            <tr>
-              <th>Título</th>
-              <th>Autor</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Panel Cliente -->
-    <div id="clientePanel" style="display:none;">
-      <div class="seccion">
-        <h2>Libros Disponibles</h2>
-        <table id="tablaLibrosCliente">
-          <thead>
-            <tr>
-              <th>Título</th>
-              <th>Autor</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==== SCRIPT: cerrar sesión ==== -->
+  <title>Booknest - Redirigiendo...</title>
   <script>
-    function logout() {
-      localStorage.removeItem("rol"); // Elimina la sesión
-      window.location.href = "login.html"; // Redirige siempre al login
+    window.onload = function () {
+      // Revisamos si hay un rol guardado en localStorage
+      const rol = localStorage.getItem("rol");
+
+      if (rol === "admin") {
+        // Si el rol es admin → redirigir a panel admin
+        window.location.href = "admin.html";
+      } else if (rol === "cliente") {
+        // Si el rol es cliente → redirigir a panel cliente
+        window.location.href = "cliente.html";
+      } else {
+        // Si no hay sesión → mandar al login
+        window.location.href = "login.html";
+      }
     }
   </script>
-
-  <!-- ==== SCRIPT PRINCIPAL DE LA APP ==== -->
-  <script src="aplicativolibreria.js"></script>
+</head>
+<body>
+  <!-- Mensaje mientras se redirige -->
+  <p>Redirigiendo, espera un momento...</p>
 </body>
 </html>

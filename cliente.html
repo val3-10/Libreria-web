@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Administrador - Booknest</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Encabezado con botón de cerrar sesión -->
+  <header class="site-header">
+    <h1>📚 Booknest - Admin</h1>
+    <button onclick="logout()">Cerrar Sesión</button>
+  </header>
+
+  <div class="container">
+    <!-- Sección para registrar libros -->
+    <div class="seccion">
+      <h2>Registrar Libro</h2>
+      <label for="titulo">Título:</label>
+      <input type="text" id="titulo">
+
+      <label for="autor">Autor:</label>
+      <input type="text" id="autor">
+
+      <label for="estado">Estado:</label>
+      <select id="estado">
+        <option value="disponible">Disponible</option>
+        <option value="venta">En venta</option>
+        <option value="prestamo">En préstamo</option>
+      </select>
+
+      <button onclick="agregarLibro()">Agregar Libro</button>
+    </div>
+
+    <!-- Tabla para mostrar libros -->
+    <div class="seccion">
+      <h2>Lista de Libros</h2>
+      <table id="tablaLibrosAdmin">
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Autor</th>
+            <th>Estado</th>
+            <th>Acciones</th> <!-- Aquí se podrían poner botones editar/eliminar -->
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Función para cerrar sesión
+    function logout() {
+      localStorage.removeItem("rol"); // Borrar rol guardado
+      window.location.href = "login.html"; // Mandar al login
+    }
+  </script>
+  <!-- Archivo donde estará la lógica de la librería -->
+  <script src="aplicativolibreria.js"></script>
+</body>
+</html>
