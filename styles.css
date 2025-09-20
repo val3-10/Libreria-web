@@ -1,172 +1,140 @@
-/* ===== LOGIN ===== */
-.login-body {
-  font-family: 'Segoe UI', Tahoma, sans-serif;
+/* ========================= */
+/* ===== ESTILOS GLOBALES ===== */
+/* ========================= */
 
-  /* Fondo con imagen */
-  background: url("img/Libros.jpg") no-repeat center center fixed;
-  background-size: cover; /* Que ocupe toda la pantalla */
-
-  /* Centrar la caja */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+/* Fondo y texto general de todo el sitio */
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif; /* Fuente principal */
+  margin: 0;
+  padding: 0;
+  background: #000;   /* Fondo negro */
+  color: #fff;        /* Texto blanco */
 }
 
-/* Caja del login */
-.login-box {
-  background: rgba(255,255,255,0.15); /* transparencia tipo vidrio */
-  backdrop-filter: blur(8px);
-  padding: 30px;
-  border-radius: 16px;
-  text-align: center;
-  width: 320px;
-  color: #fff;
+/* Encabezado (barra superior donde dice Booknest - Admin) */
+.site-header {
+  background: #1a1a1a;  /* Negro un poco más claro para distinguir */
+  padding: 20px;        /* Espaciado interno */
+  display: flex;        /* Flexbox para organizar */
+  justify-content: space-between; /* Logo a la izquierda, botón a la derecha */
+  align-items: center;  /* Centra verticalmente */
 }
 
-/* Botón de cerrar sesión */
-.logout-btn {
-  background: #ff4b5c;
-  color: white;
+/* Contenedor de secciones (ejemplo: formulario de libros, tabla, etc.) */
+.seccion {
+  background: rgba(255,255,255,0.05); /* Negro translúcido (efecto vidrio) */
+  padding: 20px;        /* Espaciado interno */
+  border-radius: 16px;  /* Bordes redondeados */
+  margin-bottom: 20px;  /* Separación entre bloques */
+}
+
+
+/* ========================= */
+/* ===== FORMULARIOS ADMIN ===== */
+/* ========================= */
+
+/* Inputs y selects */
+.seccion input, 
+.seccion select {
+  padding: 10px;         /* Espaciado interno */
+  margin: 5px;           /* Separación entre elementos */
+  border-radius: 8px;    /* Bordes redondeados */
+  border: 1px solid #444;/* Borde gris oscuro */
+  font-size: 14px;       
+  background: #111;      /* Fondo negro */
+  color: #fff;           /* Texto blanco */
+}
+
+/* Botón principal (Agregar Libro) */
+.seccion button {
+  background: #3b0ca3; /* Morado */
+  color: white;        /* Texto blanco */
   border: none;
-  padding: 10px 15px;
+  padding: 10px 20px;
+  margin: 5px;
   border-radius: 8px;
+  cursor: pointer;     /* Manito al pasar el mouse */
+  transition: 0.3s;    /* Animación suave */
+}
+
+/* Hover en botón */
+.seccion button:hover {
+  background: #1e40af; /* Azul más intenso */
+}
+
+
+/* ========================= */
+/* ===== TABLAS ===== */
+/* ========================= */
+
+/* Estilo general de la tabla */
+table {
+  width: 100%;                 /* Ocupa todo el ancho */
+  border-collapse: collapse;   /* Quita espacios entre celdas */
+  margin-top: 15px;            
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.05); /* Fondo translúcido oscuro */
+  border-radius: 12px;         /* Bordes redondeados */
+  overflow: hidden;            /* Aplica borde a todo el contenido */
+}
+
+/* Encabezado de la tabla */
+table thead {
+  background: #3b0ca3; /* Morado */
+  color: #fff;         /* Texto blanco */
+}
+
+/* Celdas de encabezado */
+table th {
+  padding: 12px;
+  text-align: left;
+  text-transform: uppercase; /* Mayúsculas */
+  letter-spacing: 1px;       /* Más espacio entre letras */
+}
+
+/* Celdas normales */
+table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Línea divisoria */
+}
+
+/* Filas alternadas para mejor legibilidad */
+table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Efecto al pasar el mouse sobre la fila */
+table tbody tr:hover {
+  background: rgba(30, 64, 175, 0.3); /* Azul translúcido */
+}
+
+/* Botones dentro de la tabla (ejemplo: editar, eliminar) */
+table button {
+  background: #3b0ca3; /* Morado */
+  color: #fff;         /* Texto blanco */
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* Hover en botones dentro de tabla */
+table button:hover {
+  background: #1e40af; /* Azul */
+}
+
+.logout-btn {
+  background: #3b0ca3;   /* Morado */
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 12px;   /* Bordes redondeados */
   cursor: pointer;
   font-weight: bold;
   transition: background 0.3s ease;
 }
 
 .logout-btn:hover {
-  background: #e63946;
-}
-
-
-/* ===== SITIO PRINCIPAL ===== */
-body {
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-  margin: 0;
-  padding: 0;
-  color: #fff;
-}
-
-.site-header {
-  background: rgba(0,0,0,0.2);
-  padding: 20px;
-  display: flex;
-  justify-content: space-between;
-}
-
-.container {
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 20px;
-}
-
-.seccion {
-  background: rgba(255,255,255,0.1);
-  padding: 20px;
-  border-radius: 16px;
-  margin-bottom: 20px;
-}
-/* ===== ESTILO PARA TABLAS ===== */
-table {
-  width: 100%; /* que ocupe todo el ancho disponible */
-  border-collapse: collapse; /* quita los espacios entre celdas */
-  margin-top: 15px;
-  font-size: 14px;
-  background: rgba(255, 255, 255, 0.08); /* fondo sutil */
-  border-radius: 12px;
-  overflow: hidden; /* redondear bordes */
-}
-
-/* Encabezados */
-table thead {
-  background: rgba(0, 0, 0, 0.4); /* fondo más oscuro */
-}
-
-table th {
-  padding: 12px;
-  text-align: left;
-  font-weight: bold;
-  color: #ffd166; /* amarillo para destacar */
-  text-transform: uppercase; /* mayúsculas */
-  letter-spacing: 1px; /* más separación */
-}
-
-/* Celdas */
-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* línea sutil */
-  color: #fff;
-}
-
-/* Filas alternadas */
-table tbody tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/* Hover en fila */
-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.15);
-  cursor: pointer;
-}
-
-/* Botones dentro de la tabla */
-table button {
-  background: #06d6a0;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: 0.3s ease;
-}
-
-table button:hover {
-  background: #118ab2; /* cambia a azul cuando pasas el mouse */
-}
-/* ==== FORMULARIO ADMIN ==== */
-.seccion input, 
-.seccion select, 
-.seccion button {
-  padding: 10px;
-  margin: 5px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-}
-
-.seccion button {
-  background: #4CAF50;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.seccion button:hover {
-  background: #45a049;
-}
-
-/* ==== TABLA ==== */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
-}
-
-table thead {
-  background: #4CAF50;
-  color: white;
-  text-align: left;
-}
-
-table th, table td {
-  padding: 12px;
-  border-bottom: 1px solid #ddd;
-}
-
-table tr:hover {
-  background: rgba(76, 175, 80, 0.1);
+  background: #1e40af;   /* Azul al pasar el mouse */
 }

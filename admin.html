@@ -6,21 +6,19 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Encabezado con botón de cerrar sesión -->
-  <header class="site-header">
-    <h1>📚 Booknest - Admin</h1>
-    <button onclick="logout()">Cerrar Sesión</button>
-  </header>
+ <header class="site-header">
+  <h1>📚 Booknest - Admin</h1>
+  <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+</header>
 
   <div class="container">
-    <!-- Sección para registrar libros -->
     <div class="seccion">
       <h2>Registrar Libro</h2>
       <label for="titulo">Título:</label>
-      <input type="text" id="titulo">
+      <input type="text" id="titulo" placeholder="Nombre del libro">
 
       <label for="autor">Autor:</label>
-      <input type="text" id="autor">
+      <input type="text" id="autor" placeholder="Autor del libro">
 
       <label for="estado">Estado:</label>
       <select id="estado">
@@ -32,7 +30,6 @@
       <button onclick="agregarLibro()">Agregar Libro</button>
     </div>
 
-    <!-- Tabla para mostrar libros -->
     <div class="seccion">
       <h2>Lista de Libros</h2>
       <table id="tablaLibrosAdmin">
@@ -41,7 +38,7 @@
             <th>Título</th>
             <th>Autor</th>
             <th>Estado</th>
-            <th>Acciones</th> <!-- Aquí se podrían poner botones editar/eliminar -->
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -50,13 +47,63 @@
   </div>
 
   <script>
-    // Función para cerrar sesión
+    // Array de libros (cargado desde localStorage si existe)
+    let libros = JSON.parse(localStorage.getItem("libros")) || [];
+
     function logout() {
-      localStorage.removeItem("rol"); // Borrar rol guardado
-      window.location.href = "login.html"; // Mandar al login
+      localStorage.removeItem("rol");
+      window.location.href = "login.html";
     }
+
+    function guardarLibros() {
+      localStorage.setItem("libros", JSON.stringify(libros));
+    }
+
+    function agregarLibro() {
+      let titulo = document.getElementById("titulo").value;
+      let autor = document.getElementById("autor").value;
+      let estado = document.getElementById("estado").value;
+
+      if (!titulo || !autor) {
+        alert("Completa todos los campos.");
+        return;
+      }
+
+      let libro = { titulo, autor, estado };
+      libros.push(libro);
+      guardarLibros();
+      mostrarLibrosAdmin();
+
+      // Limpiar inputs
+      document.getElementById("titulo").value = "";
+      document.getElementById("autor").value = "";
+      document.getElementById("estado").value = "disponible";
+    }
+
+    function mostrarLibrosAdmin() {
+      let tbody = document.querySelector("#tablaLibrosAdmin tbody");
+      tbody.innerHTML = "";
+      libros.forEach((libro, index) => {
+        let fila = `
+          <tr>
+            <td>${libro.titulo}</td>
+            <td>${libro.autor}</td>
+            <td class="${libro.estado}">${libro.estado}</td>
+            <td><button onclick="eliminarLibro(${index})">Eliminar</button></td>
+          </tr>
+        `;
+        tbody.innerHTML += fila;
+      });
+    }
+
+    function eliminarLibro(index) {
+      libros.splice(index, 1);
+      guardarLibros();
+      mostrarLibrosAdmin();
+    }
+
+    // Mostrar los libros al cargar la página
+    window.onload = mostrarLibrosAdmin;
   </script>
-  <!-- Archivo donde estará la lógica de la librería -->
-  <script src="aplicativolibreria.js"></script>
 </body>
 </html>
