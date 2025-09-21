@@ -138,3 +138,63 @@ table button:hover {
 .logout-btn:hover {
   background: #1e40af;   /* Azul al pasar el mouse */
 }
+/* ========================= */
+/* ===== LOGIN ===== */
+/* ========================= */
+
+/* Fondo del login */
+.login-body {
+  background: url("img/Libros.jpg") no-repeat center center fixed; 
+  background-size: cover;   /* Que ocupe toda la pantalla */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;            /* Que ocupe toda la altura */
+  margin: 0;
+}
+
+/* Caja del login */
+.login-box {
+  background: rgba(0, 0, 0, 0.8); /* Negro translúcido */
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  text-align: center;
+  width: 300px;
+}
+
+/* Título */
+.login-box h2 {
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+/* Inputs */
+.login-box input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #111;
+  color: #fff;
+}
+
+/* Botón */
+.login-box button {
+  width: 100%;
+  background: #3b0ca3;
+  color: #fff;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+  transition: 0.3s;
+}
+
+.login-box button:hover {
+  background: #1e40af;
+}
+
