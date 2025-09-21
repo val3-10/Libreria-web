@@ -27,7 +27,7 @@
         <option value="prestamo">En préstamo</option>
       </select>
 
-      <button onclick="agregarLibro()">Agregar Libro</button>
+      <button type="button" onclick="agregarLibro()">Agregar Libro</button>
     </div>
 
     <div class="seccion">
@@ -54,56 +54,3 @@
       localStorage.removeItem("rol");
       window.location.href = "login.html";
     }
-
-    function guardarLibros() {
-      localStorage.setItem("libros", JSON.stringify(libros));
-    }
-
-    function agregarLibro() {
-      let titulo = document.getElementById("titulo").value;
-      let autor = document.getElementById("autor").value;
-      let estado = document.getElementById("estado").value;
-
-      if (!titulo || !autor) {
-        alert("Completa todos los campos.");
-        return;
-      }
-
-      let libro = { titulo, autor, estado };
-      libros.push(libro);
-      guardarLibros();
-      mostrarLibrosAdmin();
-
-      // Limpiar inputs
-      document.getElementById("titulo").value = "";
-      document.getElementById("autor").value = "";
-      document.getElementById("estado").value = "disponible";
-    }
-
-    function mostrarLibrosAdmin() {
-      let tbody = document.querySelector("#tablaLibrosAdmin tbody");
-      tbody.innerHTML = "";
-      libros.forEach((libro, index) => {
-        let fila = `
-          <tr>
-            <td>${libro.titulo}</td>
-            <td>${libro.autor}</td>
-            <td class="${libro.estado}">${libro.estado}</td>
-            <td><button onclick="eliminarLibro(${index})">Eliminar</button></td>
-          </tr>
-        `;
-        tbody.innerHTML += fila;
-      });
-    }
-
-    function eliminarLibro(index) {
-      libros.splice(index, 1);
-      guardarLibros();
-      mostrarLibrosAdmin();
-    }
-
-    // Mostrar los libros al cargar la página
-    window.onload = mostrarLibrosAdmin;
-  </script>
-</body>
-</html>
