@@ -4,12 +4,17 @@
   <meta charset="UTF-8">
   <title>Panel Administrador - Booknest</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* pequeño ajuste para que el botón de debug sea visible */
+    #debug-bar { position: fixed; right: 12px; bottom: 12px; z-index: 999; }
+    #debug-bar button { margin-left:6px; }
+  </style>
 </head>
 <body>
- <header class="site-header">
-  <h1>📚 Booknest - Admin</h1>
-  <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
-</header>
+  <header class="site-header">
+    <h1>📚 Booknest - Admin</h1>
+    <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+  </header>
 
   <div class="container">
     <div class="seccion">
@@ -27,7 +32,7 @@
         <option value="prestamo">En préstamo</option>
       </select>
 
-      <button type="button" onclick="agregarLibro()">Agregar Libro</button>
+      <button id="btnAgregar" type="button">Agregar Libro</button>
     </div>
 
     <div class="seccion">
@@ -46,11 +51,128 @@
     </div>
   </div>
 
-  <script>
-    // Array de libros (cargado desde localStorage si existe)
-    let libros = JSON.parse(localStorage.getItem("libros")) || [];
+  <!-- Barra de debug (útil para probar en tu navegador) -->
+  <div id="debug-bar">
+    <button id="btnShowLibros" type="button">Mostrar array</button>
+    <button id="btnClearLibros" type="button">Borrar localStorage</button>
+  </div>
 
-    function logout() {
-      localStorage.removeItem("rol");
-      window.location.href = "login.html";
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const tituloEl = document.getElementById('titulo');
+    const autorEl  = document.getElementById('autor');
+    const estadoEl = document.getElementById('estado');
+    const tbody    = document.querySelector('#tablaLibrosAdmin tbody');
+    const btnAgregar = document.getElementById('btnAgregar');
+    const btnShow = document.getElementById('btnShowLibros');
+    const btnClear = document.getElementById('btnClearLibros');
+
+    // Carga segura desde localStorage (si está corrupto, lo resetea a [])
+    function loadLibrosSafe() {
+      const raw = localStorage.getItem('libros');
+      if (!raw) return [];
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (err) {
+        console.warn('localStorage "libros" inválido — se restaurará. Error:', err);
+        return [];
+      }
     }
+
+    window.libros = loadLibrosSafe();
+
+    function guardarLibros() {
+      try {
+        localStorage.setItem('libros', JSON.stringify(window.libros));
+        console.log('Libros guardados. total:', window.libros.length);
+      } catch (err) {
+        console.error('No se pudo guardar en localStorage:', err);
+        alert('Error al guardar (ver consola).');
+      }
+    }
+
+    function escapeHtml(text) {
+      return String(text).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    function mostrarLibrosAdmin() {
+      tbody.innerHTML = '';
+      window.libros.forEach((libro, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(libro.titulo)}</td>
+          <td>${escapeHtml(libro.autor)}</td>
+          <td class="${escapeHtml(libro.estado)}">${escapeHtml(libro.estado)}</td>
+          <td><button type="button" class="btn-eliminar" data-index="${index}">Eliminar</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // listeners para eliminar
+      tbody.querySelectorAll('.btn-eliminar').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const i = parseInt(btn.dataset.index, 10);
+          eliminarLibro(i);
+        });
+      });
+    }
+
+    function agregarLibro() {
+      console.log('Intentando agregar libro...');
+      const titulo = tituloEl.value.trim();
+      const autor = autorEl.value.trim();
+      const estado = estadoEl.value;
+
+      if (!titulo || !autor) {
+        alert('Completa todos los campos.');
+        return;
+      }
+
+      // push y guardar
+      window.libros.push({ titulo, autor, estado });
+      guardarLibros();
+      mostrarLibrosAdmin();
+
+      // limpiar
+      tituloEl.value = '';
+      autorEl.value = '';
+      estadoEl.value = 'disponible';
+      console.log('Libro agregado:', titulo);
+    }
+
+    function eliminarLibro(index) {
+      if (!Number.isInteger(index)) return;
+      window.libros.splice(index, 1);
+      guardarLibros();
+      mostrarLibrosAdmin();
+      console.log('Libro eliminado idx:', index);
+    }
+
+    // Exponer para la consola (útil)
+    window.agregarLibro = agregarLibro;
+    window.eliminarLibro = eliminarLibro;
+
+    // botones
+    btnAgregar.addEventListener('click', agregarLibro);
+    btnShow.addEventListener('click', () => console.log('window.libros =', window.libros));
+    btnClear.addEventListener('click', () => {
+      if (!confirm('Borrar todos los libros en localStorage?')) return;
+      localStorage.removeItem('libros');
+      window.libros = [];
+      mostrarLibrosAdmin();
+      console.log('localStorage "libros" borrado.');
+    });
+
+    // Inicializar vista
+    mostrarLibrosAdmin();
+    console.log('admin.js listo. libros cargados:', window.libros.length);
+  });
+
+  function logout() {
+    try { localStorage.removeItem('rol'); } catch(e) {}
+    window.location.href = "login.html";
+  }
+  </script>
+</body>
+</html>
