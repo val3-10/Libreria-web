@@ -5,9 +5,9 @@
   <title>Panel Administrador - Booknest</title>
   <link rel="stylesheet" href="styles.css">
   <style>
-    /* pequeño ajuste para que el botón de debug sea visible */
+    /* Barra de depuración opcional */
     #debug-bar { position: fixed; right: 12px; bottom: 12px; z-index: 999; }
-    #debug-bar button { margin-left:6px; }
+    #debug-bar button { margin-left: 6px; }
   </style>
 </head>
 <body>
@@ -51,7 +51,7 @@
     </div>
   </div>
 
-  <!-- Barra de debug (útil para probar en tu navegador) -->
+  <!-- Barra de debug -->
   <div id="debug-bar">
     <button id="btnShowLibros" type="button">Mostrar array</button>
     <button id="btnClearLibros" type="button">Borrar localStorage</button>
@@ -67,33 +67,20 @@
     const btnShow = document.getElementById('btnShowLibros');
     const btnClear = document.getElementById('btnClearLibros');
 
-    // Carga segura desde localStorage (si está corrupto, lo resetea a [])
-    function loadLibrosSafe() {
-      const raw = localStorage.getItem('libros');
-      if (!raw) return [];
+    // Cargar libros de localStorage
+    function loadLibros() {
       try {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (err) {
-        console.warn('localStorage "libros" inválido — se restaurará. Error:', err);
+        const raw = localStorage.getItem('libros');
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        console.error('Error cargando libros:', e);
         return [];
       }
     }
-
-    window.libros = loadLibrosSafe();
+    window.libros = loadLibros();
 
     function guardarLibros() {
-      try {
-        localStorage.setItem('libros', JSON.stringify(window.libros));
-        console.log('Libros guardados. total:', window.libros.length);
-      } catch (err) {
-        console.error('No se pudo guardar en localStorage:', err);
-        alert('Error al guardar (ver consola).');
-      }
-    }
-
-    function escapeHtml(text) {
-      return String(text).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+      localStorage.setItem('libros', JSON.stringify(window.libros));
     }
 
     function mostrarLibrosAdmin() {
@@ -101,9 +88,9 @@
       window.libros.forEach((libro, index) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${escapeHtml(libro.titulo)}</td>
-          <td>${escapeHtml(libro.autor)}</td>
-          <td class="${escapeHtml(libro.estado)}">${escapeHtml(libro.estado)}</td>
+          <td>${libro.titulo}</td>
+          <td>${libro.autor}</td>
+          <td class="${libro.estado}">${libro.estado}</td>
           <td><button type="button" class="btn-eliminar" data-index="${index}">Eliminar</button></td>
         `;
         tbody.appendChild(tr);
@@ -112,14 +99,12 @@
       // listeners para eliminar
       tbody.querySelectorAll('.btn-eliminar').forEach(btn => {
         btn.addEventListener('click', () => {
-          const i = parseInt(btn.dataset.index, 10);
-          eliminarLibro(i);
+          eliminarLibro(parseInt(btn.dataset.index));
         });
       });
     }
 
     function agregarLibro() {
-      console.log('Intentando agregar libro...');
       const titulo = tituloEl.value.trim();
       const autor = autorEl.value.trim();
       const estado = estadoEl.value;
@@ -129,50 +114,39 @@
         return;
       }
 
-      // push y guardar
       window.libros.push({ titulo, autor, estado });
       guardarLibros();
       mostrarLibrosAdmin();
 
-      // limpiar
+      // limpiar inputs
       tituloEl.value = '';
       autorEl.value = '';
       estadoEl.value = 'disponible';
-      console.log('Libro agregado:', titulo);
     }
 
     function eliminarLibro(index) {
-      if (!Number.isInteger(index)) return;
       window.libros.splice(index, 1);
       guardarLibros();
       mostrarLibrosAdmin();
-      console.log('Libro eliminado idx:', index);
     }
 
-    // Exponer para la consola (útil)
-    window.agregarLibro = agregarLibro;
-    window.eliminarLibro = eliminarLibro;
+    function logout() {
+      localStorage.removeItem('rol');
+      window.location.href = 'login.html';
+    }
 
-    // botones
+    // Eventos
     btnAgregar.addEventListener('click', agregarLibro);
-    btnShow.addEventListener('click', () => console.log('window.libros =', window.libros));
+    btnShow.addEventListener('click', () => console.log(window.libros));
     btnClear.addEventListener('click', () => {
-      if (!confirm('Borrar todos los libros en localStorage?')) return;
       localStorage.removeItem('libros');
       window.libros = [];
       mostrarLibrosAdmin();
-      console.log('localStorage "libros" borrado.');
     });
 
-    // Inicializar vista
+    // Inicializar tabla
     mostrarLibrosAdmin();
-    console.log('admin.js listo. libros cargados:', window.libros.length);
   });
-
-  function logout() {
-    try { localStorage.removeItem('rol'); } catch(e) {}
-    window.location.href = "login.html";
-  }
   </script>
 </body>
 </html>
