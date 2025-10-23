@@ -1,200 +1,155 @@
-/* ========================= */
-/* ===== ESTILOS GLOBALES ===== */
-/* ========================= */
-
-/* Fondo y texto general de todo el sitio */
 body {
-  font-family: 'Segoe UI', Tahoma, sans-serif; /* Fuente principal */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f4d5b0);
   margin: 0;
   padding: 0;
-  background: #000;   /* Fondo negro */
-  color: #fff;        /* Texto blanco */
+  color: #d4a017ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh; /* Centra todo verticalmente */
+  text-align: center;
 }
 
-/* Encabezado (barra superior donde dice Booknest - Admin) */
-.site-header {
-  background: #1a1a1a;  /* Negro un poco más claro para distinguir */
-  padding: 20px;        /* Espaciado interno */
-  display: flex;        /* Flexbox para organizar */
-  justify-content: space-between; /* Logo a la izquierda, botón a la derecha */
-  align-items: center;  /* Centra verticalmente */
+header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 20px 0;
+  margin-bottom: 20px;
 }
 
-/* Contenedor de secciones (ejemplo: formulario de libros, tabla, etc.) */
-.seccion {
-  background: rgba(255,255,255,0.05); /* Negro translúcido (efecto vidrio) */
-  padding: 20px;        /* Espaciado interno */
-  border-radius: 16px;  /* Bordes redondeados */
-  margin-bottom: 20px;  /* Separación entre bloques */
+.header-container {
+  position: relative;
+  text-align: center;
+  width: 100%;
+}
+.logo-booknest {
+  width: 130px;              /* Tamaño del logo */
+  height: auto;
+  margin-bottom: 10px;       /* Espacio entre la imagen y el título */
+  border-radius: 50%;        /* Lo hace circular si es un logo redondo */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-
-/* ========================= */
-/* ===== FORMULARIOS ADMIN ===== */
-/* ========================= */
-
-/* Inputs y selects */
-.seccion input, 
-.seccion select {
-  padding: 10px;         /* Espaciado interno */
-  margin: 5px;           /* Separación entre elementos */
-  border-radius: 8px;    /* Bordes redondeados */
-  border: 1px solid #444;/* Borde gris oscuro */
-  font-size: 14px;       
-  background: #111;      /* Fondo negro */
-  color: #fff;           /* Texto blanco */
+.logo-booknest:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
 }
-
-/* Botón principal (Agregar Libro) */
-.seccion button {
-  background: #3b0ca3; /* Morado */
-  color: white;        /* Texto blanco */
-  border: none;
-  padding: 10px 20px;
-  margin: 5px;
-  border-radius: 8px;
-  cursor: pointer;     /* Manito al pasar el mouse */
-  transition: 0.3s;    /* Animación suave */
-}
-
-/* Hover en botón */
-.seccion button:hover {
-  background: #1e40af; /* Azul más intenso */
-}
-
-
-/* ========================= */
-/* ===== TABLAS ===== */
-/* ========================= */
-
-/* Estilo general de la tabla */
-table {
-  width: 100%;                 /* Ocupa todo el ancho */
-  border-collapse: collapse;   /* Quita espacios entre celdas */
-  margin-top: 15px;            
-  font-size: 14px;
-  background: rgba(255, 255, 255, 0.05); /* Fondo translúcido oscuro */
-  border-radius: 12px;         /* Bordes redondeados */
-  overflow: hidden;            /* Aplica borde a todo el contenido */
-}
-
-/* Encabezado de la tabla */
-table thead {
-  background: #3b0ca3; /* Morado */
-  color: #fff;         /* Texto blanco */
-}
-
-/* Celdas de encabezado */
-table th {
-  padding: 12px;
-  text-align: left;
-  text-transform: uppercase; /* Mayúsculas */
-  letter-spacing: 1px;       /* Más espacio entre letras */
-}
-
-/* Celdas normales */
-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Línea divisoria */
-}
-
-/* Filas alternadas para mejor legibilidad */
-table tbody tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/* Efecto al pasar el mouse sobre la fila */
-table tbody tr:hover {
-  background: rgba(30, 64, 175, 0.3); /* Azul translúcido */
-}
-
-/* Botones dentro de la tabla (ejemplo: editar, eliminar) */
-table button {
-  background: #3b0ca3; /* Morado */
-  color: #fff;         /* Texto blanco */
-  border: none;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-/* Hover en botones dentro de tabla */
-table button:hover {
-  background: #1e40af; /* Azul */
-}
-
-.logout-btn {
-  background: #3b0ca3;   /* Morado */
-  color: #fff;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 12px;   /* Bordes redondeados */
-  cursor: pointer;
+header h1 {
+  font-size: 3rem;
   font-weight: bold;
+  font-style: italic;
+  color: #d4a017;
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+  margin: 0;
+  width: 100%;
+}
+
+.btn-cerrar {
+  position: absolute;
+  top: 20px;
+  right: 40px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  background-color: #0f0092;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
   transition: background 0.3s ease;
 }
 
-.logout-btn:hover {
-  background: #1e40af;   /* Azul al pasar el mouse */
-}
-/* ========================= */
-/* ===== LOGIN ===== */
-/* ========================= */
-
-/* Fondo del login */
-.login-body {
-  background: url("img/Libros.jpg") no-repeat center center fixed; 
-  background-size: cover;   /* Que ocupe toda la pantalla */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;            /* Que ocupe toda la altura */
-  margin: 0;
+.btn-cerrar:hover {
+  background-color: #150070;
 }
 
-/* Caja del login */
-.login-box {
-  background: rgba(0, 0, 0, 0.8); /* Negro translúcido */
-  padding: 30px;
+.container {
+  max-width: 900px;
+  width: 90%;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.seccion {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(6px);
+  padding: 20px;
+  margin: 20px auto;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  text-align: center;
-  width: 300px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  text-align: left;
 }
 
-/* Título */
-.login-box h2 {
-  margin-bottom: 20px;
-  color: #fff;
-}
-
-/* Inputs */
-.login-box input {
+input, select, button {
   width: 100%;
   padding: 10px;
-  margin: 10px 0;
-  border-radius: 8px;
-  border: 1px solid #444;
-  background: #111;
-  color: #fff;
-}
-
-/* Botón */
-.login-box button {
-  width: 100%;
-  background: #3b0ca3;
-  color: #fff;
-  padding: 10px;
+  margin-bottom: 15px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+input, select {
+  background: rgba(255,255,255,0.8);
+  color: #333;
+}
+
+button {
+  background: #1e3a8a;
+  color: #fff;
   cursor: pointer;
-  font-size: 16px;
-  margin-top: 10px;
-  transition: 0.3s;
+  transition: background 0.3s ease;
 }
 
-.login-box button:hover {
-  background: #1e40af;
+button:hover {
+  background: #0406a0;
 }
 
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 12px;
+  text-align: center;
+  color: #333;
+}
+
+th {
+  background: #977e0d;
+  color: #fff;
+}
+
+tr:nth-child(even) {
+  background: rgba(127,0,255,0.05);
+}
+
+.venta { color: green; font-weight: bold; }
+.prestamo { color: blue; font-weight: bold; }
+.disponible { color: black; font-weight: bold; }
+
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  color: #fff;
+  opacity: 0.9;
+  z-index: 1000;
+}
+
+.toast.success { background-color: #00ff08; }
+.toast.error { background-color: #ec1000; }
+.toast.info { background-color: #319ef7; }

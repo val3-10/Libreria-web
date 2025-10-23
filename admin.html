@@ -2,151 +2,316 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Panel Administrador - Booknest</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Booknest - Administrador</title>
   <style>
-    /* Barra de depuración opcional */
-    #debug-bar { position: fixed; right: 12px; bottom: 12px; z-index: 999; }
-    #debug-bar button { margin-left: 6px; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f4d5b0);
+      margin: 0;
+      padding: 0;
+      color: #d4a017ff;
+    }
+    
+    header {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0,0,0,0.2);
+    }
+
+    .header-container {
+      position: relative;
+      padding: 20px;
+      text-align: center;
+      width: 100%;
+    }
+
+    header h1 {
+      font-size: 3rem;
+      font-weight: bold;
+      font-style: italic;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+      margin: 0 auto;
+      width: 100%;
+      position: relative;
+    }
+
+    .btn-cerrar {
+      position: middle;
+      top: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      background-color: #0f0092;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .btn-cerrar:hover {
+      background-color: #150070;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+
+    .seccion {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(6px);
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+
+    input, select {
+      background: rgba(255,255,255,0.8);
+      color: #333;
+    }
+
+    button {
+      background: #1e3a8a;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #0406a0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: center;
+      color: #333;
+    }
+
+    th {
+      background: #977e0d;
+      color: #fff;
+    }
+
+    tr:nth-child(even) {
+      background: rgba(127,0,255,0.05);
+    }
+
+    .venta { color: green; font-weight: bold; }
+    .prestamo { color: blue; font-weight: bold; }
+    .disponible { color: black; font-weight: bold; }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      border-radius: 5px;
+      color: #fff;
+      opacity: 0.9;
+      z-index: 1000;
+    }
+
+    .toast.success { background-color: #00ff08; }
+    .toast.error { background-color: #f44336; }
+    .toast.info { background-color: #2196F3; }
   </style>
 </head>
 <body>
-  <header class="site-header">
-    <h1>📚 Booknest - Admin</h1>
-    <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+  <header>
+    <div class="header-container">
+      <h1>Booknest</h1>
+      <button onclick="cerrarSesion()" class="btn-cerrar" id="btnCerrarSesion" style="display:none;">Cerrar Sesión</button>
+    </div>
   </header>
 
   <div class="container">
-    <div class="seccion">
-      <h2>Registrar Libro</h2>
-      <label for="titulo">Título:</label>
-      <input type="text" id="titulo" placeholder="Nombre del libro">
-
-      <label for="autor">Autor:</label>
-      <input type="text" id="autor" placeholder="Autor del libro">
-
-      <label for="estado">Estado:</label>
-      <select id="estado">
-        <option value="disponible">Disponible</option>
-        <option value="venta">En venta</option>
-        <option value="prestamo">En préstamo</option>
-      </select>
-
-      <button id="btnAgregar" type="button">Agregar Libro</button>
+    <!-- Login -->
+    <div class="seccion" id="loginSeccion">
+      <h2>Iniciar Sesión</h2>
+      <input type="email" id="email" placeholder="Email">
+      <input type="password" id="password" placeholder="Contraseña">
+      <button onclick="login()">Ingresar</button>
     </div>
 
-    <div class="seccion">
-      <h2>Lista de Libros</h2>
-      <table id="tablaLibrosAdmin">
-        <thead>
-          <tr>
-            <th>Título</th>
-            <th>Autor</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
+    <!-- Panel Admin -->
+    <div id="adminPanel" style="display:none;">
+      <div class="seccion">
+        <h2>Registrar Libro</h2>
+        <input type="text" id="titulo" placeholder="Título">
+        <input type="text" id="autor" placeholder="Autor">
+        <select id="estado">
+          <option value="disponible">Disponible</option>
+          <option value="venta">En venta</option>
+          <option value="prestamo">En préstamo</option>
+        </select>
+        <input type="number" id="stock" placeholder="Stock" min="0">
+        <button onclick="agregarLibro()">Agregar Libro</button>
+      </div>
 
-  <!-- Barra de debug -->
-  <div id="debug-bar">
-    <button id="btnShowLibros" type="button">Mostrar array</button>
-    <button id="btnClearLibros" type="button">Borrar localStorage</button>
+      <div class="seccion">
+        <h2>Lista de Libros</h2>
+        <table id="tablaLibrosAdmin">
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Autor</th>
+              <th>Estado</th>
+              <th>Stock</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="seccion">
+        <h2>Registro de Transacciones</h2>
+        <table id="tablaTransacciones">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Usuario</th>
+              <th>Libro</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const tituloEl = document.getElementById('titulo');
-    const autorEl  = document.getElementById('autor');
-    const estadoEl = document.getElementById('estado');
-    const tbody    = document.querySelector('#tablaLibrosAdmin tbody');
-    const btnAgregar = document.getElementById('btnAgregar');
-    const btnShow = document.getElementById('btnShowLibros');
-    const btnClear = document.getElementById('btnClearLibros');
+    const adminUser = { email: "admin@booknest.com", password: "1234" };
+    let libros = JSON.parse(localStorage.getItem("libros")) || [];
+    let transacciones = JSON.parse(localStorage.getItem("transacciones")) || [];
 
-    // Cargar libros de localStorage
-    function loadLibros() {
-      try {
-        const raw = localStorage.getItem('libros');
-        return raw ? JSON.parse(raw) : [];
-      } catch (e) {
-        console.error('Error cargando libros:', e);
-        return [];
+    document.addEventListener("DOMContentLoaded", () => {
+      const rol = localStorage.getItem("rol");
+      if (rol === "admin") mostrarAdmin();
+    });
+
+    function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (email === adminUser.email && password === adminUser.password) {
+        localStorage.setItem("rol", "admin");
+        mostrarAdmin();
+        mostrarMensaje('success', 'Bienvenido Administrador');
+      } else {
+        mostrarMensaje('error', 'Credenciales incorrectas');
       }
     }
-    window.libros = loadLibros();
 
-    function guardarLibros() {
-      localStorage.setItem('libros', JSON.stringify(window.libros));
+    function mostrarAdmin() {
+      document.getElementById("loginSeccion").style.display = "none";
+      document.getElementById("adminPanel").style.display = "block";
+      document.getElementById("btnCerrarSesion").style.display = "block";
+      mostrarLibrosAdmin();
+      mostrarTransacciones();
     }
 
-    function mostrarLibrosAdmin() {
-      tbody.innerHTML = '';
-      window.libros.forEach((libro, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${libro.titulo}</td>
-          <td>${libro.autor}</td>
-          <td class="${libro.estado}">${libro.estado}</td>
-          <td><button type="button" class="btn-eliminar" data-index="${index}">Eliminar</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
+    function cerrarSesion() {
+  localStorage.removeItem("rol");
+  window.location.href = "login.html"; // 🔹 Redirige al archivo de login
 
-      // listeners para eliminar
-      tbody.querySelectorAll('.btn-eliminar').forEach(btn => {
-        btn.addEventListener('click', () => {
-          eliminarLibro(parseInt(btn.dataset.index));
-        });
-      });
     }
 
     function agregarLibro() {
-      const titulo = tituloEl.value.trim();
-      const autor = autorEl.value.trim();
-      const estado = estadoEl.value;
+      const titulo = document.getElementById("titulo").value.trim();
+      const autor = document.getElementById("autor").value.trim();
+      const estado = document.getElementById("estado").value;
+      const stock = parseInt(document.getElementById("stock").value.trim());
 
-      if (!titulo || !autor) {
-        alert('Completa todos los campos.');
+      if (!titulo || !autor || isNaN(stock) || stock < 0) {
+        mostrarMensaje('error', 'Complete todos los campos correctamente');
         return;
       }
 
-      window.libros.push({ titulo, autor, estado });
+      libros.push({ titulo, autor, estado, stock });
       guardarLibros();
       mostrarLibrosAdmin();
+      mostrarMensaje('success', 'Libro agregado exitosamente');
 
-      // limpiar inputs
-      tituloEl.value = '';
-      autorEl.value = '';
-      estadoEl.value = 'disponible';
+      // Limpiar campos
+      document.getElementById("titulo").value = "";
+      document.getElementById("autor").value = "";
+      document.getElementById("stock").value = "";
     }
 
-    function eliminarLibro(index) {
-      window.libros.splice(index, 1);
+    function eliminarLibro(i) {
+      if (!confirm('¿Está seguro de eliminar este libro?')) return;
+      
+      libros.splice(i, 1);
       guardarLibros();
       mostrarLibrosAdmin();
+      mostrarMensaje('info', 'Libro eliminado exitosamente');
     }
 
-    function logout() {
-      localStorage.removeItem('rol');
-      window.location.href = 'login.html';
+    function mostrarLibrosAdmin() {
+      const tbody = document.querySelector("#tablaLibrosAdmin tbody");
+      tbody.innerHTML = "";
+      libros.forEach((libro, i) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${libro.titulo}</td>
+            <td>${libro.autor}</td>
+            <td class="${libro.estado}">${libro.estado}</td>
+            <td>${libro.stock}</td>
+            <td><button onclick="eliminarLibro(${i})">Eliminar</button></td>
+          </tr>`;
+      });
     }
 
-    // Eventos
-    btnAgregar.addEventListener('click', agregarLibro);
-    btnShow.addEventListener('click', () => console.log(window.libros));
-    btnClear.addEventListener('click', () => {
-      localStorage.removeItem('libros');
-      window.libros = [];
-      mostrarLibrosAdmin();
-    });
+    function mostrarTransacciones() {
+      const tbody = document.querySelector("#tablaTransacciones tbody");
+      tbody.innerHTML = "";
+      transacciones.forEach(t => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${t.fecha}</td>
+            <td>${t.usuario}</td>
+            <td>${t.libro}</td>
+            <td>${t.tipo}</td>
+            <td>${t.estado}</td>
+          </tr>`;
+      });
+    }
 
-    // Inicializar tabla
-    mostrarLibrosAdmin();
-  });
+    function guardarLibros() {
+      localStorage.setItem("libros", JSON.stringify(libros));
+    }
+
+    function mostrarMensaje(tipo, mensaje) {
+      const toast = document.createElement('div');
+      toast.className = `toast ${tipo}`;
+      toast.textContent = mensaje;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
   </script>
 </body>
 </html>
