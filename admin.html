@@ -3,241 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <title>Booknest - Administrador</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #f4d5b0);
-      margin: 0;
-      padding: 0;
-      color: #d4a017ff;
-    }
-    
-    header {
-      text-align: center;
-      padding: 20px;
-      background: rgba(0,0,0,0.2);
-    }
-
-    .header-container {
-      position: relative;
-      padding: 20px;
-      text-align: center;
-      width: 100%;
-    }
-
-    header h1 {
-      font-size: 3rem;
-      font-weight: bold;
-      font-style: italic;
-      text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-      margin: 0 auto;
-      width: 100%;
-      position: relative;
-    }
-
-    .btn-cerrar {
-      position: middle;
-      top: 20px;
-      right: 20px;
-      padding: 8px 16px;
-      font-size: 0.9rem;
-      background-color: #0f0092;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    .btn-cerrar:hover {
-      background-color: #150070;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 20px;
-    }
-
-    .seccion {
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(6px);
-      padding: 20px;
-      margin: 20px 0;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-    }
-
-    input, select {
-      background: rgba(255,255,255,0.8);
-      color: #333;
-    }
-
-    button {
-      background: #1e3a8a;
-      color: #fff;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    button:hover {
-      background: #0406a0;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-      background: rgba(255,255,255,0.9);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    th, td {
-      padding: 12px;
-      text-align: center;
-      color: #333;
-    }
-
-    th {
-      background: #977e0d;
-      color: #fff;
-    }
-
-    tr:nth-child(even) {
-      background: rgba(127,0,255,0.05);
-    }
-
-    .venta { color: green; font-weight: bold; }
-    .prestamo { color: blue; font-weight: bold; }
-    .disponible { color: black; font-weight: bold; }
-
-    .toast {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 10px 20px;
-      border-radius: 5px;
-      color: #fff;
-      opacity: 0.9;
-      z-index: 1000;
-    }
-
-    .toast.success { background-color: #00ff08; }
-    .toast.error { background-color: #f44336; }
-    .toast.info { background-color: #2196F3; }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <header>
     <div class="header-container">
-      <h1>Booknest</h1>
-      <button onclick="cerrarSesion()" class="btn-cerrar" id="btnCerrarSesion" style="display:none;">Cerrar Sesión</button>
+
+      <button onclick="cerrarSesion()" class="btn-cerrar">Cerrar Sesión</button>
     </div>
   </header>
 
   <div class="container">
-    <!-- Login -->
-    <div class="seccion" id="loginSeccion">
-      <h2>Iniciar Sesión</h2>
-      <input type="email" id="email" placeholder="Email">
-      <input type="password" id="password" placeholder="Contraseña">
-      <button onclick="login()">Ingresar</button>
+    <div class="menu-opciones">
+      <button onclick="mostrarSeccion('libros')">Registrar Libro</button>
+      <button onclick="mostrarSeccion('ventas')">Registro de Ventas</button>
+      <button onclick="mostrarSeccion('prestamos')">Registro de Préstamos</button>
     </div>
 
-    <!-- Panel Admin -->
-    <div id="adminPanel" style="display:none;">
-      <div class="seccion">
-        <h2>Registrar Libro</h2>
-        <input type="text" id="titulo" placeholder="Título">
-        <input type="text" id="autor" placeholder="Autor">
-        <select id="estado">
-          <option value="disponible">Disponible</option>
-          <option value="venta">En venta</option>
-          <option value="prestamo">En préstamo</option>
-        </select>
-        <input type="number" id="stock" placeholder="Stock" min="0">
-        <button onclick="agregarLibro()">Agregar Libro</button>
-      </div>
+    <!-- SECCION LIBROS -->
+    <div id="libros" class="seccion">
+      <h2>Registrar Libro</h2>
+      <input type="text" id="titulo" placeholder="Título">
+      <input type="text" id="autor" placeholder="Autor">
+      <select id="estado">
+        <option value="disponible">Disponible</option>
+        <option value="venta">En venta</option>
+        <option value="prestamo">En préstamo</option>
+      </select>
+      <input type="number" id="stock" placeholder="Stock" min="0">
+      <input type="number" id="precio" placeholder="Precio (en $)" min="0">
+      <button onclick="agregarLibro()">Agregar Libro</button>
 
-      <div class="seccion">
-        <h2>Lista de Libros</h2>
-        <table id="tablaLibrosAdmin">
-          <thead>
-            <tr>
-              <th>Título</th>
-              <th>Autor</th>
-              <th>Estado</th>
-              <th>Stock</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+      <table id="tablaLibrosAdmin">
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Autor</th>
+            <th>Estado</th>
+            <th>Stock</th>
+            <th>Precio</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-      <div class="seccion">
-        <h2>Registro de Transacciones</h2>
-        <table id="tablaTransacciones">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Usuario</th>
-              <th>Libro</th>
-              <th>Tipo</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+    <!-- SECCIÓN VENTAS -->
+    <div id="ventas" class="seccion">
+      <h2>Registro de Ventas</h2>
+      <table id="tablaVentas">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Libro</th>
+            <th>Cantidad</th>
+            <th>Precio Total</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- SECCIÓN PRÉSTAMOS -->
+    <div id="prestamos" class="seccion">
+      <h2>Registro de Préstamos</h2>
+      <table id="tablaPrestamos">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Libro</th>
+            <th>Cantidad</th>
+            <th>Duración</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </div>
 
   <script>
-    const adminUser = { email: "admin@booknest.com", password: "1234" };
     let libros = JSON.parse(localStorage.getItem("libros")) || [];
     let transacciones = JSON.parse(localStorage.getItem("transacciones")) || [];
 
     document.addEventListener("DOMContentLoaded", () => {
-      const rol = localStorage.getItem("rol");
-      if (rol === "admin") mostrarAdmin();
-    });
-
-    function login() {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-
-      if (email === adminUser.email && password === adminUser.password) {
-        localStorage.setItem("rol", "admin");
-        mostrarAdmin();
-        mostrarMensaje('success', 'Bienvenido Administrador');
-      } else {
-        mostrarMensaje('error', 'Credenciales incorrectas');
-      }
-    }
-
-    function mostrarAdmin() {
-      document.getElementById("loginSeccion").style.display = "none";
-      document.getElementById("adminPanel").style.display = "block";
-      document.getElementById("btnCerrarSesion").style.display = "block";
       mostrarLibrosAdmin();
       mostrarTransacciones();
-    }
+      mostrarSeccion('libros'); // Mostrar registro de libros al inicio
+    });
 
     function cerrarSesion() {
-  localStorage.removeItem("rol");
-  window.location.href = "login.html"; // 🔹 Redirige al archivo de login
+      localStorage.removeItem("rol");
+      window.location.href = "login.html";
+    }
 
+    function mostrarSeccion(id) {
+      document.querySelectorAll(".seccion").forEach(s => s.style.display = "none");
+      document.getElementById(id).style.display = "block";
     }
 
     function agregarLibro() {
@@ -245,26 +112,26 @@
       const autor = document.getElementById("autor").value.trim();
       const estado = document.getElementById("estado").value;
       const stock = parseInt(document.getElementById("stock").value.trim());
+      const precio = parseFloat(document.getElementById("precio").value.trim());
 
-      if (!titulo || !autor || isNaN(stock) || stock < 0) {
+      if (!titulo || !autor || isNaN(stock) || stock < 0 || isNaN(precio) || precio < 0) {
         mostrarMensaje('error', 'Complete todos los campos correctamente');
         return;
       }
 
-      libros.push({ titulo, autor, estado, stock });
+      libros.push({ titulo, autor, estado, stock, precio });
       guardarLibros();
       mostrarLibrosAdmin();
       mostrarMensaje('success', 'Libro agregado exitosamente');
 
-      // Limpiar campos
       document.getElementById("titulo").value = "";
       document.getElementById("autor").value = "";
       document.getElementById("stock").value = "";
+      document.getElementById("precio").value = "";
     }
 
     function eliminarLibro(i) {
       if (!confirm('¿Está seguro de eliminar este libro?')) return;
-      
       libros.splice(i, 1);
       guardarLibros();
       mostrarLibrosAdmin();
@@ -279,26 +146,52 @@
           <tr>
             <td>${libro.titulo}</td>
             <td>${libro.autor}</td>
-            <td class="${libro.estado}">${libro.estado}</td>
+            <td>${libro.estado}</td>
             <td>${libro.stock}</td>
-            <td><button onclick="eliminarLibro(${i})">Eliminar</button></td>
+            <td>$${libro.precio.toFixed(2)}</td>
+            <td><button class="btn-eliminar" onclick="eliminarLibro(${i})">Eliminar</button></td>
           </tr>`;
       });
     }
 
     function mostrarTransacciones() {
-      const tbody = document.querySelector("#tablaTransacciones tbody");
-      tbody.innerHTML = "";
-      transacciones.forEach(t => {
-        tbody.innerHTML += `
-          <tr>
-            <td>${t.fecha}</td>
-            <td>${t.usuario}</td>
-            <td>${t.libro}</td>
-            <td>${t.tipo}</td>
-            <td>${t.estado}</td>
-          </tr>`;
+      const ventasBody = document.querySelector("#tablaVentas tbody");
+      const prestamosBody = document.querySelector("#tablaPrestamos tbody");
+
+      ventasBody.innerHTML = "";
+      prestamosBody.innerHTML = "";
+
+      transacciones.forEach((t, index) => {
+        if (t.tipo === "venta") {
+          ventasBody.innerHTML += `
+            <tr>
+              <td>${t.fecha}</td>
+              <td>${t.usuario || 'Cliente desconocido'}</td>
+              <td>${t.libro}</td>
+              <td>${t.cantidad || 1}</td>
+              <td>$${t.precioTotal || 0}</td>
+              <td><button class="btn-eliminar" onclick="eliminarTransaccion(${index})">Eliminar</button></td>
+            </tr>`;
+        } else if (t.tipo === "prestamo") {
+          prestamosBody.innerHTML += `
+            <tr>
+              <td>${t.fecha}</td>
+              <td>${t.usuario || 'Cliente desconocido'}</td>
+              <td>${t.libro}</td>
+              <td>${t.cantidad || 1}</td>
+              <td>${t.duracion || '-'}</td>
+              <td><button class="btn-eliminar" onclick="eliminarTransaccion(${index})">Eliminar</button></td>
+            </tr>`;
+        }
       });
+    }
+
+    function eliminarTransaccion(index) {
+      if (!confirm("¿Deseas eliminar este registro?")) return;
+      transacciones.splice(index, 1);
+      localStorage.setItem("transacciones", JSON.stringify(transacciones));
+      mostrarTransacciones();
+      mostrarMensaje("info", "Registro eliminado");
     }
 
     function guardarLibros() {

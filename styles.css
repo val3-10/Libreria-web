@@ -1,60 +1,48 @@
+/* === ESTILOS GENERALES === */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #f4d5b0);
   margin: 0;
   padding: 0;
-  color: #d4a017ff;
+  color: rgb(255, 255, 255);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh; /* Centra todo verticalmente */
+  min-height: 100vh;
   text-align: center;
 }
 
+/* === ENCABEZADO === */
 header {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 20px 0;
-  margin-bottom: 20px;
+  background: url("img/BookNest.png") no-repeat center fixed;
+  background-size: cover;
+  padding: 170px 0;
+  margin-bottom: 1px;
+  border-bottom: 3px solid rgba(0, 0, 0, 0.2);
+  position: relative; /* necesario para el botón */
 }
 
-.header-container {
-  position: relative;
-  text-align: center;
-  width: 100%;
-}
-.logo-booknest {
-  width: 130px;              /* Tamaño del logo */
-  height: auto;
-  margin-bottom: 10px;       /* Espacio entre la imagen y el título */
-  border-radius: 50%;        /* Lo hace circular si es un logo redondo */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.logo-booknest:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
-}
+/* === LOGO / TÍTULO === */
 header h1 {
   font-size: 3rem;
   font-weight: bold;
   font-style: italic;
   color: #d4a017;
-  text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
   margin: 0;
-  width: 100%;
 }
 
+/* === BOTÓN DE CERRAR SESIÓN === */
 .btn-cerrar {
-  position: absolute;
-  top: 20px;
-  right: 40px;
+  position: absolute; /* flota sobre el header */
+  top: 20px;          /* distancia desde la parte superior */
+  right: 20px;        /* distancia desde la derecha */
   padding: 8px 16px;
   font-size: 0.9rem;
   background-color: #0f0092;
@@ -62,13 +50,15 @@ header h1 {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, transform 0.2s ease;
 }
 
 .btn-cerrar:hover {
   background-color: #150070;
+  transform: scale(1.05);
 }
 
+/* === CONTENEDOR PRINCIPAL === */
 .container {
   max-width: 900px;
   width: 90%;
@@ -76,16 +66,19 @@ header h1 {
   padding: 20px;
 }
 
+/* === SECCIONES === */
 .seccion {
   background: rgba(255,255,255,0.1);
   backdrop-filter: blur(6px);
   padding: 20px;
   margin: 20px auto;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
   text-align: left;
+  display: none;
 }
 
+/* === CAMPOS DE FORMULARIOS === */
 input, select, button {
   width: 100%;
   padding: 10px;
@@ -100,6 +93,7 @@ input, select {
   color: #333;
 }
 
+/* === BOTONES GENERALES === */
 button {
   background: #1e3a8a;
   color: #fff;
@@ -111,6 +105,44 @@ button:hover {
   background: #0406a0;
 }
 
+/* === BOTONES DE LA SECCIÓN LIBROS === */
+#libros button {
+  background-color: #1e3a8a;
+  color: white;
+  font-weight: bold;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+#libros button:hover {
+  background-color: #0406a0;
+  transform: scale(1.05);
+}
+
+/* === MENÚ DE OPCIONES === */
+.menu-opciones {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.menu-opciones button {
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.menu-opciones button:hover {
+  background: #0406a0;
+  transform: scale(1.05);
+}
+
+/* === TABLAS === */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -135,10 +167,27 @@ tr:nth-child(even) {
   background: rgba(127,0,255,0.05);
 }
 
+/* === ESTADOS DE LIBROS === */
 .venta { color: green; font-weight: bold; }
 .prestamo { color: blue; font-weight: bold; }
 .disponible { color: black; font-weight: bold; }
 
+/* === BOTONES DE ELIMINAR === */
+.btn-eliminar {
+  background-color: #1e3a8a;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.btn-eliminar:hover {
+  background-color: #0406a0;
+}
+
+/* === NOTIFICACIONES === */
 .toast {
   position: fixed;
   top: 20px;
@@ -153,3 +202,31 @@ tr:nth-child(even) {
 .toast.success { background-color: #00ff08; }
 .toast.error { background-color: #ec1000; }
 .toast.info { background-color: #319ef7; }
+
+/* ========================= */ /* ===== LOGIN ===== */ /* ========================= */ 
+.login-body::before { content: "";
+  position: 100% auto; 
+  top: 30px; /* distancia desde arriba */ 
+  left: 50%; transform: translateX(-50%); width: 120px; 
+  /* tamaño del logo */ height: 120px; 
+  background: url("img/logo-booknest.png") no-repeat center center; 
+  background-size: contain; /* mantiene proporciones del logo */
+  z-index: 10; } .login-body { position: relative; 
+  background: url("img/BookNest.png") no-repeat center center fixed; 
+  background-size: cover;
+  display: flex;
+  justify-content: center; 
+  align-items: center; 
+  height: 100vh; margin: 0; }
+ /* Caja del login */
+.login-box {
+  background: rgba(0, 0, 0, 0.329); /* Negro translúcido */
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.164);
+  text-align: center;
+  width: 300px;
+}
+.login-box button:hover {
+  background: #1e40af;
+}
