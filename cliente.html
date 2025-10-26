@@ -2,61 +2,428 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Panel Administrador - Booknest</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Booknest - Cliente</title>
+  <link rel="stylesheet" href="styles.css"> <!-- Estilos externos -->
 </head>
 <body>
-  <!-- Encabezado con botón de cerrar sesión -->
-  <header class="site-header">
-    <h1>📚 Booknest - Admin</h1>
-    <button onclick="logout()">Cerrar Sesión</button>
+  <!-- Botón para cerrar sesión -->
+  <header>
+    <button class="btn-cerrar" onclick="volverAlLogin()">Cerrar Sesión</button>
   </header>
 
   <div class="container">
-    <!-- Sección para registrar libros -->
+
+    <!-- CATÁLOGO -->
     <div class="seccion">
-      <h2>Registrar Libro</h2>
-      <label for="titulo">Título:</label>
-      <input type="text" id="titulo">
-
-      <label for="autor">Autor:</label>
-      <input type="text" id="autor">
-
-      <label for="estado">Estado:</label>
-      <select id="estado">
-        <option value="disponible">Disponible</option>
-        <option value="venta">En venta</option>
-        <option value="prestamo">En préstamo</option>
-      </select>
-
-      <button onclick="agregarLibro()">Agregar Libro</button>
+      <h2>Catálogo de Libros</h2>
+      <!-- Aquí se cargan dinámicamente los libros -->
+      <div id="catalogoLibros" class="catalogo-libros"></div>
     </div>
 
-    <!-- Tabla para mostrar libros -->
+    <!-- CARRITO -->
     <div class="seccion">
-      <h2>Lista de Libros</h2>
-      <table id="tablaLibrosAdmin">
+      <h2>Carrito de Compras</h2>
+      <!-- Tabla donde se listan los libros agregados al carrito -->
+      <table id="tablaCarrito">
         <thead>
           <tr>
-            <th>Título</th>
-            <th>Autor</th>
+            <th>Libro</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Total</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button onclick="pagarCarrito()" style="margin-top:10px;">Proceder al Pago</button>
+    </div>
+
+    <!-- HISTORIAL -->
+    <div class="seccion">
+      <h2>Mi Historial</h2>
+      <button onclick="borrarHistorial()" style="margin-bottom:10px;">Borrar historial</button>
+      <!-- Tabla de historial de compras y préstamos -->
+      <table id="tablaHistorialCliente">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Libro</th>
+            <th>Tipo</th>
             <th>Estado</th>
-            <th>Acciones</th> <!-- Aquí se podrían poner botones editar/eliminar -->
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
+
+  </div>
+
+  <!-- MODAL para ingresar cantidad -->
+  <div id="modalCantidad" class="modal">
+    <div class="modal-contenido">
+      <h3 id="modalTitulo"></h3>
+      <p id="modalSub"></p>
+      <input type="number" id="cantidadInput" min="1"> <!-- Cantidad ingresada -->
+      <div class="modal-botones">
+        <button onclick="confirmarCantidad()">Aceptar</button>
+        <button onclick="cerrarModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PORTAL DE PAGO -->
+  <div id="checkout" class="modal">
+    <div class="modal-contenido">
+      <h3>Portal de Pago</h3>
+      <!-- Formulario de tarjeta -->
+      <form>
+        <input type="text" id="tarjeta" placeholder="Número de tarjeta" maxlength="16" oninput="soloNumeros(this)"><br>
+        <input type="text" id="expiracion" placeholder="MM/AA" maxlength="5" oninput="formatoExpiracion(this)"><br>
+        <input type="text" id="cvv" placeholder="CVV" maxlength="3" oninput="soloNumeros(this)"><br>
+        <input type="text" id="titular" placeholder="Nombre del titular"><br>
+        <div class="modal-botones">
+          <button type="button" onclick="finishPurchase()">Pagar</button>
+          <button type="button" onclick="cerrarCheckout()">Cancelar</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script>
-    // Función para cerrar sesión
-    function logout() {
-      localStorage.removeItem("rol"); // Borrar rol guardado
-      window.location.href = "login.html"; // Mandar al login
+    // ---------------- VARIABLES GLOBALES (traídas del localStorage) ----------------
+    let libros = JSON.parse(localStorage.getItem("libros")) || [];              // Lista de libros
+    let transacciones = JSON.parse(localStorage.getItem("transacciones")) || []; // Registro general
+    let historialCliente = JSON.parse(localStorage.getItem("historialCliente")) || []; // Historial propio
+    let carrito = JSON.parse(localStorage.getItem("carrito")) || [];             // Carrito de compras
+
+    // Control del modal y acciones
+    let accionPendiente = null;
+    let libroSeleccionado = null;
+    let indiceSeleccionado = null;
+    let compraPendiente = null;
+
+    // Al cargar la página, mostramos catálogo, historial y carrito
+    document.addEventListener("DOMContentLoaded", () => {
+      mostrarLibrosCliente();
+      mostrarHistorialCliente();
+      mostrarCarrito();
+    });
+
+    // ------------------- FUNCIONES GENERALES -------------------
+
+    // Cerrar sesión y volver al login
+    function volverAlLogin() {
+      localStorage.removeItem("rol");
+      window.location.href = "login.html";
     }
+
+    // Muestra mensajes tipo "toast"
+    function mostrarMensaje(tipo, mensaje) {
+      const toast = document.createElement('div');
+      toast.className = `toast ${tipo}`;
+      toast.textContent = mensaje;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Guarda todos los datos en localStorage
+    function guardarDatos() {
+      localStorage.setItem("libros", JSON.stringify(libros));
+      localStorage.setItem("transacciones", JSON.stringify(transacciones));
+      localStorage.setItem("historialCliente", JSON.stringify(historialCliente));
+      guardarCarrito();
+    }
+
+    // ------------------- CATÁLOGO -------------------
+
+    // Muestra los libros disponibles al cliente
+    function mostrarLibrosCliente() {
+      const contenedor = document.getElementById("catalogoLibros");
+      contenedor.innerHTML = "";
+
+      if (libros.length === 0) {
+        contenedor.innerHTML = "<p>No hay libros disponibles</p>";
+        return;
+      }
+
+      // Recorre todos los libros y los dibuja en pantalla
+      libros.forEach((libro, i) => {
+        const carta = document.createElement("div");
+        carta.className = "carta-libro";
+
+        carta.innerHTML = `
+          <img src="${libro.caratula || 'img/sin-imagen.png'}" alt="Portada">
+          <h3>${libro.titulo}</h3>
+          <p>Autor: ${libro.autor}</p>
+          <p>Estado: ${libro.estado}</p>
+          <p>Precio: $${libro.precio ? libro.precio.toFixed(2) : 0}</p>
+          <p>Stock: ${libro.stock}</p>
+          <button onclick="abrirModal('comprar', ${i})">Comprar</button>
+          <button onclick="abrirModal('prestamo', ${i})">Pedir Préstamo</button>
+          <button onclick="agregarCarrito(${i})">Agregar al Carrito</button>
+        `;
+        contenedor.appendChild(carta);
+      });
+    }
+
+    // Abre modal para seleccionar cantidad
+    function abrirModal(tipo, i) {
+      accionPendiente = tipo;
+      libroSeleccionado = libros[i];
+      indiceSeleccionado = i;
+      document.getElementById('modalTitulo').textContent =
+        tipo === 'comprar'
+          ? `Comprar "${libroSeleccionado.titulo}"`
+          : `Pedir préstamo de "${libroSeleccionado.titulo}"`;
+      document.getElementById('modalSub').textContent = `Disponible: ${libroSeleccionado.stock} ejemplares`;
+      document.getElementById('cantidadInput').value = 1;
+      document.getElementById('cantidadInput').max = libroSeleccionado.stock;
+      document.getElementById('modalCantidad').style.display = 'flex';
+    }
+
+    // Cierra el modal
+    function cerrarModal() {
+      document.getElementById('modalCantidad').style.display = 'none';
+      accionPendiente = null;
+    }
+
+    // Confirma la cantidad elegida en el modal
+    function confirmarCantidad() {
+      const cantidad = parseInt(document.getElementById('cantidadInput').value);
+      if (isNaN(cantidad) || cantidad <= 0) return;
+
+      // Validamos stock
+      if (cantidad > libroSeleccionado.stock) {
+        mostrarMensaje('error', 'Cantidad superior al stock disponible');
+        return;
+      }
+
+      // Si es compra → abrir portal de pago
+      // Si es préstamo → ejecutarlo de inmediato
+      if (accionPendiente === 'comprar') showCheckout(libroSeleccionado, cantidad);
+      else if (accionPendiente === 'prestamo') ejecutarPrestamo(cantidad);
+
+      cerrarModal();
+    }
+
+    // Registra préstamo
+    function ejecutarPrestamo(cantidad) {
+      const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+      const nombreCliente = usuarioActivo ? usuarioActivo.nombre : "Cliente";
+      const fecha = new Date().toLocaleString();
+
+      libroSeleccionado.stock -= cantidad;
+
+      // Registro general
+      transacciones.push({
+        fecha, usuario: nombreCliente, libro: libroSeleccionado.titulo, tipo: "prestamo", cantidad, duracion: "7 días"
+      });
+
+      // Registro en historial del cliente
+      historialCliente.push({
+        fecha, libro: libroSeleccionado.titulo, tipo: "Préstamo", estado: "Activo"
+      });
+
+      guardarDatos();
+      mostrarLibrosCliente();
+      mostrarHistorialCliente();
+      mostrarMensaje('info', `Préstamo registrado (${cantidad} libro/s)`);
+    }
+
+    // ------------------- HISTORIAL -------------------
+
+    // Muestra el historial del cliente
+    function mostrarHistorialCliente() {
+      const tbody = document.querySelector("#tablaHistorialCliente tbody");
+      tbody.innerHTML = "";
+
+      if (historialCliente.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='4'>Aún no tienes transacciones</td></tr>";
+        return;
+      }
+
+      historialCliente.forEach(t => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${t.fecha}</td>
+            <td>${t.libro}</td>
+            <td>${t.tipo}</td>
+            <td>${t.estado}</td>
+          </tr>`;
+      });
+    }
+
+    // Borra historial
+    function borrarHistorial() {
+      historialCliente = [];
+      guardarDatos();
+      mostrarHistorialCliente();
+      mostrarMensaje('info', 'Historial borrado correctamente');
+    }
+
+    // ------------------- CARRITO -------------------
+
+    // Agrega libro al carrito
+    function agregarCarrito(i) {
+      const libro = libros[i];
+
+      // Validamos stock
+      if (libro.stock <= 0) {
+        mostrarMensaje('error', 'No hay stock disponible');
+        return;
+      }
+
+      // Si ya existe en el carrito, solo sumamos
+      const existente = carrito.find(item => item.titulo === libro.titulo);
+      if (existente) existente.cantidad++;
+      else carrito.push({ titulo: libro.titulo, precio: libro.precio, cantidad: 1 });
+
+      guardarCarrito();
+      mostrarCarrito();
+      mostrarMensaje('success', 'Agregado al carrito');
+    }
+
+    // Muestra el carrito en tabla
+    function mostrarCarrito() {
+      const tbody = document.querySelector("#tablaCarrito tbody");
+      tbody.innerHTML = "";
+
+      if (carrito.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='5'>El carrito está vacío</td></tr>";
+        return;
+      }
+
+      carrito.forEach((item, i) => {
+        const total = item.precio * item.cantidad;
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.titulo}</td>
+            <td>${item.cantidad}</td>
+            <td>$${item.precio.toFixed(2)}</td>
+            <td>$${total.toFixed(2)}</td>
+            <td><button onclick="eliminarDelCarrito(${i})">Eliminar</button></td>
+          </tr>`;
+      });
+    }
+
+    // Eliminar item del carrito
+    function eliminarDelCarrito(i) {
+      carrito.splice(i, 1);
+      guardarCarrito();
+      mostrarCarrito();
+    }
+
+    // Guarda el carrito en localStorage
+    function guardarCarrito() {
+      localStorage.setItem("carrito", JSON.stringify(carrito));
+    }
+
+    // Botón pagar carrito
+    function pagarCarrito() {
+      if (carrito.length === 0) {
+        mostrarMensaje('error', 'El carrito está vacío');
+        return;
+      }
+      compraPendiente = { carrito: true };
+      document.getElementById('checkout').style.display = 'flex';
+    }
+
+    // ------------------- PORTAL DE PAGO -------------------
+
+    // Abre modal para pago de compra individual
+    function showCheckout(libro, cantidad) {
+      compraPendiente = { libro, cantidad };
+      document.getElementById('checkout').style.display = 'flex';
+    }
+
+    // Cierra portal de pago
+    function cerrarCheckout() {
+      document.getElementById('checkout').style.display = 'none';
+      compraPendiente = null;
+      document.getElementById('tarjeta').value = '';
+      document.getElementById('expiracion').value = '';
+      document.getElementById('cvv').value = '';
+      document.getElementById('titular').value = '';
+    }
+
+    // Validaciones numéricas
+    function soloNumeros(input) { input.value = input.value.replace(/\D/g, ''); }
+
+    // Formato MM/AA
+    function formatoExpiracion(input) {
+      let v = input.value.replace(/\D/g, '');
+      if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2, 4);
+      input.value = v;
+    }
+
+    // Finaliza compra (carrito o libro individual)
+    function finishPurchase() {
+      const tarjeta = document.getElementById('tarjeta').value.trim();
+      const expiracion = document.getElementById('expiracion').value.trim();
+      const cvv = document.getElementById('cvv').value.trim();
+      const titular = document.getElementById('titular').value.trim();
+
+      // Validación básica
+      if (!/^\d{16}$/.test(tarjeta) || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiracion) || !/^\d{3}$/.test(cvv) || titular.length === 0) {
+        alert("Datos de tarjeta inválidos.");
+        return;
+      }
+
+      const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+      const nombreCliente = usuarioActivo ? usuarioActivo.nombre : "Cliente";
+      const fecha = new Date().toLocaleString();
+
+      // Si es carrito
+      if (compraPendiente && compraPendiente.carrito) {
+        carrito.forEach(item => {
+          const libro = libros.find(l => l.titulo === item.titulo);
+          libro.stock -= item.cantidad;
+
+          transacciones.push({
+            fecha,
+            usuario: nombreCliente,
+            libro: item.titulo,
+            tipo: "venta",
+            cantidad: item.cantidad,
+            precioTotal: item.precio * item.cantidad
+          });
+
+          historialCliente.push({
+            fecha,
+            libro: item.titulo,
+            tipo: "Compra",
+            estado: "Completado"
+          });
+        });
+
+        carrito = [];
+        guardarCarrito();
+
+      } else if (compraPendiente && compraPendiente.libro) {
+        // Compra individual
+        const { libro, cantidad } = compraPendiente;
+        libro.stock -= cantidad;
+        const precioTotal = libro.precio * cantidad;
+
+        transacciones.push({
+          fecha, usuario: nombreCliente, libro: libro.titulo, tipo: "venta", cantidad, precioTotal
+        });
+
+        historialCliente.push({
+          fecha, libro: libro.titulo, tipo: "Compra", estado: "Completado"
+        });
+      }
+
+      // Guardamos cambios
+      guardarDatos();
+      mostrarLibrosCliente();
+      mostrarHistorialCliente();
+      mostrarCarrito();
+      cerrarCheckout();
+      mostrarMensaje('success', 'Compra realizada con éxito');
+    }
+
   </script>
-  <!-- Archivo donde estará la lógica de la librería -->
-  <script src="aplicativolibreria.js"></script>
 </body>
 </html>

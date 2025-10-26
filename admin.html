@@ -2,151 +2,311 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Panel Administrador - Booknest</title>
+  <title>Booknest - Administrador</title>
   <link rel="stylesheet" href="styles.css">
+
   <style>
-    /* Barra de depuración opcional */
-    #debug-bar { position: fixed; right: 12px; bottom: 12px; z-index: 999; }
-    #debug-bar button { margin-left: 6px; }
-  </style>
+    /* Imagen de vista previa de la carátula. Se oculta inicialmente
+       y solo se mostrará cuando el usuario seleccione una imagen */
+    #previewCaratula {
+      max-width: 100px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    /* Tamaño de las miniaturas que aparecerán en la tabla */
+    table img {
+      width: 50px;
+      height: auto;
+    }
+
+    /* Estilos simples para mensajes emergentes (notificaciones tipo toast) */
+    .toast-success { background: #4caf50; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px;}
+    .toast-error { background: #f44336; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px;}
+    .toast-info { background: #2196f3; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px;}
+ 
+ </style>
 </head>
+
 <body>
-  <header class="site-header">
-    <h1>📚 Booknest - Admin</h1>
-    <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
-  </header>
+<header>
+  <div class="header-container">
+    <!-- Botón para cerrar sesión. El evento llama a cerrarSesion() -->
+    <button onclick="cerrarSesion()" class="btn-cerrar">Cerrar Sesión</button>
+  </div>
+</header>
 
-  <div class="container">
-    <div class="seccion">
-      <h2>Registrar Libro</h2>
-      <label for="titulo">Título:</label>
-      <input type="text" id="titulo" placeholder="Nombre del libro">
+<div class="container">
 
-      <label for="autor">Autor:</label>
-      <input type="text" id="autor" placeholder="Autor del libro">
-
-      <label for="estado">Estado:</label>
-      <select id="estado">
-        <option value="disponible">Disponible</option>
-        <option value="venta">En venta</option>
-        <option value="prestamo">En préstamo</option>
-      </select>
-
-      <button id="btnAgregar" type="button">Agregar Libro</button>
-    </div>
-
-    <div class="seccion">
-      <h2>Lista de Libros</h2>
-      <table id="tablaLibrosAdmin">
-        <thead>
-          <tr>
-            <th>Título</th>
-            <th>Autor</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+  <!-- Menú superior con navegación entre secciones del panel -->
+  <div class="menu-opciones">
+    <button onclick="mostrarSeccion('libros')">Registrar Libro</button>
+    <button onclick="mostrarSeccion('ventas')">Registro de Ventas</button>
+    <button onclick="mostrarSeccion('prestamos')">Registro de Préstamos</button>
   </div>
 
-  <!-- Barra de debug -->
-  <div id="debug-bar">
-    <button id="btnShowLibros" type="button">Mostrar array</button>
-    <button id="btnClearLibros" type="button">Borrar localStorage</button>
+  <!-- SECCIÓN: REGISTRO DE LIBROS -->
+  <div id="libros" class="seccion">
+    <h2>Registrar Libro</h2>
+
+    <!-- Inputs para capturar los datos del libro -->
+    <input type="text" id="titulo" placeholder="Título">
+    <input type="text" id="autor" placeholder="Autor">
+
+    <!-- Estado del libro: disponible, venta o préstamo -->
+    <select id="estado">
+      <option value="disponible">Disponible</option>
+      <option value="venta">En venta</option>
+      <option value="prestamo">En préstamo</option>
+    </select>
+
+    <!-- Campos numéricos -->
+    <input type="number" id="stock" placeholder="Stock" min="0">
+    <input type="number" id="precio" placeholder="Precio (en $)" min="0">
+
+    <!-- Input para cargar carátula y vista previa -->
+    <label for="caratula">Carátula del libro:</label>
+    <input type="file" id="caratula" accept="image/*" capture="environment">
+    <img id="previewCaratula" alt="Vista previa">
+
+    <!-- Botón que ejecuta la creación del libro -->
+    <button onclick="agregarLibro()">Agregar Libro</button>
+
+    <!-- Tabla donde se listarán los libros -->
+    <table id="tablaLibrosAdmin">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Autor</th>
+          <th>Estado</th>
+          <th>Stock</th>
+          <th>Precio</th>
+          <th>Carátula</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
 
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const tituloEl = document.getElementById('titulo');
-    const autorEl  = document.getElementById('autor');
-    const estadoEl = document.getElementById('estado');
-    const tbody    = document.querySelector('#tablaLibrosAdmin tbody');
-    const btnAgregar = document.getElementById('btnAgregar');
-    const btnShow = document.getElementById('btnShowLibros');
-    const btnClear = document.getElementById('btnClearLibros');
+  <!-- SECCIÓN: REGISTRO DE VENTAS (solo se muestra al cambiar de pestaña) -->
+  <div id="ventas" class="seccion" style="display:none;">
+    <h2>Registro de Ventas</h2>
+    <table id="tablaVentas">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Libro</th>
+          <th>Cantidad</th>
+          <th>Precio Total</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-    // Cargar libros de localStorage
-    function loadLibros() {
-      try {
-        const raw = localStorage.getItem('libros');
-        return raw ? JSON.parse(raw) : [];
-      } catch (e) {
-        console.error('Error cargando libros:', e);
-        return [];
-      }
-    }
-    window.libros = loadLibros();
+  <!-- SECCIÓN: REGISTRO DE PRÉSTAMOS -->
+  <div id="prestamos" class="seccion" style="display:none;">
+    <h2>Registro de Préstamos</h2>
+    <table id="tablaPrestamos">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Cliente</th>
+          <th>Libro</th>
+          <th>Cantidad</th>
+          <th>Duración</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
 
-    function guardarLibros() {
-      localStorage.setItem('libros', JSON.stringify(window.libros));
-    }
+<script>
+/* ================================
+   VARIABLES GLOBALES
+   ================================ */
 
-    function mostrarLibrosAdmin() {
-      tbody.innerHTML = '';
-      window.libros.forEach((libro, index) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${libro.titulo}</td>
-          <td>${libro.autor}</td>
-          <td class="${libro.estado}">${libro.estado}</td>
-          <td><button type="button" class="btn-eliminar" data-index="${index}">Eliminar</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
+// Se obtienen los libros y transacciones desde localStorage.
+// Si no existe nada, se inicializa como arreglo vacío.
+let libros = JSON.parse(localStorage.getItem("libros")) || [];
+let transacciones = JSON.parse(localStorage.getItem("transacciones")) || [];
 
-      // listeners para eliminar
-      tbody.querySelectorAll('.btn-eliminar').forEach(btn => {
-        btn.addEventListener('click', () => {
-          eliminarLibro(parseInt(btn.dataset.index));
-        });
-      });
-    }
+/* Evento que se ejecuta al cargar la página:
+   - Muestra libros
+   - Muestra transacciones
+   - Abre la sección "libros" por defecto */
+document.addEventListener("DOMContentLoaded", () => {
+  mostrarLibrosAdmin();
+  mostrarTransacciones();
+  mostrarSeccion('libros');
+});
 
-    function agregarLibro() {
-      const titulo = tituloEl.value.trim();
-      const autor = autorEl.value.trim();
-      const estado = estadoEl.value;
+/* Elimina el rol del usuario guardado en localStorage
+   y redirige al login */
+function cerrarSesion() {
+  localStorage.removeItem("rol");
+  window.location.href = "login.html";
+}
 
-      if (!titulo || !autor) {
-        alert('Completa todos los campos.');
-        return;
-      }
+/* Muestra una sola sección a la vez (libros, ventas o préstamos) */
+function mostrarSeccion(id) {
+  document.querySelectorAll(".seccion").forEach(s => s.style.display = "none");
+  document.getElementById(id).style.display = "block";
+}
 
-      window.libros.push({ titulo, autor, estado });
-      guardarLibros();
-      mostrarLibrosAdmin();
+/* Vista previa de la carátula seleccionada
+   Se carga la imagen en base64 con FileReader */
+document.getElementById("caratula").addEventListener("change", function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const preview = document.getElementById("previewCaratula");
+      preview.src = ev.target.result;
+      preview.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  }
+});
 
-      // limpiar inputs
-      tituloEl.value = '';
-      autorEl.value = '';
-      estadoEl.value = 'disponible';
-    }
+/* Función principal para registrar un libro
+   Si el usuario subió imagen, se procesa antes de guardarlo */
+function agregarLibro() {
+  const caratulaInput = document.getElementById("caratula");
+  let caratula = "";
 
-    function eliminarLibro(index) {
-      window.libros.splice(index, 1);
-      guardarLibros();
-      mostrarLibrosAdmin();
-    }
+  // Si hay imagen, se lee en Base64
+  if (caratulaInput.files.length > 0) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      caratula = e.target.result;
+      guardarLibroConCaratula(caratula);
+    };
+    reader.readAsDataURL(caratulaInput.files[0]);
+  } else {
+    guardarLibroConCaratula("");
+  }
+}
 
-    function logout() {
-      localStorage.removeItem('rol');
-      window.location.href = 'login.html';
-    }
+/* Segunda parte de agregarLibro:
+   Valida datos, guarda el libro en memoria y recarga tabla */
+function guardarLibroConCaratula(caratula) {
+  const titulo = document.getElementById("titulo").value.trim();
+  const autor = document.getElementById("autor").value.trim();
+  const estado = document.getElementById("estado").value;
+  const stock = parseInt(document.getElementById("stock").value.trim());
+  const precio = parseFloat(document.getElementById("precio").value.trim());
 
-    // Eventos
-    btnAgregar.addEventListener('click', agregarLibro);
-    btnShow.addEventListener('click', () => console.log(window.libros));
-    btnClear.addEventListener('click', () => {
-      localStorage.removeItem('libros');
-      window.libros = [];
-      mostrarLibrosAdmin();
-    });
+  // Validación de campos
+  if (!titulo || !autor || isNaN(stock) || stock < 0 || isNaN(precio) || precio < 0) {
+    mostrarMensaje('error', 'Complete todos los campos correctamente');
+    return;
+  }
 
-    // Inicializar tabla
-    mostrarLibrosAdmin();
+  // Se agrega libro al arreglo
+  libros.push({ titulo, autor, estado, stock, precio, caratula });
+
+  guardarLibros();        // Lo guarda en localStorage
+  mostrarLibrosAdmin();   // Refresca la tabla
+  mostrarMensaje('success', 'Libro agregado exitosamente');
+
+  // Limpia los inputs
+  document.getElementById("titulo").value = "";
+  document.getElementById("autor").value = "";
+  document.getElementById("stock").value = "";
+  document.getElementById("precio").value = "";
+  document.getElementById("caratula").value = "";
+  document.getElementById("previewCaratula").style.display = "none";
+}
+
+/* Elimina un libro por su índice en el arreglo */
+function eliminarLibro(i) {
+  if (!confirm('¿Está seguro de eliminar este libro?')) return;
+  libros.splice(i, 1);
+  guardarLibros();
+  mostrarLibrosAdmin();
+  mostrarMensaje('info', 'Libro eliminado exitosamente');
+}
+
+/* Carga en tabla todos los libros almacenados */
+function mostrarLibrosAdmin() {
+  const tbody = document.querySelector("#tablaLibrosAdmin tbody");
+  tbody.innerHTML = "";
+  libros.forEach((libro, i) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${libro.titulo}</td>
+        <td>${libro.autor}</td>
+        <td>${libro.estado}</td>
+        <td>${libro.stock}</td>
+        <td>$${libro.precio.toFixed(2)}</td>
+        <td>${libro.caratula ? `<img src="${libro.caratula}">` : 'Sin imagen'}</td>
+        <td><button class="btn-eliminar" onclick="eliminarLibro(${i})">Eliminar</button></td>
+      </tr>
+    `;
   });
-  </script>
+}
+
+/* Carga ventas y préstamos en tablas separadas */
+function mostrarTransacciones() {
+  const ventasBody = document.querySelector("#tablaVentas tbody");
+  const prestamosBody = document.querySelector("#tablaPrestamos tbody");
+  ventasBody.innerHTML = "";
+  prestamosBody.innerHTML = "";
+
+  transacciones.forEach((t, index) => {
+    if (t.tipo === "venta") {
+      ventasBody.innerHTML += `
+        <tr>
+          <td>${t.fecha}</td>
+          <td>${t.usuario || 'Cliente desconocido'}</td>
+          <td>${t.libro}</td>
+          <td>${t.cantidad || 1}</td>
+          <td>$${t.precioTotal || 0}</td>
+          <td><button class="btn-eliminar" onclick="eliminarTransaccion(${index})">Eliminar</button></td>
+        </tr>`;
+    } else if (t.tipo === "prestamo") {
+      prestamosBody.innerHTML += `
+        <tr>
+          <td>${t.fecha}</td>
+          <td>${t.usuario || 'Cliente desconocido'}</td>
+          <td>${t.libro}</td>
+          <td>${t.cantidad || 1}</td>
+          <td>${t.duracion || '-'}</td>
+          <td><button class="btn-eliminar" onclick="eliminarTransaccion(${index})">Eliminar</button></td>
+        </tr>`;
+    }
+  });
+}
+
+/* Elimina una venta o préstamo */
+function eliminarTransaccion(index) {
+  if (!confirm("¿Deseas eliminar este registro?")) return;
+  transacciones.splice(index, 1);
+  localStorage.setItem("transacciones", JSON.stringify(transacciones));
+  mostrarTransacciones();
+  mostrarMensaje("info", "Registro eliminado");
+}
+
+/* Guarda el arreglo libros en localStorage */
+function guardarLibros() {
+  localStorage.setItem("libros", JSON.stringify(libros));
+}
+
+/* Crea y muestra una notificación flotante */
+function mostrarMensaje(tipo, mensaje) {
+  const toast = document.createElement('div');
+  toast.className = `toast-${tipo}`;
+  toast.textContent = mensaje;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+</script>
+
 </body>
 </html>
