@@ -332,7 +332,7 @@
   }
 
   /* Logo sobre el login */
-  .login-body::before {
+  /* .login-body::before {
     content: "";
     width: 120px;
     height: 120px;
@@ -340,7 +340,7 @@
     background-size: contain;
     z-index: 10;
     margin-bottom: 2px;
-  }
+  } */
 
   /* Caja del login */
   .login-box {
