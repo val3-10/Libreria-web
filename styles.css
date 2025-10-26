@@ -489,48 +489,10 @@
     margin-top: 10px;
   }
 
-  /* Botón cerrar sesión */
-  .btn-cerrar {
-    background: #0906b3;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-
-  .btn-cerrar:hover {
-    background: #07048d;
-  }
-
-  /* Toast */
-  .toast {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    padding: 10px;
-    border-radius: 5px;
-    color: #fff;
-  }
-
-  .toast.success { background: #4caf50; }
-  .toast.error { background: #f44336; }
-  .toast.info { background: #2196f3; }
-
   /* ========================= */
   /* RECUPERAR CONTRASEÑA */
   /* ========================= */
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f9e1c3; /* Fondo diferente para esta vista */
-    margin: 0;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-  }
-
+  
   /* Caja del formulario recuperar contraseña */
   .forgot-box {
     background: rgba(255,255,255,0.9);
