@@ -1,75 +1,75 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <link rel="stylesheet" href="styles.css">
-  <meta charset="UTF-8">
-  <title>Login - Booknest</title>
-</head>
-<body class="login-body">
-  <div class="login-box">
-    <h2>Iniciar Sesión</h2>
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <title>Login - Booknest</title>
+  </head>
+  <body class="login-body">
+    <div class="login-box">
+      <h2>Iniciar Sesión</h2>
 
 
-    <form onsubmit="return login()">
-      <label for="email">Correo:</label>
-      <input type="email" id="email" required>
+      <form onsubmit="return login()">
+        <label for="email">Correo:</label>
+        <input type="email" id="email" required>
 
 
-      <label for="password">Contraseña:</label>
-      <input type="password" id="password" required>
+        <label for="password">Contraseña:</label>
+        <input type="password" id="password" required>
 
 
-      <button type="submit">Entrar</button>
-    </form>
+        <button type="submit">Entrar</button>
+      </form>
 
 
-    <!-- Enlace para crear cuenta -->
-    <p>¿No tienes cuenta? <a href="register.html">Crear cuenta</a></p>
-  </div>
+      <!-- Enlace para crear cuenta -->
+      <p>¿No tienes cuenta? <a href="register.html">Crear cuenta</a></p>
+    </div>
 
 
-  <script>
-    // Usuario administrador de prueba
-    const adminUser = { email: "admin@booknest.com", password: "1234" };
+    <script>
+      // Usuario administrador de prueba
+      const adminUser = { email: "admin@booknest.com", password: "1234" };
 
 
-    function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      function login() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
 
 
-      // Recuperar los usuarios registrados en localStorage
-      const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+        // Recuperar los usuarios registrados en localStorage
+        const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
 
 
-      // 🔹 Verificar si es el administrador
-      if (email === adminUser.email && password === adminUser.password) {
-        localStorage.setItem("rol", "admin");
-        alert("Bienvenido, administrador.");
-        window.location.href = "admin.html";
-        return false;
+        // 🔹 Verificar si es el administrador
+        if (email === adminUser.email && password === adminUser.password) {
+          localStorage.setItem("rol", "admin");
+          alert("Bienvenido, administrador.");
+          window.location.href = "admin.html";
+          return false;
+        }
+
+
+        // 🔹 Buscar el usuario registrado por correo y contraseña
+        const usuario = usuarios.find(u => u.correo === email && u.password === password);
+
+
+        if (usuario) {
+          // Guardar información del usuario activo
+          localStorage.setItem("usuarioActivo", JSON.stringify(usuario));
+          localStorage.setItem("rol", usuario.tipo); // tipo: estudiante, docente o visitante
+
+
+          alert(`Bienvenido ${usuario.nombre} (${usuario.tipo})`);
+          window.location.href = "cliente.html";
+        } else {
+          alert("Correo o contraseña incorrectos. Verifica tus datos.");
+        }
+
+
+        return false; // Evita recargar la página
       }
-
-
-      // 🔹 Buscar el usuario registrado por correo y contraseña
-      const usuario = usuarios.find(u => u.correo === email && u.password === password);
-
-
-      if (usuario) {
-        // Guardar información del usuario activo
-        localStorage.setItem("usuarioActivo", JSON.stringify(usuario));
-        localStorage.setItem("rol", usuario.tipo); // tipo: estudiante, docente o visitante
-
-
-        alert(`Bienvenido ${usuario.nombre} (${usuario.tipo})`);
-        window.location.href = "cliente.html";
-      } else {
-        alert("Correo o contraseña incorrectos. Verifica tus datos.");
-      }
-
-
-      return false; // Evita recargar la página
-    }
-  </script>
-</body>
-</html>
+    </script>
+  </body>
+  </html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Perfil del Usuario - Booknest</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>👤 Perfil del Usuario</h1>
+    <div>
+      <button class="logout-btn" onclick="volver()">Volver al catálogo</button>
+      <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="seccion">
+      <h2>Mi historial</h2>
+      <table id="tablaHistorial">
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Autor</th>
+            <th>Acción</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const tbody = document.querySelector("#tablaHistorial tbody");
+      const historial = JSON.parse(localStorage.getItem("historialUsuario")) || [];
+
+      if (historial.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4">Aún no tienes compras ni préstamos.</td></tr>`;
+      } else {
+        historial.forEach(item => {
+          tbody.innerHTML += `
+            <tr>
+              <td>${item.titulo}</td>
+              <td>${item.autor}</td>
+              <td>${item.accion}</td>
+              <td>${item.fecha}</td>
+            </tr>`;
+        });
+      }
+    });
+
+    function volver() { window.location.href = "cliente.html"; }
+    function logout() { localStorage.removeItem("rol"); window.location.href = "login.html"; }
+  </script>
+</body>
+</html>
