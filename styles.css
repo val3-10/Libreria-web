@@ -353,6 +353,14 @@
     color: #fff;
   }
 
+  /* Título del login */
+  .login-box h2 {
+    margin-top: 20px;
+    margin-bottom: 25px;
+    font-size: 1.8rem;
+    color: #fff;
+  }
+
   /* Estilos internos del login */
   .login-box label {
     display: block;
