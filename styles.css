@@ -1,385 +1,580 @@
-/*  ESTILOS GENERALES  */
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #f4d5b0);
-  margin: 0;
-  padding: 0;
-  color: rgb(0, 0, 0);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  text-align: center;
-}
+  /* ========================= */
+  /* ESTILOS GENERALES / ADMIN */
+  /* ========================= */
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fuente principal */
+    background: linear-gradient(135deg, #f4d5b0); /* Fondo degradado */
+    margin: 0;
+    padding: 0;
+    color: rgb(0, 0, 0); /* Color de texto */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centrado horizontal */
+    justify-content: center; /* Centrado vertical */
+    min-height: 100vh; /* Ocupa toda la altura de la pantalla */
+    text-align: center;
+  }
 
-/*  ENCABEZADO  */
-header {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: url("img/BookNest.png") no-repeat center fixed;
-  background-size: cover;
-  padding: 170px 0;
-  margin-bottom: 1px;
-  border-bottom: 3px solid rgba(0, 0, 0, 0.2);
-  position: relative; 
-}
+  /* ========================= */
+  /* ENCABEZADO */
+  /* ========================= */
+  header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: url("img/BookNest.png") no-repeat center fixed; /* Imagen de fondo */
+    background-size: cover;
+    padding: 170px 0;
+    margin-bottom: 1px;
+    border-bottom: 3px solid rgba(0, 0, 0, 0.2);
+    position: relative;
+  }
 
-/*  LOGO / TÍTULO  */
-header h1 {
-  font-size: 3rem;
-  font-weight: bold;
-  font-style: italic;
-  color: #efb810;
-  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
-  margin: 0;
-}
+  /* Título principal del header */
+  header h1 {
+    font-size: 3rem;
+    font-weight: bold;
+    font-style: italic;
+    color: #efb810;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+    margin: 0;
+  }
 
-/*  BOTÓN DE CERRAR SESIÓN  */
+  /* Botón para cerrar sesión */
+  .btn-cerrar {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: inline-block;
+    width: auto;
+    background-color: #0f0092;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
 
-.btn-cerrar {
-  position: absolute; 
-  top: 20px;          
-  right: 20px;       
-  padding: 8px 16px;
-  font-size: 0.9rem;
-  background-color: #0f0092;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease;
-}
+  .btn-cerrar:hover {
+    background-color: #150070;
+    transform: scale(1.05);
+  }
 
-.btn-cerrar:hover {
-  background-color: #150070;
-  transform: scale(1.05);
-}
+  /* ========================= */
+  /* CONTENEDOR PRINCIPAL */
+  /* ========================= */
+  .container {
+    max-width: 900px; /* Ancho máximo */
+    width: 90%; /* Adaptable */
+    margin: 0 auto;
+    padding: 20px;
+  }
 
-/*  CONTENEDOR PRINCIPAL  */
-.container {
-  max-width: 900px;
-  width: 90%;
-  margin: 0 auto;
-  padding: 20px;
-}
+  /* ========================= */
+  /* SECCIONES */
+  /* ========================= */
+  .seccion {
+    background: #fdd6a7;
+    backdrop-filter: blur(6px);
+    padding: 20px;
+    margin: 20px auto;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgb(0, 0, 0);
+    text-align: left;
+    display: block;
+  }
 
-/*  SECCIONES  */
-.seccion {
-  background: #fdd6a7;
-  backdrop-filter: blur(6px);
-  padding: 20px;
-  margin: 20px auto;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgb(0, 0, 0);
-  text-align: left;
-  display: block;
-}
+  /* ========================= */
+  /* CAMPOS DE FORMULARIOS */
+  /* ========================= */
+  input, select, button {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+  }
 
-/*  CAMPOS DE FORMULARIOS  */
-input, select, button {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 15px;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-}
+  input, select {
+    background: rgba(255,255,255,0.8);
+    color: #333;
+  }
 
-input, select {
-  background: rgba(255,255,255,0.8);
-  color: #333;
-}
+  /* ========================= */
+  /* BOTONES GENERALES */
+  /* ========================= */
+  button {
+    background: #1e3a8a;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
 
-/*  BOTONES GENERALES  */
-button {
-  background: #1e3a8a;
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
+  button:hover {
+    background: #0406a0;
+  }
 
-button:hover {
-  background: #0406a0;
-}
+  /* ========================= */
+  /* BOTONES SECCIÓN LIBROS */
+  /* ========================= */
+  #libros button {
+    background-color: #1e3a8a;
+    color: white;
+    font-weight: bold;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
 
-/*  BOTONES DE LA SECCIÓN LIBROS  */
-#libros button {
-  background-color: #1e3a8a;
-  color: white;
-  font-weight: bold;
-  transition: background 0.3s ease, transform 0.2s ease;
-}
+  #libros button:hover {
+    background-color: #0406a0;
+    transform: scale(1.05);
+  }
 
-#libros button:hover {
-  background-color: #0406a0;
-  transform: scale(1.05);
-}
+  /* ========================= */
+  /* MENÚ DE OPCIONES */
+  /* ========================= */
+  .menu-opciones {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
 
-/*  MENÚ DE OPCIONES  */
-.menu-opciones {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-bottom: 30px;
-}
+  .menu-opciones button {
+    background: #1e3a8a;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+  }
 
-.menu-opciones button {
-  background: #1e3a8a;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
-}
+  .menu-opciones button:hover {
+    background: #0406a0;
+    transform: scale(1.05);
+  }
 
-.menu-opciones button:hover {
-  background: #0406a0;
-  transform: scale(1.05);
-}
+  /* ========================= */
+  /* TABLAS */
+  /* ========================= */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 12px;
+    overflow: hidden;
+  }
 
-/*  TABLAS  */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
-  background: rgba(255,255,255,0.9);
-  border-radius: 12px;
-  overflow: hidden;
-}
+  th, td {
+    padding: 12px;
+    text-align: center;
+    color: #333;
+  }
 
-th, td {
-  padding: 12px;
-  text-align: center;
-  color: #333;
-}
+  th {
+    background: #daa520;
+    color: #fff;
+  }
 
-th {
-  background: #daa520;
-  color: #fff;
-}
+  tr:nth-child(even) {
+    background: rgba(127,0,255,0.05);
+  }
 
-tr:nth-child(even) {
-  background: rgba(127,0,255,0.05);
-}
+  /* Estados visuales para libros */
+  .venta { color: green; font-weight: bold; }
+  .prestamo { color: blue; font-weight: bold; }
+  .disponible { color: black; font-weight: bold; }
 
-/*  ESTADOS DE LIBROS  */
-.venta { color: green; font-weight: bold; }
-.prestamo { color: blue; font-weight: bold; }
-.disponible { color: black; font-weight: bold; }
+  /* Botón de eliminar */
+  .btn-eliminar {
+    background-color: #1e3a8a;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
 
-/* = BOTONES DE ELIMINAR  */
-.btn-eliminar {
-  background-color: #1e3a8a;
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
+  .btn-eliminar:hover {
+    background-color: #0406a0;
+  }
 
-.btn-eliminar:hover {
-  background-color: #0406a0;
-}
-/*  FORMULARIO REGISTRO USUARIO */
-.registro-box {
-  background: #f4d5b0;
-  padding: 30px 35px;
-  border-radius: 15px;
-  box-shadow: 0 8px 25px rgb(0, 0, 0);
-  width: 350px;
-  text-align: center;
-  margin-top: 40px;
-}
+  /* ========================= */
+  /* FORMULARIO REGISTRO */
+  /* ========================= */
+  .registro-box {
+    background: #f4d5b0;
+    padding: 30px 35px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgb(0, 0, 0);
+    width: 350px;
+    text-align: center;
+    margin-top: 40px;
+  }
 
-/* Título */
-.registro-box h2 {
-  margin-bottom: 0.5px;
-  font-size: 1.7rem;
-  color: #1e3a8a;
-  font-weight: 600;
-}
+  .register {
+    background-image: url('img/fondoregister1.jpg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 100vh;
+    width: 100%;
+  }
 
-/* Campos */
-.registro-box input {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 14px;
-  border: 1px solid #aaa;
-  border-radius: 8px;
-  font-size: 1rem;
-  outline: none;
-  transition: 0.3s;
-}
+  /* ========================= */
+  /* PORTAL DE PAGO (MODAL) */
+  /* ========================= */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    justify-content: center;
+    align-items: center;
+  }
 
-.registro-box input:focus {
-  border-color: #1e3a8a;
-  box-shadow: 0 0 5px rgba(30, 58, 138, 0.5);
-}
+  .modal-contenido {
+    background: linear-gradient(135deg, #fff8e1, #f4d5b0);
+    border-radius: 16px;
+    padding: 25px;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    color: #333;
+    animation: aparecer 0.3s ease;
+  }
 
-/* Botón */
-.registro-box button {
-  width: 100%;
-  padding: 12px;
-  background: #1e3a8a;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
-  color: white;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
+  .modal-contenido h3 {
+    color: #daa520;
+    margin-bottom: 10px;
+  }
 
-.registro-box button:hover {
-  background: #0406a0;
-}
+  /* Inputs del modal */
+  .modal-contenido input {
+    width: 80%;
+    padding: 8px;
+    margin: 10px 0;
+    border: 2px solid #daa520;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1rem;
+  }
 
+  /* Botones dentro del modal */
+  .modal-botones {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
 
-/* PORTAL DE PAGO  */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 2000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.4);
-  justify-content: center;
-  align-items: center;
-}
+  .modal-botones button {
+    background: #1e3a8a;
+    border-radius: 10px;
+    color: white;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
 
-.modal-contenido {
-  background: linear-gradient(135deg, #fff8e1, #f4d5b0);
-  border-radius: 16px;
-  padding: 25px;
-  width: 320px;
-  text-align: center;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
-  color: #333;
-  animation: aparecer 0.3s ease;
-}
+  .modal-botones button:hover {
+    background: #0406a0;
+  }
 
-.modal-contenido h3 {
-  color: #daa520;
-  margin-bottom: 10px;
-}
+  /* Animación */
+  @keyframes aparecer {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
 
-.modal-contenido input {
-  width: 80%;
-  padding: 8px;
-  margin: 10px 0;
-  border: 2px solid #daa520;
-  border-radius: 8px;
-  text-align: center;
-  font-size: 1rem;
-}
+  /* ========================= */
+  /* NOTIFICACIONES (TOAST) */
+  /* ========================= */
+  .toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    color: #fff;
+    opacity: 0.9;
+    z-index: 1000;
+  }
 
-.modal-botones {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
-}
+  .toast.success { background-color: #00ff08; }
+  .toast.error { background-color: #ec1000; }
+  .toast.info { background-color: #319ef7; }
 
-.modal-botones button {
-  background: #1e3a8a;
-  border-radius: 10px;
-  color: white;
-  padding: 8px 14px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
+  /* ========================= */
+  /* LOGIN */
+  /* ========================= */
+  .login-body {
+    position: relative;
+    background: url("img/BookNest.png") no-repeat center top;
+    background-size: cover;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    padding-top: 72px;
+  }
 
-.modal-botones button:hover {
-  background: #0406a0;
-}
+  /* Logo sobre el login */
+  .login-body::before {
+    content: "";
+    width: 120px;
+    height: 120px;
+    background: url("img/logo-booknest.png") no-repeat center center;
+    background-size: contain;
+    z-index: 10;
+    margin-bottom: 2px;
+  }
 
-@keyframes aparecer {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
+  /* Caja del login */
+  .login-box {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 35px 30px;
+    border-radius: 16px;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    width: 320px;
+    color: #fff;
+  }
 
+  /* Estilos internos del login */
+  .login-box label {
+    display: block;
+    text-align: left;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #efb810;
+  }
 
-/* === NOTIFICACIONES === */
-.toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 10px 20px;
-  border-radius: 5px;
-  color: #fff;
-  opacity: 0.9;
-  z-index: 1000;
-}
+  .login-box input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    outline: none;
+    background: rgba(255, 255, 255, 0.9);
+    color: #000;
+  }
 
-.toast.success { background-color: #00ff08; }
-.toast.error { background-color: #ec1000; }
-.toast.info { background-color: #319ef7; }
- /* ===== LOGIN ===== */ 
-.login-body::before { content: "";
-  position: 100% auto; 
-  top: 30px; 
-  left: 50%; transform: translateX(-50%); width: 120px; 
-  height: 120px; 
-  background: url("img/logo-booknest.png") no-repeat center center; 
-  background-size: contain; 
-  z-index: 10; } .login-body { position: relative; 
-  background: url("img/BookNest.png") no-repeat center center fixed; 
-  background-size: cover;
-  display: flex;
-  justify-content: center; 
-  align-items: center; 
-  height: 100vh; margin: 0; }
- /* Caja del login */
-.login-box {
-  background: rgba(0, 0, 0, 0.329); 
-  padding: 30px;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.164);
-  text-align: center;
-  width: 300px;
-}
-.login-box button:hover {
-  background: #1e40af;
-}
-/* Texto de "¿Ya tienes cuenta?" */
-.texto-login {
-  color: rgb(0, 0, 0);
-  margin-top: 15px;
-  font-size: 0.9rem;
-}
+  .login-box button {
+    background: #1e3a8a;
+    color: white;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    width: 100%;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
 
-/* Link "Inicia sesión aquí" */
-.link-login {
-  color: #00a2ff;
-  text-decoration: none;
-  font-weight: 600;
-}
+  .login-box button:hover {
+    background: #0406a0;
+  }
 
-.link-login:hover {
-  text-decoration: underline;
-}
+  .login-box a {
+    color: #efb810;
+    text-decoration: none;
+  }
 
-/* Label de términos */
-.label-terminos {
-  color: rgb(0, 0, 0);
-  font-size: 0.9rem;
-  display: block;
-  margin: 8px 0;
-}
-/* Label "Fecha de nacimiento" */
-.label-fecha {
-  color: rgb(0, 0, 0);
-  font-size: 0.9rem;
-  display: block;
-  margin: 10px 0 4px;
-}
+  .login-box a:hover {
+    text-decoration: underline;
+  }
+
+  /* ========================= */
+  /* CATÁLOGO LIBROS (tarjetas) */
+  /* ========================= */
+  .catalogo-libros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .carta-libro {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    width: 180px;
+    text-align: center;
+    padding: 10px;
+    transition: transform 0.2s;
+  }
+
+  .carta-libro img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 8px;
+    transition: transform 0.3s;
+  }
+
+  .carta-libro h3 {
+    font-size: 1rem;
+    margin: 8px 0 4px;
+  }
+
+  .carta-libro p {
+    font-size: 0.9rem;
+    margin: 2px 0;
+  }
+
+  .carta-libro button {
+    margin: 5px 5px 0 5px;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background-color: #1e3a8a;
+    color: white;
+    font-size: 0.85rem;
+  }
+
+  .carta-libro button:hover {
+    background-color: #0406a0;
+  }
+
+  /* Efectos hover */
+  .carta-libro:hover {
+    transform: translateY(-5px);
+  }
+
+  .carta-libro img:hover {
+    transform: scale(1.05);
+  }
+
+  /* ========================= */
+  /* MODAL GENÉRICO */
+  /* ========================= */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .modal-contenido {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    width: 300px;
+  }
+
+  .modal-botones {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+
+  /* Botón cerrar sesión */
+  .btn-cerrar {
+    background: #0906b3;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .btn-cerrar:hover {
+    background: #07048d;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    color: #fff;
+  }
+
+  .toast.success { background: #4caf50; }
+  .toast.error { background: #f44336; }
+  .toast.info { background: #2196f3; }
+
+  /* ========================= */
+  /* RECUPERAR CONTRASEÑA */
+  /* ========================= */
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f9e1c3; /* Fondo diferente para esta vista */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+
+  /* Caja del formulario recuperar contraseña */
+  .forgot-box {
+    background: rgba(255,255,255,0.9);
+    padding: 30px 35px;
+    border-radius: 16px;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
+    width: 350px;
+    text-align: center;
+  }
+
+  .forgot-box h2 {
+    margin-bottom: 12px;
+    color: #333;
+  }
+
+  .forgot-box input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+  }
+
+  .forgot-box button {
+    background: #1e3a8a;
+    color: white;
+    border: none;
+    padding: 10px;
+    width: 100%;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: .3s;
+  }
+
+  .forgot-box button:hover {
+    background: #0406a0;
+  }
+
+  .forgot-box a {
+    color: #1e3a8a;
+    text-decoration: none;
+  }
+
+  .forgot-box a:hover {
+    text-decoration: underline;
+  }

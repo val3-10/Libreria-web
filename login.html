@@ -1,75 +1,77 @@
-  <!DOCTYPE html>
-  <html lang="es">
-  <head>
-    <link rel="stylesheet" href="styles.css">
-    <meta charset="UTF-8">
-    <title>Login - Booknest</title>
-  </head>
-  <body class="login-body">
-    <div class="login-box">
-      <h2>Iniciar Sesión</h2>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - Booknest</title>
+  <!-- Enlace al archivo de estilos -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="login-body">
 
+  <!-- Contenedor principal del cuadro de login -->
+  <div class="login-box">
+    <h2>Iniciar Sesión</h2>
 
-      <form onsubmit="return login()">
-        <label for="email">Correo:</label>
-        <input type="email" id="email" required>
+    <!-- Formulario de inicio de sesión -->
+    <!-- onsubmit llama a la función login() y evita recargar la página -->
+    <form onsubmit="return login()">
+      <label for="email">Correo:</label>
+      <input type="email" id="email" required> <!-- Campo para el correo -->
 
+      <label for="password">Contraseña:</label>
+      <input type="password" id="password" required> <!-- Campo para la contraseña -->
 
-        <label for="password">Contraseña:</label>
-        <input type="password" id="password" required>
+      <button type="submit">Entrar</button> <!-- Botón de login -->
+    </form>
 
+    <!-- Enlace para recuperar contraseña -->
+    <a href="forgot-password.html">¿Olvidaste tu contraseña?</a>
 
-        <button type="submit">Entrar</button>
-      </form>
+    <!-- Enlace para ir a registro si no está registrado -->
+    <p>¿No tienes cuenta? <a href="register.html">Crear cuenta</a></p>
+  </div>
 
+  <script>
+    // Usuario administrador de prueba (login directo sin estar en localStorage)
+    const adminUser = { email: "admin@booknest.com", password: "1234" };
 
-      <!-- Enlace para crear cuenta -->
-      <p>¿No tienes cuenta? <a href="register.html">Crear cuenta</a></p>
-    </div>
+    // Función que valida el inicio de sesión
+    function login() {
+      // Captura de datos desde los inputs
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
 
+      // Obtiene los usuarios del localStorage (si no hay, se pone un array vacío)
+      const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
 
-    <script>
-      // Usuario administrador de prueba
-      const adminUser = { email: "admin@booknest.com", password: "1234" };
-
-
-      function login() {
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-
-
-        // Recuperar los usuarios registrados en localStorage
-        const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-
-
-        // 🔹 Verificar si es el administrador
-        if (email === adminUser.email && password === adminUser.password) {
-          localStorage.setItem("rol", "admin");
-          alert("Bienvenido, administrador.");
-          window.location.href = "admin.html";
-          return false;
-        }
-
-
-        // 🔹 Buscar el usuario registrado por correo y contraseña
-        const usuario = usuarios.find(u => u.correo === email && u.password === password);
-
-
-        if (usuario) {
-          // Guardar información del usuario activo
-          localStorage.setItem("usuarioActivo", JSON.stringify(usuario));
-          localStorage.setItem("rol", usuario.tipo); // tipo: estudiante, docente o visitante
-
-
-          alert(`Bienvenido ${usuario.nombre} (${usuario.tipo})`);
-          window.location.href = "cliente.html";
-        } else {
-          alert("Correo o contraseña incorrectos. Verifica tus datos.");
-        }
-
-
+      // ✅ Verificar si es el administrador
+      if (email === adminUser.email && password === adminUser.password) {
+        localStorage.setItem("rol", "admin"); // Guardamos el rol para saber a qué vista dirigir
+        alert("Bienvenido, administrador.");
+        window.location.href = "admin.html"; // Redirige a la vista del administrador
         return false; // Evita recargar la página
       }
-    </script>
-  </body>
-  </html>
+
+      // ✅ Buscar el usuario registrado en localStorage
+      // .find busca coincidencia exacta entre correo y contraseña
+      const usuario = usuarios.find(u => u.correo === email && u.password === password);
+
+      // Si encontró el usuario
+      if (usuario) {
+        // Guardamos el usuario activo y su rol
+        localStorage.setItem("usuarioActivo", JSON.stringify(usuario));
+        localStorage.setItem("rol", usuario.tipo);
+
+        alert(`Bienvenido ${usuario.nombre} (${usuario.tipo})`);
+        window.location.href = "cliente.html"; // Redirige al panel del cliente
+      } else {
+        // Si no coincide, muestra mensaje
+        alert("Correo o contraseña incorrectos. Verifica tus datos.");
+      }
+
+      return false; // Evita recargar la página
+    }
+  </script>
+
+</body>
+</html>
