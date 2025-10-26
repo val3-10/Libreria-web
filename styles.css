@@ -1,10 +1,10 @@
-/* === ESTILOS GENERALES === */
+/*  ESTILOS GENERALES  */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #f4d5b0);
   margin: 0;
   padding: 0;
-  color: rgb(255, 255, 255);
+  color: rgb(0, 0, 0);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -13,7 +13,7 @@ body {
   text-align: center;
 }
 
-/* === ENCABEZADO === */
+/*  ENCABEZADO  */
 header {
   width: 100%;
   display: flex;
@@ -25,24 +25,25 @@ header {
   padding: 170px 0;
   margin-bottom: 1px;
   border-bottom: 3px solid rgba(0, 0, 0, 0.2);
-  position: relative; /* necesario para el botón */
+  position: relative; 
 }
 
-/* === LOGO / TÍTULO === */
+/*  LOGO / TÍTULO  */
 header h1 {
   font-size: 3rem;
   font-weight: bold;
   font-style: italic;
-  color: #d4a017;
+  color: #efb810;
   text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
   margin: 0;
 }
 
-/* === BOTÓN DE CERRAR SESIÓN === */
+/*  BOTÓN DE CERRAR SESIÓN  */
+
 .btn-cerrar {
-  position: absolute; /* flota sobre el header */
-  top: 20px;          /* distancia desde la parte superior */
-  right: 20px;        /* distancia desde la derecha */
+  position: absolute; 
+  top: 20px;          
+  right: 20px;       
   padding: 8px 16px;
   font-size: 0.9rem;
   background-color: #0f0092;
@@ -58,7 +59,7 @@ header h1 {
   transform: scale(1.05);
 }
 
-/* === CONTENEDOR PRINCIPAL === */
+/*  CONTENEDOR PRINCIPAL  */
 .container {
   max-width: 900px;
   width: 90%;
@@ -66,19 +67,19 @@ header h1 {
   padding: 20px;
 }
 
-/* === SECCIONES === */
+/*  SECCIONES  */
 .seccion {
-  background: rgba(255,255,255,0.1);
+  background: #fdd6a7;
   backdrop-filter: blur(6px);
   padding: 20px;
   margin: 20px auto;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgb(0, 0, 0);
   text-align: left;
-  display: none;
+  display: block;
 }
 
-/* === CAMPOS DE FORMULARIOS === */
+/*  CAMPOS DE FORMULARIOS  */
 input, select, button {
   width: 100%;
   padding: 10px;
@@ -93,7 +94,7 @@ input, select {
   color: #333;
 }
 
-/* === BOTONES GENERALES === */
+/*  BOTONES GENERALES  */
 button {
   background: #1e3a8a;
   color: #fff;
@@ -105,7 +106,7 @@ button:hover {
   background: #0406a0;
 }
 
-/* === BOTONES DE LA SECCIÓN LIBROS === */
+/*  BOTONES DE LA SECCIÓN LIBROS  */
 #libros button {
   background-color: #1e3a8a;
   color: white;
@@ -118,7 +119,7 @@ button:hover {
   transform: scale(1.05);
 }
 
-/* === MENÚ DE OPCIONES === */
+/*  MENÚ DE OPCIONES  */
 .menu-opciones {
   display: flex;
   justify-content: center;
@@ -142,7 +143,7 @@ button:hover {
   transform: scale(1.05);
 }
 
-/* === TABLAS === */
+/*  TABLAS  */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -159,7 +160,7 @@ th, td {
 }
 
 th {
-  background: #977e0d;
+  background: #daa520;
   color: #fff;
 }
 
@@ -167,12 +168,12 @@ tr:nth-child(even) {
   background: rgba(127,0,255,0.05);
 }
 
-/* === ESTADOS DE LIBROS === */
+/*  ESTADOS DE LIBROS  */
 .venta { color: green; font-weight: bold; }
 .prestamo { color: blue; font-weight: bold; }
 .disponible { color: black; font-weight: bold; }
 
-/* === BOTONES DE ELIMINAR === */
+/* = BOTONES DE ELIMINAR  */
 .btn-eliminar {
   background-color: #1e3a8a;
   color: white;
@@ -186,6 +187,127 @@ tr:nth-child(even) {
 .btn-eliminar:hover {
   background-color: #0406a0;
 }
+/*  FORMULARIO REGISTRO USUARIO */
+.registro-box {
+  background: #f4d5b0;
+  padding: 30px 35px;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgb(0, 0, 0);
+  width: 350px;
+  text-align: center;
+  margin-top: 40px;
+}
+
+/* Título */
+.registro-box h2 {
+  margin-bottom: 0.5px;
+  font-size: 1.7rem;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+/* Campos */
+.registro-box input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 14px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: 0.3s;
+}
+
+.registro-box input:focus {
+  border-color: #1e3a8a;
+  box-shadow: 0 0 5px rgba(30, 58, 138, 0.5);
+}
+
+/* Botón */
+.registro-box button {
+  width: 100%;
+  padding: 12px;
+  background: #1e3a8a;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.registro-box button:hover {
+  background: #0406a0;
+}
+
+
+/* PORTAL DE PAGO  */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-contenido {
+  background: linear-gradient(135deg, #fff8e1, #f4d5b0);
+  border-radius: 16px;
+  padding: 25px;
+  width: 320px;
+  text-align: center;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+  color: #333;
+  animation: aparecer 0.3s ease;
+}
+
+.modal-contenido h3 {
+  color: #daa520;
+  margin-bottom: 10px;
+}
+
+.modal-contenido input {
+  width: 80%;
+  padding: 8px;
+  margin: 10px 0;
+  border: 2px solid #daa520;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.modal-botones {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.modal-botones button {
+  background: #1e3a8a;
+  border-radius: 10px;
+  color: white;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.modal-botones button:hover {
+  background: #0406a0;
+}
+
+@keyframes aparecer {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 
 /* === NOTIFICACIONES === */
 .toast {
@@ -202,15 +324,14 @@ tr:nth-child(even) {
 .toast.success { background-color: #00ff08; }
 .toast.error { background-color: #ec1000; }
 .toast.info { background-color: #319ef7; }
-
-/* ========================= */ /* ===== LOGIN ===== */ /* ========================= */ 
+ /* ===== LOGIN ===== */ 
 .login-body::before { content: "";
   position: 100% auto; 
-  top: 30px; /* distancia desde arriba */ 
+  top: 30px; 
   left: 50%; transform: translateX(-50%); width: 120px; 
-  /* tamaño del logo */ height: 120px; 
+  height: 120px; 
   background: url("img/logo-booknest.png") no-repeat center center; 
-  background-size: contain; /* mantiene proporciones del logo */
+  background-size: contain; 
   z-index: 10; } .login-body { position: relative; 
   background: url("img/BookNest.png") no-repeat center center fixed; 
   background-size: cover;
@@ -220,7 +341,7 @@ tr:nth-child(even) {
   height: 100vh; margin: 0; }
  /* Caja del login */
 .login-box {
-  background: rgba(0, 0, 0, 0.329); /* Negro translúcido */
+  background: rgba(0, 0, 0, 0.329); 
   padding: 30px;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.164);
@@ -229,4 +350,36 @@ tr:nth-child(even) {
 }
 .login-box button:hover {
   background: #1e40af;
+}
+/* Texto de "¿Ya tienes cuenta?" */
+.texto-login {
+  color: rgb(0, 0, 0);
+  margin-top: 15px;
+  font-size: 0.9rem;
+}
+
+/* Link "Inicia sesión aquí" */
+.link-login {
+  color: #00a2ff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.link-login:hover {
+  text-decoration: underline;
+}
+
+/* Label de términos */
+.label-terminos {
+  color: rgb(0, 0, 0);
+  font-size: 0.9rem;
+  display: block;
+  margin: 8px 0;
+}
+/* Label "Fecha de nacimiento" */
+.label-fecha {
+  color: rgb(0, 0, 0);
+  font-size: 0.9rem;
+  display: block;
+  margin: 10px 0 4px;
 }

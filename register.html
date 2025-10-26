@@ -14,6 +14,10 @@
     <input type="text" id="nombre" required><br><br>
 
 
+    <label for="tipo_documento">Tipo de documento:</label><br>
+    <input type="text" id="tipo_documento" required><br><br>
+
+
     <label for="documento">Documento:</label><br>
     <input type="text" id="documento" required><br><br>
 
@@ -62,6 +66,7 @@
   <script>
     function register() {
       const nombre = document.getElementById("nombre").value.trim();
+      const tipo_documento = document.getElementById("tipo").value.trim();
       const documento = document.getElementById("documento").value.trim();
       const correo = document.getElementById("correo").value.trim();
       const telefono = document.getElementById("telefono").value.trim();
@@ -110,6 +115,7 @@
       // Crear nuevo usuario
       const nuevoUsuario = {
         nombre,
+        tipo_documento,
         documento,
         correo,
         telefono,
