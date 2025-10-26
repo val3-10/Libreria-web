@@ -1,72 +1,72 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-   <link rel="stylesheet" href="styles.css">
   <meta charset="UTF-8">
   <title>Crear cuenta - Booknest</title>
+
+  <!-- Enlazamos el archivo CSS donde están los estilos -->
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h2>Crear cuenta nueva</h2>
 
+  <!-- Contenedor principal del formulario de registro -->
+  <div class="registro-box">
+    <h2>Crear cuenta nueva</h2>
 
-  <form onsubmit="return register()">
-    <label for="nombre">Nombre completo:</label><br>
-    <input type="text" id="nombre" required><br><br>
+    <!-- Cuando se envía el formulario, se ejecuta la función register() -->
+    <form onsubmit="return register()">
 
+      <!-- Campos de entrada con su respectiva etiqueta -->
+      <label for="nombre">Nombre completo:</label>
+      <input type="text" id="nombre" placeholder="Juan Pérez" required>
 
-    <label for="tipo_documento">Tipo de documento:</label><br>
-    <input type="text" id="tipo_documento" required><br><br>
+      <label for="tipo_documento">Tipo de documento:</label>
+      <input type="text" id="tipo_documento" placeholder="Cédula, Pasaporte..." required>
 
+      <label for="documento">Documento:</label>
+      <input type="text" id="documento" placeholder="123456789" required>
 
-    <label for="documento">Documento:</label><br>
-    <input type="text" id="documento" required><br><br>
+      <label for="correo">Correo electrónico:</label>
+      <input type="email" id="correo" placeholder="correo@ejemplo.com" required>
 
+      <label for="telefono">Teléfono:</label>
+      <input type="text" id="telefono" placeholder="+57 300 0000000" required>
 
-    <label for="correo">Correo electrónico:</label><br>
-    <input type="email" id="correo" required><br><br>
+      <label for="direccion">Dirección:</label>
+      <input type="text" id="direccion" placeholder="Ciudad, Calle, Número" required>
 
+      <label for="fecha">Fecha de nacimiento:</label>
+      <input type="date" id="fecha" required>
 
-    <label for="telefono">Teléfono:</label><br>
-    <input type="text" id="telefono" required><br><br>
+      <label for="usuario">Nombre de usuario:</label>
+      <input type="text" id="usuario" placeholder="usuario123" required>
 
+      <label for="password">Contraseña:</label>
+      <input type="password" id="password" placeholder="••••••••" required>
 
-    <label for="direccion">Dirección:</label><br>
-    <input type="text" id="direccion" required><br><br>
+      <label for="confirmar">Confirmar contraseña:</label>
+      <input type="password" id="confirmar" placeholder="••••••••" required>
 
+      <!-- Checkbox obligatorio para continuar -->
+      <label>
+        <input type="checkbox" id="terminos" required>
+        Acepto los términos y condiciones
+      </label>
 
-    <label for="fecha">Fecha de nacimiento:</label><br>
-    <input type="date" id="fecha" required><br><br>
+      <!-- Botón que dispara el evento onsubmit -->
+      <button type="submit">Registrar cuenta</button>
+    </form>
 
-
-    <label for="usuario">Nombre de usuario:</label><br>
-    <input type="text" id="usuario" required><br><br>
-
-
-    <label for="password">Contraseña:</label><br>
-    <input type="password" id="password" required><br><br>
-
-
-    <label for="confirmar">Confirmar contraseña:</label><br>
-    <input type="password" id="confirmar" required><br><br>
-
-
-    <label>
-      <input type="checkbox" id="terminos" required>
-      Acepto los términos y condiciones
-    </label><br><br>
-
-
-    <button type="submit">Registrar cuenta</button>
-  </form>
-
-
-  <p>¿Ya tienes cuenta? <a href="login.html">Inicia sesión aquí</a></p>
-
+    <!-- Link para ir al login si ya tiene cuenta -->
+    <p>¿Ya tienes cuenta? <a href="login.html">Inicia sesión aquí</a></p>
+  </div>
 
   <script>
+    // Función que valida y registra al usuario
     function register() {
+      // Se obtienen los valores del formulario
       const nombre = document.getElementById("nombre").value.trim();
-      const tipo_documento = document.getElementById("tipo").value.trim();
+      const tipo_documento = document.getElementById("tipo_documento").value.trim();
       const documento = document.getElementById("documento").value.trim();
       const correo = document.getElementById("correo").value.trim();
       const telefono = document.getElementById("telefono").value.trim();
@@ -77,42 +77,34 @@
       const confirmar = document.getElementById("confirmar").value;
       const terminos = document.getElementById("terminos").checked;
 
-
-      // Validar contraseñas iguales
+      // Validación: Verifica si las contraseñas coinciden
       if (password !== confirmar) {
         alert("Las contraseñas no coinciden.");
-        return false;
+        return false; // evita que el formulario se envíe
       }
 
-
-      // Validar términos aceptados
+      // Validación: Verifica si aceptó los términos
       if (!terminos) {
         alert("Debes aceptar los términos y condiciones.");
         return false;
       }
 
-
-      // Obtener usuarios guardados
+      // Traemos de localStorage la lista de usuarios (o creamos un arreglo vacío)
       const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
 
-
-      // Verificar si el correo ya está registrado
-      const correoExistente = usuarios.some(u => u.correo === correo);
-      if (correoExistente) {
-        alert("Este correo ya está registrado. Usa otro o inicia sesión.");
+      // Validación: Evita registrar correos duplicados
+      if (usuarios.some(u => u.correo === correo)) {
+        alert("Este correo ya está registrado.");
         return false;
       }
 
-
-      // Verificar si el nombre de usuario ya existe
-      const usuarioExistente = usuarios.some(u => u.usuario === usuario);
-      if (usuarioExistente) {
-        alert("Ese nombre de usuario ya está en uso. Elige otro diferente.");
+      // Validación: Evita nombres de usuario repetidos
+      if (usuarios.some(u => u.usuario === usuario)) {
+        alert("Ese nombre de usuario ya está en uso.");
         return false;
       }
 
-
-      // Crear nuevo usuario
+      // Se crea el objeto usuario con los datos ingresados
       const nuevoUsuario = {
         nombre,
         tipo_documento,
@@ -125,15 +117,16 @@
         password
       };
 
-
+      // Guardamos el nuevo usuario en el arreglo y lo subimos al localStorage
       usuarios.push(nuevoUsuario);
       localStorage.setItem("usuarios", JSON.stringify(usuarios));
 
-
+      // Mensaje final y redirección
       alert("Cuenta creada exitosamente. Ahora puedes iniciar sesión.");
-      window.location.href = "login.html";
+      window.location.href = "login.html"; // redirige a la pantalla de login
       return false;
     }
   </script>
+
 </body>
 </html>
