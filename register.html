@@ -3,20 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>Crear cuenta - Booknest</title>
-
-  <!-- Enlazamos el archivo CSS donde están los estilos -->
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-
-  <!-- Contenedor principal del formulario de registro -->
+<body class="register-body">
   <div class="registro-box">
     <h2>Crear cuenta nueva</h2>
-
-    <!-- Cuando se envía el formulario, se ejecuta la función register() -->
     <form onsubmit="return register()">
-
-      <!-- Campos de entrada con su respectiva etiqueta -->
       <label for="nombre">Nombre completo:</label>
       <input type="text" id="nombre" placeholder="Juan Pérez" required>
 
@@ -47,24 +39,19 @@
       <label for="confirmar">Confirmar contraseña:</label>
       <input type="password" id="confirmar" placeholder="••••••••" required>
 
-      <!-- Checkbox obligatorio para continuar -->
       <label>
         <input type="checkbox" id="terminos" required>
         Acepto los términos y condiciones
       </label>
 
-      <!-- Botón que dispara el evento onsubmit -->
       <button type="submit">Registrar cuenta</button>
     </form>
 
-    <!-- Link para ir al login si ya tiene cuenta -->
     <p>¿Ya tienes cuenta? <a href="login.html">Inicia sesión aquí</a></p>
   </div>
 
   <script>
-    // Función que valida y registra al usuario
     function register() {
-      // Se obtienen los valores del formulario
       const nombre = document.getElementById("nombre").value.trim();
       const tipo_documento = document.getElementById("tipo_documento").value.trim();
       const documento = document.getElementById("documento").value.trim();
@@ -77,34 +64,29 @@
       const confirmar = document.getElementById("confirmar").value;
       const terminos = document.getElementById("terminos").checked;
 
-      // Validación: Verifica si las contraseñas coinciden
       if (password !== confirmar) {
         alert("Las contraseñas no coinciden.");
-        return false; // evita que el formulario se envíe
+        return false;
       }
 
-      // Validación: Verifica si aceptó los términos
       if (!terminos) {
         alert("Debes aceptar los términos y condiciones.");
         return false;
       }
 
-      // Traemos de localStorage la lista de usuarios (o creamos un arreglo vacío)
       const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
 
-      // Validación: Evita registrar correos duplicados
       if (usuarios.some(u => u.correo === correo)) {
         alert("Este correo ya está registrado.");
         return false;
       }
 
-      // Validación: Evita nombres de usuario repetidos
       if (usuarios.some(u => u.usuario === usuario)) {
         alert("Ese nombre de usuario ya está en uso.");
         return false;
       }
 
-      // Se crea el objeto usuario con los datos ingresados
+      // --- CAMBIO: añadir historial y carrito propios ---
       const nuevoUsuario = {
         nombre,
         tipo_documento,
@@ -114,19 +96,18 @@
         direccion,
         fecha,
         usuario,
-        password
+        password,
+        historial: [],   
+        carrito: []      
       };
 
-      // Guardamos el nuevo usuario en el arreglo y lo subimos al localStorage
       usuarios.push(nuevoUsuario);
       localStorage.setItem("usuarios", JSON.stringify(usuarios));
 
-      // Mensaje final y redirección
       alert("Cuenta creada exitosamente. Ahora puedes iniciar sesión.");
-      window.location.href = "login.html"; // redirige a la pantalla de login
+      window.location.href = "login.html";
       return false;
     }
   </script>
-
 </body>
 </html>
