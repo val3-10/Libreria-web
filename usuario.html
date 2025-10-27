@@ -6,12 +6,8 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-  <!-- / ENCABEZADO DEL PERFIL -->
   <header class="site-header">
     <h1>👤 Perfil del Usuario</h1>
-
-    <!-- / BOTONES DE NAVEGACIÓN -->
     <div>
       <button class="logout-btn" onclick="volver()">Volver al catálogo</button>
       <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
@@ -19,12 +15,8 @@
   </header>
 
   <div class="container">
-
-    <!-- / SECCIÓN DEL HISTORIAL -->
     <div class="seccion">
       <h2>Mi historial</h2>
-
-      <!-- / TABLA DEL HISTORIAL -->
       <table id="tablaHistorial">
         <thead>
           <tr>
@@ -37,21 +29,16 @@
         <tbody></tbody>
       </table>
     </div>
-
   </div>
 
   <script>
-    /* / CARGAR EL HISTORIAL CUANDO SE ABRE LA PÁGINA */
     document.addEventListener("DOMContentLoaded", () => {
       const tbody = document.querySelector("#tablaHistorial tbody");
       const historial = JSON.parse(localStorage.getItem("historialUsuario")) || [];
 
-      /* / SI NO HAY HISTORIAL, MOSTRAR MENSAJE */
       if (historial.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4">Aún no tienes compras ni préstamos.</td></tr>`;
-      } 
-      /* / MOSTRAR CADA REGISTRO EN LA TABLA */
-      else {
+      } else {
         historial.forEach(item => {
           tbody.innerHTML += `
             <tr>
@@ -64,17 +51,8 @@
       }
     });
 
-    /* / VOLVER AL CATÁLOGO */
-    function volver() { 
-      window.location.href = "cliente.html"; 
-    }
-
-    /* / CERRAR SESIÓN */
-    function logout() { 
-      localStorage.removeItem("rol"); 
-      window.location.href = "login.html"; 
-    }
+    function volver() { window.location.href = "cliente.html"; }
+    function logout() { localStorage.removeItem("rol"); window.location.href = "login.html"; }
   </script>
-
 </body>
 </html>

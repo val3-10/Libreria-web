@@ -13,13 +13,11 @@
       display: none;
     }
 
-    /* Ajuste de imágenes dentro de tabla */
     table img {
       width: 50px;
       height: auto;
     }
 
-    /* Estilos para notificaciones tipo toast */
     .toast-success { background: #4caf50; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px;}
     .toast-error { background: #f44336; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px;}
     .toast-info { background: #2196f3; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px;}
@@ -29,14 +27,11 @@
 <body>
 <header>
   <div class="header-container">
-    <!-- Botón para cerrar sesión -->
     <button onclick="cerrarSesion()" class="btn-cerrar">Cerrar Sesión</button>
   </div>
 </header>
 
 <div class="container">
-
-  <!-- Menú de navegación entre secciones -->
   <div class="menu-opciones">
     <button onclick="mostrarSeccion('libros')">Registrar Libro</button>
     <button onclick="mostrarSeccion('ventas')">Registro de Ventas</button>
@@ -47,31 +42,19 @@
   <!-- SECCIÓN: REGISTRO DE LIBROS -->
   <div id="libros" class="seccion">
     <h2>Registrar Libro</h2>
-
-    <!-- Datos del libro -->
     <input type="text" id="titulo" placeholder="Título">
     <input type="text" id="autor" placeholder="Autor">
-
-    <!-- Estado del libro -->
     <select id="estado">
       <option value="disponible">Disponible</option>
       <option value="venta">En venta</option>
       <option value="prestamo">En préstamo</option>
     </select>
-
-    <!-- Stock y precio -->
     <input type="number" id="stock" placeholder="Stock" min="0">
     <input type="number" id="precio" placeholder="Precio (en $)" min="0">
-
-    <!-- Carga de carátula con vista previa -->
     <label for="caratula">Carátula del libro:</label>
     <input type="file" id="caratula" accept="image/*" capture="environment">
     <img id="previewCaratula" alt="Vista previa">
-
-    <!-- Botón para guardar libro -->
     <button onclick="agregarLibro()">Agregar Libro</button>
-
-    <!-- Tabla de libros registrados -->
     <table id="tablaLibrosAdmin">
       <thead>
         <tr>
@@ -124,18 +107,12 @@
     </table>
   </div>
 
-  <!-- SECCIÓN: PROVEEDORES -->
+  <!-- NUEVA SECCIÓN: PROVEEDORES -->
   <div id="proveedores" class="seccion" style="display:none;">
     <h2>Proveedores</h2>
-
-    <!-- Datos del proveedor -->
     <input type="text" id="nombreProveedor" placeholder="Nombre del proveedor">
     <input type="text" id="contactoProveedor" placeholder="Contacto (correo o teléfono)">
-
-    <!-- Agregar proveedor -->
     <button onclick="agregarProveedor()">Agregar Proveedor</button>
-
-    <!-- Tabla de proveedores -->
     <table id="tablaProveedores">
       <thead>
         <tr>
@@ -150,34 +127,28 @@
 </div>
 
 <script>
-  // Carga de datos desde localStorage
   let libros = JSON.parse(localStorage.getItem("libros")) || [];
   let transacciones = JSON.parse(localStorage.getItem("transacciones")) || [];
   let proveedores = JSON.parse(localStorage.getItem("proveedores")) || [];
 
-  // Al cargar la página, mostrar los datos
   document.addEventListener("DOMContentLoaded", () => {
     mostrarLibrosAdmin();
     mostrarTransacciones();
     mostrarProveedores();
-    mostrarSeccion('libros'); // Sección por defecto
+    mostrarSeccion('libros');
   });
 
-  // Cerrar sesión y regresar al login
   function cerrarSesion() {
     localStorage.removeItem("rol");
     window.location.href = "login.html";
   }
 
-  // Cambiar entre secciones
   function mostrarSeccion(id) {
     document.querySelectorAll(".seccion").forEach(s => s.style.display = "none");
     document.getElementById(id).style.display = "block";
   }
 
   /* === LIBROS === */
-
-  // Mostrar vista previa de carátula
   document.getElementById("caratula").addEventListener("change", function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -191,12 +162,9 @@
     }
   });
 
-  // Agregar libro con validaciones
   function agregarLibro() {
     const caratulaInput = document.getElementById("caratula");
     let caratula = "";
-
-    // Si se carga imagen, leerla
     if (caratulaInput.files.length > 0) {
       const reader = new FileReader();
       reader.onload = function(e) {
@@ -209,7 +177,6 @@
     }
   }
 
-  // Guardar libro en memoria
   function guardarLibroConCaratula(caratula) {
     const titulo = document.getElementById("titulo").value.trim();
     const autor = document.getElementById("autor").value.trim();
@@ -217,19 +184,16 @@
     const stock = parseInt(document.getElementById("stock").value.trim());
     const precio = parseFloat(document.getElementById("precio").value.trim());
 
-    // Validación de campos
     if (!titulo || !autor || isNaN(stock) || stock < 0 || isNaN(precio) || precio < 0) {
       mostrarMensaje('error', 'Complete todos los campos correctamente');
       return;
     }
 
-    // Añadir al arreglo y guardar
     libros.push({ titulo, autor, estado, stock, precio, caratula });
     localStorage.setItem("libros", JSON.stringify(libros));
     mostrarLibrosAdmin();
     mostrarMensaje('success', 'Libro agregado exitosamente');
 
-    // Limpiar formulario
     document.getElementById("titulo").value = "";
     document.getElementById("autor").value = "";
     document.getElementById("stock").value = "";
@@ -238,7 +202,6 @@
     document.getElementById("previewCaratula").style.display = "none";
   }
 
-  // Eliminar libro
   function eliminarLibro(i) {
     if (!confirm('¿Está seguro de eliminar este libro?')) return;
     libros.splice(i, 1);
@@ -247,11 +210,9 @@
     mostrarMensaje('info', 'Libro eliminado exitosamente');
   }
 
-  // Mostrar libros en tabla
   function mostrarLibrosAdmin() {
     const tbody = document.querySelector("#tablaLibrosAdmin tbody");
     tbody.innerHTML = "";
-
     libros.forEach((libro, i) => {
       tbody.innerHTML += `
         <tr>
@@ -268,12 +229,9 @@
   }
 
   /* === TRANSACCIONES === */
-
-  // Mostrar ventas y préstamos en sus tablas
   function mostrarTransacciones() {
     const ventasBody = document.querySelector("#tablaVentas tbody");
     const prestamosBody = document.querySelector("#tablaPrestamos tbody");
-
     ventasBody.innerHTML = "";
     prestamosBody.innerHTML = "";
 
@@ -302,7 +260,6 @@
     });
   }
 
-  // Eliminar transacción
   function eliminarTransaccion(index) {
     if (!confirm("¿Deseas eliminar este registro?")) return;
     transacciones.splice(index, 1);
@@ -311,9 +268,7 @@
     mostrarMensaje("info", "Registro eliminado");
   }
 
-  /* === MENSAJES TOAST === */
-
-  // Mensajes flotantes temporales
+  /* === MENSAJES === */
   function mostrarMensaje(tipo, mensaje) {
     const toast = document.createElement('div');
     toast.className = `toast-${tipo}`;
@@ -323,8 +278,6 @@
   }
 
   /* === PROVEEDORES === */
-
-  // Agregar proveedor
   function agregarProveedor() {
     const nombre = document.getElementById("nombreProveedor").value.trim();
     const contacto = document.getElementById("contactoProveedor").value.trim();
@@ -343,7 +296,6 @@
     document.getElementById("contactoProveedor").value = "";
   }
 
-  // Eliminar proveedor
   function eliminarProveedor(i) {
     if (!confirm('¿Desea eliminar este proveedor?')) return;
     proveedores.splice(i, 1);
@@ -352,11 +304,9 @@
     mostrarMensaje('info', 'Proveedor eliminado');
   }
 
-  // Mostrar proveedores en tabla
   function mostrarProveedores() {
     const tbody = document.querySelector("#tablaProveedores tbody");
     tbody.innerHTML = "";
-
     proveedores.forEach((p, i) => {
       tbody.innerHTML += `
         <tr>
