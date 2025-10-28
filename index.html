@@ -46,7 +46,7 @@
       if (email === adminUser.email && password === adminUser.password) {
         localStorage.setItem("rol", "admin");
         alert("Bienvenido, administrador.");
-        window.location.href = "index.html";
+        window.location.href = "admin.html";
         return false;
       }
 
@@ -62,7 +62,7 @@
 
 
         alert(`Bienvenido ${usuario.nombre} (${usuario.tipo})`);
-        window.location.href = "index.html";
+        window.location.href = "cliente.html";
       } else {
         alert("Correo o contraseña incorrectos. Verifica tus datos.");
       }
