@@ -6,13 +6,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="site-header">
-    <h1>👤 Perfil del Usuario</h1>
-    <div>
-      <button class="logout-btn" onclick="volver()">Volver al catálogo</button>
-      <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
-    </div>
-  </header>
+  <header class="site-header"></header>
 
   <div class="container">
     <div class="seccion">
@@ -21,38 +15,89 @@
         <thead>
           <tr>
             <th>Título</th>
-            <th>Autor</th>
             <th>Acción</th>
             <th>Fecha</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
+      <button onclick="borrarHistorial()" style="margin-top:10px;">Borrar historial</button>
     </div>
   </div>
 
+  <!-- Botones -->
+  <button class="btn-eliminar">Eliminar Cuenta</button>
+  <button class="catalogo-btn" onclick="volver()">Volver al catálogo</button>
+  <button class="cerrar-sesion-btn" onclick="logout()">Cerrar Sesión</button>
+
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+
+    // ---------------- Mostrar historial ----------------
+    function mostrarHistorial() {
       const tbody = document.querySelector("#tablaHistorial tbody");
-      const historial = JSON.parse(localStorage.getItem("historialUsuario")) || [];
+      if (!usuarioActivo) return;
+
+      // Obtenemos el historial del usuario
+      const historial = JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || [];
+      tbody.innerHTML = "";
 
       if (historial.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4">Aún no tienes compras ni préstamos.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3">Aún no tienes compras ni préstamos.</td></tr>`;
       } else {
         historial.forEach(item => {
           tbody.innerHTML += `
             <tr>
-              <td>${item.titulo}</td>
-              <td>${item.autor}</td>
-              <td>${item.accion}</td>
+              <td>${item.libro || item.titulo}</td>
+              <td>${item.tipo || item.accion}</td>
               <td>${item.fecha}</td>
             </tr>`;
         });
       }
-    });
+    }
 
+    // ---------------- Borrar historial ----------------
+    function borrarHistorial() {
+      if (!usuarioActivo) return;
+
+      const confirmar = confirm("¿Estás seguro de que quieres borrar tu historial?");
+      if (!confirmar) return;
+
+      // Eliminamos solo el historial, no las compras ni el carrito
+      localStorage.removeItem(`historial_${usuarioActivo.usuario}`);
+      mostrarHistorial();
+      alert("Historial borrado correctamente");
+    }
+
+    // ---------------- Otros botones ----------------
     function volver() { window.location.href = "cliente.html"; }
     function logout() { localStorage.removeItem("rol"); window.location.href = "login.html"; }
+
+   document.querySelector(".btn-eliminar")?.addEventListener("click", function() {
+  if (!usuarioActivo) return;
+
+  const confirmar = confirm("¿Estas seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.");
+  if (!confirmar) return;
+
+  // 1. Eliminar usuario del array global de usuarios
+  const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+  const index = usuarios.findIndex(u => u.correo === usuarioActivo.correo);
+  if (index !== -1) usuarios.splice(index, 1);
+  localStorage.setItem("usuarios", JSON.stringify(usuarios));
+
+  // 2. Eliminar datos del usuario
+  localStorage.removeItem("usuarioActivo"); // Perfil activo
+  localStorage.removeItem(`historial_${usuarioActivo.usuario}`); // Historial
+  localStorage.removeItem(`carrito_${usuarioActivo.usuario}`); // Carrito
+
+  alert("Tu cuenta ha sido eliminada correctamente.");
+
+  // 3. Redirigir al login
+  window.location.href = "login.html";
+});
+
+    // ---------------- Cargar historial al inicio ----------------
+    document.addEventListener("DOMContentLoaded", mostrarHistorial);
   </script>
 </body>
 </html>

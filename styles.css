@@ -584,3 +584,149 @@
   margin: 0;
   padding-top: 200px;
 }
+/* === animaciones de los botones  === */
+button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(120deg, rgba(255,255,255,0.4), rgba(255,255,255,0));
+  transform: skewX(-25deg);
+  transition: left 0.6s ease;
+}
+
+button:hover::before {
+  left: 125%;
+}
+
+/* === RESPLANDOR SUAVE AL PASAR EL MOUSE === */
+button:hover {
+  text-shadow: 0 0 6px rgba(255, 223, 100, 0.8);
+  filter: brightness(1.05);
+  transform: translateY(-2px);
+}
+
+/* === PEQUEÑA ANIMACIÓN AL CLIC === */
+button:active {
+  transform: scale(0.96);
+  transition: transform 0.1s;
+}
+
+/* === APARICIÓN SUAVE AL CARGAR === */
+@keyframes fadeInButtons {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+button {
+  animation: fadeInButtons 0.6s ease;
+}
+/* === BOTÓN "VER PERFIL" === */
+.btn-perfil {
+    position: absolute;
+    top: 70px;
+    right: 20px;
+    display: inline-block;
+    width: auto;
+    background-color: #000000;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+
+  .btn-cerrar:hover {
+    background-color: #2e2e2e;
+    transform: scale(1.05);
+  }
+  /* === SECCIÓN DE HISTORIAL === */
+.historial {
+  background-color: #f5f5f5;
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 20px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.1);
+}
+
+/* === BOTONES (volver / cerrar sesión) === */
+
+/* === BOTÓN VOLVER AL CATÁLOGO === */
+.catalogo-btn {
+  position: absolute;
+  top: 280px;     
+  right: 20px;    
+  display: inline-block;
+  width: auto;
+  background-color: #000000;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-volver:hover {
+  background-color: #2e2e2e;
+  transform: translateY(-2px);
+}
+
+/* === BOTÓN CERRAR SESIÓN === */
+.cerrar-sesion-btn {
+  position: absolute;
+  top: 70px;      
+  right: 20px;    
+  display: inline-block;
+  width: auto;
+  background-color: #000000;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-cerrar-sesion:hover {
+  background-color: #2e2e2e;
+  transform: translateY(-2px);
+}
+
+/* === BOTÓN ELIMINAR CUENTA === */
+.btn-eliminar {
+  position: absolute;
+  top: 120px;      
+  right: 20px;    
+  display: inline-block;
+  width: auto;
+  background-color: #c0392b;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-eliminar:hover {
+  background-color: #922b21;
+  transform: scale(1.03);
+}
