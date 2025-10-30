@@ -10,20 +10,20 @@
   <div class="login-box">
     <h2>Iniciar Sesión</h2>
 
-
     <form onsubmit="return login()">
-      <label for="email">Correo:</label>
-      <input type="email" id="email" required>
-
+      <label for="email">Correo (solo @booknest.com):</label>
+      <input type="email" id="email" placeholder="usuario@booknest.com" required>
 
       <label for="password">Contraseña:</label>
-      <input type="password" id="password" required>
-
+      <div class="password-container">
+        <input type="password" id="password" required>
+        <span class="toggle-password" onclick="togglePassword('password')">👁️</span>
+      </div>
 
       <button type="submit">Entrar</button>
     </form>
 
-
+    <a href="forgot-password.html">¿Olvidaste tu contraseña?</a>
     <p>¿No tienes cuenta? <a href="register.html">Crear cuenta</a></p>
   </div>
 
@@ -32,15 +32,31 @@
     // Usuario administrador de prueba
     const adminUser = { email: "admin@booknest.com", password: "1234" };
 
+    function togglePassword(inputId) {
+      const input = document.getElementById(inputId);
+      const icon = input.nextElementSibling;
+      
+      if (input.type === "password") {
+        input.type = "text";
+        icon.textContent = "🙈";
+      } else {
+        input.type = "password";
+        icon.textContent = "👁️";
+      }
+    }
 
     function login() {
-      const email = document.getElementById("email").value;
+      const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
 
+      // ✅ Validación de dominio @booknest.com
+      if (!email.endsWith("@booknest.com")) {
+        alert("Solo se permiten correos con el dominio @booknest.com");
+        return false;
+      }
 
       // Recuperar los usuarios registrados
       const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-
 
       // 🔹 Verificar si es administrador
       if (email === adminUser.email && password === adminUser.password) {
@@ -50,23 +66,21 @@
         return false;
       }
 
-
       // 🔹 Buscar usuario registrado
       const usuario = usuarios.find(u => u.correo === email && u.password === password);
-
 
       if (usuario) {
         // Guardamos sus datos y lo tratamos como "cliente"
         localStorage.setItem("usuarioActivo", JSON.stringify(usuario));
+        localStorage.setItem("historialCliente", JSON.stringify(usuario.historial || []));
+        localStorage.setItem("carrito", JSON.stringify(usuario.carrito || []));
         localStorage.setItem("rol", "cliente");
 
-
-        alert(`Bienvenido ${usuario.nombre} (${usuario.tipo})`);
+        alert(`Bienvenido ${usuario.nombre}`);
         window.location.href = "cliente.html";
       } else {
         alert("Correo o contraseña incorrectos. Verifica tus datos.");
       }
-
 
       return false; // Evita recargar la página
     }

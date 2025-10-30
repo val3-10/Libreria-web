@@ -121,6 +121,40 @@
   }
 
   /* ========================= */
+  /* CONTENEDOR DE CONTRASEÑA CON OJITO */
+  /* ========================= */
+  .password-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .password-container input {
+    width: 100%;
+    padding-right: 40px; /* Espacio para el ícono */
+    margin-bottom: 0; /* Evitar doble margen */
+  }
+
+  .toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 1.2rem;
+    user-select: none;
+    transition: transform 0.2s ease;
+  }
+
+  .toggle-password:hover {
+    transform: translateY(-50%) scale(1.2);
+  }
+
+  .toggle-password:active {
+    transform: translateY(-50%) scale(0.95);
+  }
+
+  /* ========================= */
   /* BOTONES GENERALES */
   /* ========================= */
   button {
