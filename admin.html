@@ -21,6 +21,31 @@
     .toast-success { background: #4caf50; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px;}
     .toast-error { background: #f44336; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px;}
     .toast-info { background: #2196f3; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px;}
+
+    /* Limitar altura de la tabla de proveedores con scroll */
+    #tablaProveedores {
+      display: block;
+      max-height: 400px; /* Altura máxima */
+      overflow-y: auto;   /* Scroll vertical */
+    }
+
+    #tablaProveedores thead {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    #tablaProveedores tbody {
+      display: block;
+      max-height: 350px;
+      overflow-y: auto;
+    }
+
+    #tablaProveedores tbody tr {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+    }
   </style>
 </head>
 
