@@ -11,13 +11,25 @@
     <h2>Iniciar Sesión</h2>
 
     <form onsubmit="return login()">
-      <label for="email">Correo (solo @booknest.com):</label>
+      <label for="email">Correo:</label>
       <input type="email" id="email" placeholder="usuario@booknest.com" required>
 
       <label for="password">Contraseña:</label>
       <div class="password-container">
         <input type="password" id="password" required>
-        <span class="toggle-password" onclick="togglePassword('password')">👁️</span>
+        <span class="toggle-password" onclick="togglePassword('password')">
+
+          <!-- 👁️ SVG ojo abierto (como el de la captura de Freepik) -->
+          <svg class="icon-eye" width="22" height="22" viewBox="0 0 24 24" fill="#333">
+            <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5c-1.73-3.89-6-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
+          </svg>
+
+          <!-- 🙈 SVG ojo tachado (como el de la captura de Freepik) -->
+          <svg class="icon-eye-slash" width="22" height="22" viewBox="0 0 24 24" fill="#333" style="display:none">
+            <path d="M12 5C7 5 2.73 8.11 1 12a11.94 11.94 0 0 0 2.12 3.06L2 16.18 3.41 17.6l18.02-18.02L22 1.18 20.59 2.6l-2.12 2.12C16.9 3.84 14.53 3 12 3 7 3 2.73 6.11 1 10c1.73 3.89 6 7 11 7 2.53 0 4.9-.84 6.47-2.27l2.12 2.12L22 15.82l-2.12-2.12A11.94 11.94 0 0 0 23 10c-1.73-3.89-6-7-11-7z"/>
+          </svg>
+
+        </span>
       </div>
 
       <button type="submit">Entrar</button>
@@ -34,14 +46,18 @@
 
     function togglePassword(inputId) {
       const input = document.getElementById(inputId);
-      const icon = input.nextElementSibling;
-      
+      const container = input.nextElementSibling;
+      const eye = container.querySelector('.icon-eye');
+      const eyeSlash = container.querySelector('.icon-eye-slash');
+
       if (input.type === "password") {
         input.type = "text";
-        icon.textContent = "🙈";
+        eye.style.display = "none";
+        eyeSlash.style.display = "inline";
       } else {
         input.type = "password";
-        icon.textContent = "👁️";
+        eye.style.display = "inline";
+        eyeSlash.style.display = "none";
       }
     }
 
