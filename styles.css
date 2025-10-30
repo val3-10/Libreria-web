@@ -3,7 +3,7 @@
   /* ========================= */
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fuente principal */
-    background: linear-gradient(135deg, #1f2937); /* Fondo degradado */
+    background: #f0f4f8; /* Fondo claro azul-gris */
     margin: 0;
     padding: 0;
     color: rgb(0, 0, 0); /* Color de texto */
