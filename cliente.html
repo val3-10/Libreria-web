@@ -8,11 +8,13 @@
 <body>
   <!-- Botón para cerrar sesión  y perfil-->
   <header>
-    <div class="header-botones">
-      <button class="btn-cerrar" onclick="volverAlLogin()">Cerrar Sesión</button>
-      <button onclick="abrirCarrito()" class="btn-carrito">Mi carrito 🛒</button>
-      <button class="btn-perfil" onclick="verPerfil()">Ver Perfil</button>
-    </div>
+    <!-- 🔝 Barra fija delgada -->
+<div class="barra-cliente">
+  <button onclick="abrirCarrito()">Carrito 🛒</button>
+  <button onclick="verPerfil()">Perfil</button>
+  <button onclick="volverAlLogin()">Cerrar Sesión</button>
+</div>
+
   </header>
 
   <div class="container">
@@ -383,6 +385,26 @@
       function verPerfil() {
         window.location.href = "usuario.html";
       }
+
+
+      function generarFactura() {
+  const factura = {
+    id: Date.now(),
+    cliente: document.getElementById("nombreCliente").value,
+    correo: document.getElementById("correoCliente").value,
+    libro: document.getElementById("nombreLibro").textContent,
+    cantidad: document.getElementById("cantidad").value,
+    total: calcularTotal() // o el total que ya tengas
+  };
+
+  // Guarda la factura en localStorage
+  let facturas = JSON.parse(localStorage.getItem("facturas")) || [];
+  facturas.push(factura);
+  localStorage.setItem("facturas", JSON.stringify(facturas));
+
+  alert("Factura generada y guardada correctamente.");
+}
+
     </script>
 </body>
 </html>
