@@ -10,11 +10,17 @@
   <div class="login-box">
     <h2>Iniciar Sesión</h2>
     <form onsubmit="return login()">
-      <label for="email">Correo:</label>
-      <input type="email" id="email" required>
+      <label for="email">Correo (solo @booknest.com):</label>
+      <input type="email" id="email" placeholder="usuario@booknest.com" required>
 
       <label for="password">Contraseña:</label>
-      <input type="password" id="password" required>
+      <div class="password-container">
+        <input type="password" id="password" required>
+        <span class="toggle-password" onclick="togglePassword('password')">
+          <!-- 👁️ Ojo abierto -->
+          <img src="https://cdn-icons-png.flaticon.com/512/709/709612.png" alt="Mostrar contraseña" width="20" height="20">
+        </span>
+      </div>
 
       <button type="submit">Entrar</button>
     </form>
@@ -26,9 +32,28 @@
   <script>
     const adminUser = { email: "admin@booknest.com", password: "1234" };
 
+    function togglePassword(inputId) {
+      const input = document.getElementById(inputId);
+      const icon = input.nextElementSibling.querySelector("img");
+      
+      if (input.type === "password") {
+        input.type = "text";
+        icon.src = "https://cdn-icons-png.flaticon.com/512/709/709699.png"; // 🙈 ojo cerrado
+      } else {
+        input.type = "password";
+        icon.src = "https://cdn-icons-png.flaticon.com/512/709/709612.png"; // 👁️ ojo abierto
+      }
+    }
+
     function login() {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
+
+      // ✅ Validación de dominio @booknest.com
+      if (!email.endsWith("@booknest.com")) {
+        alert("Solo se permiten correos con el dominio @booknest.com");
+        return false;
+      }
 
       const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
 
@@ -42,7 +67,6 @@
       const usuario = usuarios.find(u => u.correo === email && u.password === password);
 
       if (usuario) {
-        // --- CAMBIO: Guardar el historial y carrito individuales ---
         localStorage.setItem("usuarioActivo", JSON.stringify(usuario));
         localStorage.setItem("historialCliente", JSON.stringify(usuario.historial || []));
         localStorage.setItem("carrito", JSON.stringify(usuario.carrito || []));
