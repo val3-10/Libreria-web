@@ -13,7 +13,15 @@
       <input type="text" id="nombre" placeholder="Juan Pérez" required>
 
       <label for="tipo_documento">Tipo de documento:</label>
-      <input type="text" id="tipo_documento" placeholder="Cédula, Pasaporte..." required>
+      <select id="tipo_documento" required>
+        <option value="">Selecciona un tipo de documento</option>
+        <option value="Cédula de Ciudadanía">Cédula de Ciudadanía</option>
+        <option value="Cédula de Extranjería">Cédula de Extranjería</option>
+        <option value="Pasaporte">Pasaporte</option>
+        <option value="Tarjeta de Identidad">Tarjeta de Identidad</option>
+        <option value="NIT">NIT</option>
+        <option value="DNI">DNI</option>
+      </select>
 
       <label for="documento">Documento:</label>
       <input type="text" id="documento" placeholder="123456789" required>
