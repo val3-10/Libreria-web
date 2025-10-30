@@ -3,7 +3,7 @@
   /* ========================= */
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fuente principal */
-    background: linear-gradient(135deg, #f4d5b0); /* Fondo degradado */
+    background: linear-gradient(135deg, #1f2937); /* Fondo degradado */
     margin: 0;
     padding: 0;
     color: rgb(0, 0, 0); /* Color de texto */
@@ -37,7 +37,7 @@
     font-size: 3rem;
     font-weight: bold;
     font-style: italic;
-    color: #efb810;
+    color: #d4a017;
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
     margin: 0;
   }
@@ -49,7 +49,7 @@
     right: 20px;
     display: inline-block;
     width: auto;
-    background-color: #0f0092;
+    background-color: #000000;
     color: white;
     border: none;
     border-radius: 6px;
@@ -58,25 +58,44 @@
   }
 
   .btn-cerrar:hover {
-    background-color: #150070;
+    background-color: #2e2e2e;
     transform: scale(1.05);
   }
+  .btn-carrito {
+  position: absolute;
+  top: 290px;        
+  right: 20px;      
+  display: inline-block;
+  width: auto;
+  background-color: #000000;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+  padding: 8px 16px;
+  font-size: 5 rem;
+}
+
+.btn-carrito:hover {
+  background-color: #2e2e2e;
+  transform: scale(1.05);
+}
 
   /* ========================= */
   /* CONTENEDOR PRINCIPAL */
   /* ========================= */
   .container {
-    max-width: 900px; /* Ancho máximo */
-    width: 90%; /* Adaptable */
+    max-width: 900px; 
+    width: 90%; 
     margin: 0 auto;
     padding: 20px;
   }
-
-  /* ========================= */
+ 
   /* SECCIONES */
-  /* ========================= */
+
   .seccion {
-    background: #fdd6a7;
+    background: #e6ebf1;
     backdrop-filter: blur(6px);
     padding: 20px;
     margin: 20px auto;
@@ -86,9 +105,7 @@
     display: block;
   }
 
-  /* ========================= */
   /* CAMPOS DE FORMULARIOS */
-  /* ========================= */
   input, select, button {
     width: 100%;
     padding: 10px;
@@ -107,28 +124,28 @@
   /* BOTONES GENERALES */
   /* ========================= */
   button {
-    background: #1e3a8a;
+    background: #1f2937;
     color: #fff;
     cursor: pointer;
     transition: background 0.3s ease;
   }
 
   button:hover {
-    background: #0406a0;
+    background: #2e2e2e;
   }
 
   /* ========================= */
   /* BOTONES SECCIÓN LIBROS */
   /* ========================= */
   #libros button {
-    background-color: #1e3a8a;
+    background-color: #1f2937;
     color: white;
     font-weight: bold;
     transition: background 0.3s ease, transform 0.2s ease;
   }
 
   #libros button:hover {
-    background-color: #0406a0;
+    background-color: #2e2e2e;
     transform: scale(1.05);
   }
 
@@ -143,8 +160,8 @@
   }
 
   .menu-opciones button {
-    background: #1e3a8a;
-    color: white;
+    background: #e6ebf1;
+    color: rgb(0, 0, 0);
     border: none;
     padding: 12px 24px;
     border-radius: 12px;
@@ -154,7 +171,7 @@
   }
 
   .menu-opciones button:hover {
-    background: #0406a0;
+    background: #b2d5ff;
     transform: scale(1.05);
   }
 
@@ -177,7 +194,7 @@
   }
 
   th {
-    background: #daa520;
+    background: #d4a017;
     color: #fff;
   }
 
@@ -192,7 +209,7 @@
 
   /* Botón de eliminar */
   .btn-eliminar {
-    background-color: #1e3a8a;
+    background-color: #1f2937;
     color: white;
     border: none;
     padding: 6px 10px;
@@ -202,14 +219,14 @@
   }
 
   .btn-eliminar:hover {
-    background-color: #0406a0;
+    background-color: #2e2e2e;
   }
 
   /* ========================= */
   /* FORMULARIO REGISTRO */
   /* ========================= */
   .registro-box {
-    background: #f4d5b0;
+    background: #e6ebf1;
     padding: 30px 35px;
     border-radius: 15px;
     box-shadow: 0 8px 25px rgb(0, 0, 0);
@@ -220,11 +237,13 @@
 
   .register {
     background-image: url('img/fondoregister1.jpg');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-attachment: fixed;
-    min-height: 100vh;
-    width: 100%;
+     background-size: cover;
+  display: flex;
+  justify-content: center; 
+  align-items: center;     
+  min-height: 100vh;      
+  margin: 0;
+  padding: 0;
   }
 
   /* ========================= */
@@ -244,7 +263,7 @@
   }
 
   .modal-contenido {
-    background: linear-gradient(135deg, #fff8e1, #f4d5b0);
+    background: linear-gradient(135deg, #e6ebf1, #c3cedb);
     border-radius: 16px;
     padding: 25px;
     width: 320px;
@@ -255,7 +274,7 @@
   }
 
   .modal-contenido h3 {
-    color: #daa520;
+    color: #d4a017;
     margin-bottom: 10px;
   }
 
@@ -264,7 +283,7 @@
     width: 80%;
     padding: 8px;
     margin: 10px 0;
-    border: 2px solid #daa520;
+    border: 2px solid #d4a017;
     border-radius: 8px;
     text-align: center;
     font-size: 1rem;
@@ -279,7 +298,7 @@
   }
 
   .modal-botones button {
-    background: #1e3a8a;
+    background: #000000;
     border-radius: 10px;
     color: white;
     padding: 8px 14px;
@@ -289,7 +308,7 @@
   }
 
   .modal-botones button:hover {
-    background: #0406a0;
+    background: #d4a017;
   }
 
   /* Animación */
@@ -322,25 +341,16 @@
   .login-body {
     position: relative;
     background: url("img/BookNest.png") no-repeat center top;
-    background-size: cover;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    padding-top: 200px;
+     background-size: cover;
+  display: flex;
+  justify-content: center; 
+  align-items: center;     
+  min-height: 100vh;      
+  margin: 0;
+  padding: 0;
   }
 
-  /* Logo sobre el login */
-  /* .login-body::before {
-    content: "";
-    width: 120px;
-    height: 120px;
-    background: url("img/logo-booknest.png") no-repeat center center;
-    background-size: contain;
-    z-index: 10;
-    margin-bottom: 2px;
-  } */
+ 
 
   /* Caja del login */
   .login-box {
@@ -367,7 +377,7 @@
     text-align: left;
     font-weight: 600;
     margin-bottom: 5px;
-    color: #efb810;
+    color: #d4a017;
   }
 
   .login-box input {
@@ -383,7 +393,7 @@
   }
 
   .login-box button {
-    background: #1e3a8a;
+    background: #000000;
     color: white;
     font-weight: 600;
     border: none;
@@ -395,11 +405,11 @@
   }
 
   .login-box button:hover {
-    background: #0406a0;
+    background: #1f2937;
   }
 
   .login-box a {
-    color: #efb810;
+    color: #d4a017;
     text-decoration: none;
   }
 
@@ -450,13 +460,13 @@
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    background-color: #1e3a8a;
+    background-color: #000000;
     color: white;
     font-size: 0.85rem;
   }
 
   .carta-libro button:hover {
-    background-color: #0406a0;
+    background-color: #2e2e2e;
   }
 
   /* Efectos hover */
@@ -526,7 +536,7 @@
   }
 
   .forgot-box button {
-    background: #1e3a8a;
+    background: #000000;
     color: white;
     border: none;
     padding: 10px;
@@ -537,11 +547,11 @@
   }
 
   .forgot-box button:hover {
-    background: #0406a0;
+    background: #2e2e2e;
   }
 
   .forgot-box a {
-    color: #1e3a8a;
+    color: #000000;
     text-decoration: none;
   }
 
@@ -549,47 +559,174 @@
     text-decoration: underline;
   }
 
-  .password-field {
+  /* fondo de recuperar contraseña */
+ .contraseña-body {
   position: relative;
+  background: url("img/fondo\ restaurar\ contraseña.png") no-repeat center center;
+  background-size: cover;
   display: flex;
+  justify-content: center; 
+  align-items: center;     
+  min-height: 100vh;      
+  margin: 0;
+  padding: 0;           
+}
+  /* fondo register */
+ .register-body {
+  position: relative;
+  background: url("img/register\ fondo.png") no-repeat center center;
+  background-size: cover;
+  background-attachment: fixed; 
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  height: 100vh;
+  margin: 0;
+  padding-top: 200px;
+}
+/* === animaciones de los botones  === */
+button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
-.password-field input {
-  width: 350px; /* 🔹 más corto, igual estilo */
-  padding: 12px 40px 12px 15px; /* espacio para el ojito */
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 12px;
-  box-sizing: border-box;
-}
-
-
-
-/* 🔹 Botón del ojito */
-.password-field button {
+button::before {
+  content: "";
   position: absolute;
-  right: 15px;           /* ligeramente más separado del borde */
-  background: none;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(120deg, rgba(255,255,255,0.4), rgba(255,255,255,0));
+  transform: skewX(-25deg);
+  transition: left 0.6s ease;
+}
+
+button:hover::before {
+  left: 125%;
+}
+
+/* === RESPLANDOR SUAVE AL PASAR EL MOUSE === */
+button:hover {
+  text-shadow: 0 0 6px rgba(255, 223, 100, 0.8);
+  filter: brightness(1.05);
+  transform: translateY(-2px);
+}
+
+/* === PEQUEÑA ANIMACIÓN AL CLIC === */
+button:active {
+  transform: scale(0.96);
+  transition: transform 0.1s;
+}
+
+/* === APARICIÓN SUAVE AL CARGAR === */
+@keyframes fadeInButtons {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+button {
+  animation: fadeInButtons 0.6s ease;
+}
+/* === BOTÓN "VER PERFIL" === */
+.btn-perfil {
+    position: absolute;
+    top: 70px;
+    right: 20px;
+    display: inline-block;
+    width: auto;
+    background-color: #000000;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+
+  .btn-cerrar:hover {
+    background-color: #2e2e2e;
+    transform: scale(1.05);
+  }
+  /* === SECCIÓN DE HISTORIAL === */
+.historial {
+  background-color: #f5f5f5;
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 20px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.1);
+}
+
+/* === BOTONES (volver / cerrar sesión) === */
+
+/* === BOTÓN VOLVER AL CATÁLOGO === */
+.catalogo-btn {
+  position: absolute;
+  top: 280px;     
+  right: 20px;    
+  display: inline-block;
+  width: auto;
+  background-color: #000000;
+  color: white;
   border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
   cursor: pointer;
-  padding: 2px;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
-/* 🔹 Icono SVG */
-.password-field button svg {
-  width: 16px;
-  height: 16px;
-  fill: #555;
+.btn-volver:hover {
+  background-color: #2e2e2e;
+  transform: translateY(-2px);
 }
 
-/* 🔹 Hover */
-.password-field button:hover svg {
-  fill: #000;
+/* === BOTÓN CERRAR SESIÓN === */
+.cerrar-sesion-btn {
+  position: absolute;
+  top: 70px;      
+  right: 20px;    
+  display: inline-block;
+  width: auto;
+  background-color: #000000;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
+.btn-cerrar-sesion:hover {
+  background-color: #2e2e2e;
+  transform: translateY(-2px);
+}
+
+/* === BOTÓN ELIMINAR CUENTA === */
+.btn-eliminar {
+  position: absolute;
+  top: 120px;      
+  right: 20px;    
+  display: inline-block;
+  width: auto;
+  background-color: #c0392b;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-eliminar:hover {
+  background-color: #922b21;
+  transform: scale(1.03);
+}
