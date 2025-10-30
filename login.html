@@ -17,8 +17,14 @@
       <div class="password-container">
         <input type="password" id="password" required>
         <span class="toggle-password" onclick="togglePassword('password')">
-          <!-- 👁️ Ojo abierto -->
-          <img src="https://cdn-icons-png.flaticon.com/512/709/709612.png" alt="Mostrar contraseña" width="20" height="20">
+          <!-- 👁️ SVG ojo abierto -->
+          <svg class="icon-eye" width="20" height="20" viewBox="0 0 24 24">
+            <path d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z"/>
+          </svg>
+          <!-- 🙈 SVG ojo tachado -->
+          <svg class="icon-eye-slash" width="20" height="20" viewBox="0 0 24 24" style="display:none">
+            <path d="M2 4.27L3.28 3 21 20.72 19.73 22 16.84 19.11A11.88 11.88 0 0 1 12 21c-5 0-9.27-3.11-11-7 1.03-2.32 2.7-4.28 4.72-5.71L2 4.27zM12 7a5 5 0 0 1 5 5c0 .66-.13 1.29-.36 1.86L10.14 6.22A4.98 4.98 0 0 1 12 7z"/>
+          </svg>
         </span>
       </div>
 
@@ -34,14 +40,18 @@
 
     function togglePassword(inputId) {
       const input = document.getElementById(inputId);
-      const icon = input.nextElementSibling.querySelector("img");
-      
+      const container = input.nextElementSibling; // span.toggle-password
+      const eye = container.querySelector('.icon-eye');
+      const eyeSlash = container.querySelector('.icon-eye-slash');
+
       if (input.type === "password") {
         input.type = "text";
-        icon.src = "https://cdn-icons-png.flaticon.com/512/709/709699.png"; // 🙈 ojo cerrado
+        eye.style.display = "none";
+        eyeSlash.style.display = "inline";
       } else {
         input.type = "password";
-        icon.src = "https://cdn-icons-png.flaticon.com/512/709/709612.png"; // 👁️ ojo abierto
+        eye.style.display = "inline";
+        eyeSlash.style.display = "none";
       }
     }
 
