@@ -16,7 +16,10 @@
       <label for="password">Contraseña:</label>
       <div class="password-container">
         <input type="password" id="password" required>
-        <span class="toggle-password" onclick="togglePassword('password')">👁️</span>
+        <span class="toggle-password" onclick="togglePassword('password')">
+          <!-- 👁️ Ojo abierto -->
+          <img src="https://cdn-icons-png.flaticon.com/512/709/709612.png" alt="Mostrar contraseña" width="20" height="20">
+        </span>
       </div>
 
       <button type="submit">Entrar</button>
@@ -31,14 +34,14 @@
 
     function togglePassword(inputId) {
       const input = document.getElementById(inputId);
-      const icon = input.nextElementSibling;
+      const icon = input.nextElementSibling.querySelector("img");
       
       if (input.type === "password") {
         input.type = "text";
-        icon.textContent = "🙈";
+        icon.src = "https://cdn-icons-png.flaticon.com/512/709/709699.png"; // 🙈 ojo cerrado
       } else {
         input.type = "password";
-        icon.textContent = "👁️";
+        icon.src = "https://cdn-icons-png.flaticon.com/512/709/709612.png"; // 👁️ ojo abierto
       }
     }
 
@@ -64,7 +67,6 @@
       const usuario = usuarios.find(u => u.correo === email && u.password === password);
 
       if (usuario) {
-        // --- CAMBIO: Guardar el historial y carrito individuales ---
         localStorage.setItem("usuarioActivo", JSON.stringify(usuario));
         localStorage.setItem("historialCliente", JSON.stringify(usuario.historial || []));
         localStorage.setItem("carrito", JSON.stringify(usuario.carrito || []));
