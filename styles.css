@@ -730,3 +730,41 @@ button {
   background-color: #922b21;
   transform: scale(1.03);
 }
+
+.password-field input {
+  width: 350px; /* 🔹 más corto, igual estilo */
+  padding: 12px 40px 12px 15px; /* espacio para el ojito */
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+
+
+/* 🔹 Botón del ojito */
+.password-field button {
+  position: absolute;
+  right: 15px;           /* ligeramente más separado del borde */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 🔹 Icono SVG */
+.password-field button svg {
+  width: 16px;
+  height: 16px;
+  fill: #555;
+}
+
+/* 🔹 Hover */
+.password-field button:hover svg {
+  fill: #000;
+}
