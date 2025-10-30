@@ -802,3 +802,30 @@ button {
 .password-field button:hover svg {
   fill: #000;
 }
+
+/* ========================= */
+/* TABLA DE PROVEEDORES CON SCROLL */
+/* ========================= */
+#tablaProveedores {
+  display: block;
+  max-height: 400px; /* Altura máxima */
+  overflow-y: auto;   /* Scroll vertical */
+}
+
+#tablaProveedores thead {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+#tablaProveedores tbody {
+  display: block;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+#tablaProveedores tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
