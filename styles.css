@@ -768,7 +768,7 @@ button {
 
 .password-field input {
   width: 350px; /* 🔹 más corto, igual estilo */
-  padding: 12px 40px 12px 15px; /* espacio para el ojito */
+  padding: 12px 40px 12px 100px; /* espacio para el ojito */
   font-size: 16px;
   border: 1px solid #ccc;
   border-radius: 12px;
@@ -803,30 +803,41 @@ button {
 .password-field button:hover svg {
   fill: #000;
 }
-
-/* =========================== */
-/* TABLA DE PROVEEDORES CON SCROLL */
-/* ========================= */
-#tablaProveedores {
-  display: block;
-  max-height: 400px; /* Altura máxima */
-  overflow-y: auto;   /* Scroll vertical */
-}
-
-#tablaProveedores thead {
-  display: table;
+/* Ajuste manual de posiciones (sin cambiar el diseño) */
+.barra-cliente {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  table-layout: fixed;
+  height: 45px;
+  background: rgba(3, 0, 48, 0.95);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
 }
 
-#tablaProveedores tbody {
-  display: block;
-  max-height: 350px;
-  overflow-y: auto;
+/* Carrito a la izquierda */
+.btn-carrito {
+  position: absolute;
+  left: 50px;
+  top: 8px;
 }
 
-#tablaProveedores tbody tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
+/* Perfil al centro */
+.btn-perfil {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 8px;
+}
+
+/* Cerrar sesión a la derecha */
+.btn-cerrar {
+  position: absolute;
+  right: 20px;
+  top: 8px;
 }

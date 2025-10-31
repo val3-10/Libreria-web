@@ -8,11 +8,13 @@
 <body>
   <!-- Botón para cerrar sesión  y perfil-->
   <header>
-    <div class="header-botones">
-      <button class="btn-cerrar" onclick="volverAlLogin()">Cerrar Sesión</button>
-      <button onclick="abrirCarrito()" class="btn-carrito">Mi carrito 🛒</button>
-      <button class="btn-perfil" onclick="verPerfil()">Ver Perfil</button>
-    </div>
+    <!-- 🔝 Barra fija delgada -->
+<div class="barra-cliente">
+  <button onclick="abrirCarrito()">Carrito 🛒</button>
+  <button onclick="verPerfil()">Perfil</button>
+  <button onclick="volverAlLogin()">Cerrar Sesión</button>
+</div>
+
   </header>
 
   <div class="container">
