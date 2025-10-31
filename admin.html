@@ -278,6 +278,7 @@
   }
 
   /* === PROVEEDORES === */
+  /* === PROVEEDORES === */
   function agregarProveedor() {
     const nombre = document.getElementById("nombreProveedor").value.trim();
     const contacto = document.getElementById("contactoProveedor").value.trim();
@@ -287,10 +288,20 @@
       return;
     }
 
-    proveedores.push({ nombre, contacto });
+    // Si hay un índice guardado, significa que estamos editando
+    if (document.getElementById("proveedorIndex").value !== "") {
+      const index = parseInt(document.getElementById("proveedorIndex").value);
+      proveedores[index] = { nombre, contacto };
+      mostrarMensaje('success', 'Proveedor modificado correctamente');
+      document.getElementById("proveedorIndex").value = "";
+      document.querySelector("button[onclick='agregarProveedor()']").textContent = "Agregar Proveedor";
+    } else {
+      proveedores.push({ nombre, contacto });
+      mostrarMensaje('success', 'Proveedor agregado correctamente');
+    }
+
     localStorage.setItem("proveedores", JSON.stringify(proveedores));
     mostrarProveedores();
-    mostrarMensaje('success', 'Proveedor agregado correctamente');
 
     document.getElementById("nombreProveedor").value = "";
     document.getElementById("contactoProveedor").value = "";
@@ -304,6 +315,14 @@
     mostrarMensaje('info', 'Proveedor eliminado');
   }
 
+  function modificarProveedor(i) {
+    const proveedor = proveedores[i];
+    document.getElementById("nombreProveedor").value = proveedor.nombre;
+    document.getElementById("contactoProveedor").value = proveedor.contacto;
+    document.getElementById("proveedorIndex").value = i;
+    document.querySelector("button[onclick='agregarProveedor()']").textContent = "Guardar Cambios";
+  }
+
   function mostrarProveedores() {
     const tbody = document.querySelector("#tablaProveedores tbody");
     tbody.innerHTML = "";
@@ -312,11 +331,20 @@
         <tr>
           <td>${p.nombre}</td>
           <td>${p.contacto}</td>
-          <td><button onclick="eliminarProveedor(${i})">Eliminar</button></td>
+          <td>
+            <button onclick="modificarProveedor(${i})">Modificar</button>
+            <button onclick="eliminarProveedor(${i})">Eliminar</button>
+          </td>
         </tr>
       `;
     });
   }
+
+  // Campo oculto para saber si se está editando
+  const hiddenIndex = document.createElement("input");
+  hiddenIndex.type = "hidden";
+  hiddenIndex.id = "proveedorIndex";
+  document.body.appendChild(hiddenIndex);
 
 </script>
 </body>
