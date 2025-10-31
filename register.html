@@ -42,7 +42,17 @@
       <input type="text" id="usuario" placeholder="usuario123" required>
 
       <label for="password">Contraseña:</label>
-      <input type="password" id="password" placeholder="••••••••" required>
+      <input type="password" id="password" placeholder="••••••••" required oninput="verificarFuerzaPassword()">
+      
+      <!-- Barra de fuerza de contraseña -->
+      <div style="margin: -10px 0 15px 0;">
+        <div id="barraFuerza" style="height: 8px; width: 100%; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
+          <div id="nivelFuerza" style="height: 100%; width: 0%; transition: all 0.3s ease; border-radius: 4px;"></div>
+        </div>
+        <small id="textoFuerza" style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">
+          Mínimo 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 carácter especial (@$!%*?&)
+        </small>
+      </div>
 
       <label for="confirmar">Confirmar contraseña:</label>
       <input type="password" id="confirmar" placeholder="••••••••" required>
@@ -59,6 +69,103 @@
   </div>
 
   <script>
+    // Verificar fuerza de contraseña en tiempo real
+    function verificarFuerzaPassword() {
+      const password = document.getElementById("password").value;
+      const barra = document.getElementById("nivelFuerza");
+      const texto = document.getElementById("textoFuerza");
+      
+      let fuerza = 0;
+      let requisitos = [];
+      
+      // Verificar cada requisito
+      if (password.length >= 8) {
+        fuerza++;
+      } else {
+        requisitos.push("8 caracteres");
+      }
+      
+      if (/[A-Z]/.test(password)) {
+        fuerza++;
+      } else {
+        requisitos.push("1 mayúscula");
+      }
+      
+      if (/[a-z]/.test(password)) {
+        fuerza++;
+      } else {
+        requisitos.push("1 minúscula");
+      }
+      
+      if (/[0-9]/.test(password)) {
+        fuerza++;
+      } else {
+        requisitos.push("1 número");
+      }
+      
+      if (/[@$!%*?&]/.test(password)) {
+        fuerza++;
+      } else {
+        requisitos.push("1 carácter especial");
+      }
+      
+      // Actualizar barra y color
+      if (fuerza === 0 || password.length === 0) {
+        barra.style.width = "0%";
+        barra.style.backgroundColor = "#e0e0e0";
+        texto.style.color = "#666";
+        texto.textContent = "Mínimo 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 carácter especial (@$!%*?&)";
+      } else if (fuerza <= 2) {
+        // DÉBIL - Rojo
+        barra.style.width = "33%";
+        barra.style.backgroundColor = "#f44336";
+        texto.style.color = "#f44336";
+        texto.textContent = "❌ Débil - Faltan: " + requisitos.join(", ");
+      } else if (fuerza <= 4) {
+        // MEDIA - Naranja
+        barra.style.width = "66%";
+        barra.style.backgroundColor = "#ff9800";
+        texto.style.color = "#ff9800";
+        texto.textContent = "⚠️ Media - Faltan: " + requisitos.join(", ");
+      } else {
+        // FUERTE - Verde
+        barra.style.width = "100%";
+        barra.style.backgroundColor = "#4caf50";
+        texto.style.color = "#4caf50";
+        texto.textContent = "✅ Contraseña segura";
+      }
+    }
+
+    // ✅ Validación de seguridad de contraseña
+    function validarSeguridadPassword(password) {
+      // Mínimo 8 caracteres
+      if (password.length < 8) {
+        return "La contraseña debe tener al menos 8 caracteres.";
+      }
+      
+      // Al menos una letra mayúscula
+      if (!/[A-Z]/.test(password)) {
+        return "La contraseña debe contener al menos una letra mayúscula.";
+      }
+      
+      // Al menos una letra minúscula
+      if (!/[a-z]/.test(password)) {
+        return "La contraseña debe contener al menos una letra minúscula.";
+      }
+      
+      // Al menos un número
+      if (!/[0-9]/.test(password)) {
+        return "La contraseña debe contener al menos un número.";
+      }
+      
+      // Al menos un carácter especial
+      if (!/[@$!%*?&]/.test(password)) {
+        return "La contraseña debe contener al menos un carácter especial (@$!%*?&).";
+      }
+      
+      return null; // Contraseña válida
+    }
+
     function register() {
       const nombre = document.getElementById("nombre").value.trim();
       const tipo_documento = document.getElementById("tipo_documento").value.trim();
@@ -75,6 +182,13 @@
       // ✅ Validación de dominio @booknest.com
       if (!correo.endsWith("@booknest.com")) {
         alert("Solo se permiten correos con el dominio @booknest.com");
+        return false;
+      }
+
+      // ✅ Validación de seguridad de contraseña
+      const errorPassword = validarSeguridadPassword(password);
+      if (errorPassword) {
+        alert(errorPassword);
         return false;
       }
 

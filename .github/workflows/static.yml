@@ -31,13 +31,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        
+      # Agregar meta tags para deshabilitar caché en todos los HTML
+      - name: Disable cache in HTML files
+        run: |
+          # Agregar meta tags de no-cache a todos los archivos HTML
+          for file in *.html; do
+            if [ -f "$file" ]; then
+              # Agregar timestamp y meta tags después del <head>
+              sed -i '/<head>/a\  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">\n  <meta http-equiv="Pragma" content="no-cache">\n  <meta http-equiv="Expires" content="0">\n  <!-- Build: '"$(date +%s)"' -->' "$file"
+            fi
+          done
+          
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
           path: '.'
+          
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
