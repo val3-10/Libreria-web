@@ -6,14 +6,24 @@
   <link rel="stylesheet" href="styles.css"> 
 </head>
 <body>
-  <!-- Botón para cerrar sesión  y perfil-->
-  <header>
-    <!-- 🔝 Barra fija delgada -->
-<div class="barra-cliente">
-  <button onclick="abrirCarrito()">Carrito 🛒</button>
-  <button onclick="verPerfil()">Perfil</button>
-  <button onclick="volverAlLogin()">Cerrar Sesión</button>
+ <div class="menu-flotante-opciones">
+
+  <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+
+  <!-- Opciones ocultas -->
+  <div class="menu-opciones" id="menuOpciones">
+    <button class="btn-menu" onclick="verPerfil()">Ver Perfil</button>
+    <button class="btn-menu" onclick="volverAlLogin()">Cerrar Sesión</button>
+  </div>
 </div>
+
+  <!-- Botón para carrito -->
+ <header>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+      <button onclick="abrirCarrito()" class="btn-carrito">Mi carrito 
+        <ion-icon name="cart-outline"></ion-icon></button>
+      </button>
 
   </header>
 
@@ -404,6 +414,21 @@
 
   alert("Factura generada y guardada correctamente.");
 }
+
+// ====== MENÚ FLOTANTE ======
+const menuFlotante = document.querySelector('.menu-flotante');
+const menuOpciones = document.getElementById('menuOpciones');
+
+menuFlotante.addEventListener('click', (e) => {
+  e.stopPropagation(); // evita que el clic se propague
+  menuOpciones.style.display =
+    menuOpciones.style.display === 'flex' ? 'none' : 'flex';
+});
+
+// Cierra el menú si se hace clic fuera
+window.addEventListener('click', () => {
+  menuOpciones.style.display = 'none';
+});
 
     </script>
 </body>

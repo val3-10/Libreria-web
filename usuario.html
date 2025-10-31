@@ -25,11 +25,20 @@
     </div>
   </div>
 
-  <!-- Botones -->
-  <button class="btn-eliminar">Eliminar Cuenta</button>
-  <button class="catalogo-btn" onclick="volver()">Volver al catálogo</button>
-  <button class="cerrar-sesion-btn" onclick="logout()">Cerrar Sesión</button>
+  <!-- ====== MENÚ FLOTANTE DE TRES PUNTOS ====== -->
+<div class="menu-flotante" onclick="toggleMenu()">⋮</div>
 
+<div class="menu-opciones" id="menuOpciones">
+  <button class="btn-menu" onclick="logout()">Cerrar sesión</button>
+  <button class="btn-menu" onclick="window.location.href='usuario.html'">Perfil</button>
+</div>
+
+<script>
+  function toggleMenu() {
+    const menu = document.getElementById("menuOpciones");
+    menu.style.display = menu.style.display === "flex" ? "none" : "flex";
+  }
+</script>
   <script>
     const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
 
