@@ -18,14 +18,15 @@
 </div>
 
 
-  <!-- Botón para carrito -->
+ <!-- Botón para carrito -->
  <header>
   <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-      <button onclick="abrirCarrito()" class="btn-carrito">Mi carrito 
-        <ion-icon name="cart-outline"></ion-icon></button>
-      </button>
-
+      <button onclick="abrirCarrito()" class="btn-carrito">
+  Mi carrito 
+  <ion-icon name="cart-outline"></ion-icon>
+  <span id="contadorCarrito" class="contador-carrito">0</span>
+</button>
   </header>
 
   <div class="container">
@@ -431,6 +432,32 @@ botonMenu.addEventListener('click', (e) => {
 window.addEventListener('click', () => {
   menuOpciones.style.display = 'none';
 });
+// === CONTADOR DE CARRITO (versión estable para cliente.html) ===
+
+// Actualiza el numerito del carrito
+function actualizarContadorCarrito() {
+  const contador = document.getElementById("contadorCarrito");
+  if (!contador) return;
+
+  const totalItems = carrito.reduce((total, item) => total + (item.cantidad || 1), 0);
+  contador.textContent = totalItems > 0 ? totalItems : 0;
+}
+
+// Interceptamos funciones existentes para no romper nada
+const _agregarCarrito = agregarCarrito;
+agregarCarrito = function(i) {
+  _agregarCarrito(i);
+  actualizarContadorCarrito();
+};
+
+const _eliminarDelCarrito = eliminarDelCarrito;
+eliminarDelCarrito = function(i) {
+  _eliminarDelCarrito(i);
+  actualizarContadorCarrito();
+};
+
+// También actualiza al iniciar
+document.addEventListener("DOMContentLoaded", actualizarContadorCarrito);
     </script>
 </body>
 </html>
