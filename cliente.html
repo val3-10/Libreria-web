@@ -34,7 +34,8 @@
     <!-- SECCIÓN FACTURAS -->
 <div class="seccion">
   <h2>Mis Facturas</h2>
-  <button onclick="mostrarFacturasGuardadas()" style="margin-bottom:10px;">Ver Facturas</button>
+  <!-- Botón para ver facturas -->
+<button onclick="toggleFacturas()" style="margin-bottom:10px;">Ver Facturas</button>
   <table id="tablaFacturasCliente">
     <thead>
       <tr>
@@ -549,6 +550,33 @@ eliminarDelCarrito = function(i) {
 
 // También actualiza al iniciar
 document.addEventListener("DOMContentLoaded", actualizarContadorCarrito);
+//  Actualizar contador del carrito
+actualizarContadorCarrito();
+
+compraPendiente = null;
+function mostrarCarrito() {
+  const tbody = document.querySelector("#tablaCarrito tbody");
+  tbody.innerHTML = "";
+
+  if (carrito.length === 0) {
+    tbody.innerHTML = "<tr><td colspan='5'>El carrito está vacío</td></tr>";
+  } else {
+    carrito.forEach((item, i) => {
+      const total = item.precio * item.cantidad;
+      tbody.innerHTML += `
+        <tr>
+          <td>${item.titulo}</td>
+          <td>${item.cantidad}</td>
+          <td>$${item.precio.toFixed(2)}</td>
+          <td>$${total.toFixed(2)}</td>
+          <td><button onclick="eliminarDelCarrito(${i})">Eliminar</button></td>
+        </tr>`;
+    });
+  }
+
+  // ✅ Mantener contador siempre sincronizado
+  actualizarContadorCarrito();
+}
 
 // ========================
 // VER FACTURAS GUARDADAS
@@ -571,6 +599,8 @@ function mostrarFacturasGuardadas() {
         <td>$${f.total.toFixed(2)}</td>
         <td>
           <button onclick="verFactura(${i})">Ver</button>
+          <!-- 🔽 AQUI VA EL NUEVO BOTÓN -->
+        <button onclick="eliminarFactura(${i})">Eliminar</button>
         </td>
       </tr>
     `;
@@ -610,8 +640,62 @@ function verFactura(indice) {
 
   modal.style.display = 'flex';
 }
+function cerrarModalFactura() {
+  const modal = document.getElementById("modalFactura");
+  if (modal) modal.style.display = "none";
+}
+function eliminarFactura(indice) {
+  const facturas = JSON.parse(localStorage.getItem('facturas')) || [];
+  if (!facturas[indice]) return;
 
+  const confirmar = confirm(`¿Seguro que deseas eliminar la factura #${facturas[indice].id}?`);
+  if (!confirmar) return;
 
+  facturas.splice(indice, 1);
+  localStorage.setItem('facturas', JSON.stringify(facturas));
+  mostrarFacturasGuardadas();
+  cerrarModalFactura();
+
+  alert("Factura eliminada correctamente ✅");
+}
+function toggleFacturas() {
+  const seccionTabla = document.getElementById('tablaFacturasCliente');
+  
+  // Si está visible, la escondemos
+  if (seccionTabla.style.display === 'table') {
+    seccionTabla.style.display = 'none';
+    return;
+  }
+
+  // Si está oculta, la mostramos y llenamos con las facturas
+  seccionTabla.style.display = 'table';
+  mostrarFacturasGuardadas();
+}
+
+function mostrarFacturasGuardadas() {
+  const facturas = JSON.parse(localStorage.getItem('facturas')) || [];
+  const tbody = document.querySelector('#tablaFacturasCliente tbody');
+  tbody.innerHTML = '';
+
+  if (facturas.length === 0) {
+    tbody.innerHTML = "<tr><td colspan='4'>No hay facturas registradas</td></tr>";
+    return;
+  }
+
+  facturas.forEach((f, i) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${f.id}</td>
+        <td>${f.fecha}</td>
+        <td>$${f.total.toFixed(2)}</td>
+        <td>
+          <button onclick="verFactura(${i})">Ver</button>
+          <button onclick="eliminarFactura(${i})">Eliminar</button>
+        </td>
+      </tr>
+    `;
+  });
+}
     </script>
 </body>
 </html>
