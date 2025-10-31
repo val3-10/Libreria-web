@@ -9,7 +9,7 @@
   <div class="registro-box">
     <h2>Crear cuenta nueva</h2>
 
-    <form onsubmit="return register()">
+    <form onsubmit="return register(event)">
       <label for="nombre">Nombre completo:</label>
       <input type="text" id="nombre" placeholder="Juan Paez" required>
 
@@ -31,7 +31,7 @@
       <input type="email" id="correo" placeholder="usuario@booknest.com" required>
 
       <label for="telefono">Teléfono:</label>
-      <input type="text" id="telefono" placeholder="‪+57 300 0000000‬" required>
+      <input type="text" id="telefono" placeholder="+57 300 0000000" required>
 
       <label for="direccion">Dirección:</label>
       <input type="text" id="direccion" placeholder="Ciudad, Calle, Número" required>
@@ -45,9 +45,10 @@
       <label for="password">Contraseña:</label>
       <input type="password" id="password" placeholder="••••••••" required oninput="verificarFuerzaPassword()">
 
-      <label for="Colaboradores">Tipo de Colaborador:</label>
-      <select id="Colaboradores" required>
-        <option value="">Selecciona un tipo de Colaborador</option>
+      <label for="rol">Rol:</label>
+      <select id="rol" required>
+        <option value="">Selecciona un rol</option>
+        <option value="Admin">Administrador</option>
         <option value="Empleado">Empleado</option>
         <option value="Proveedor">Proveedor</option>
       </select>
@@ -124,11 +125,16 @@
       if (!/[A-Z]/.test(password)) return "Debe contener al menos una letra mayúscula.";
       if (!/[a-z]/.test(password)) return "Debe contener al menos una letra minúscula.";
       if (!/[0-9]/.test(password)) return "Debe contener al menos un número.";
-      if (!/[@$!%?&]/.test(password)) return "Debe contener al menos un carácter especial (@$!%?&).";
+      if (!/[@$!%*?&]/.test(password)) return "Debe contener al menos un carácter especial (@$!%*?&).";
       return null;
     }
 
-    function register() {
+    // =======================
+    // Registro del usuario
+    // =======================
+    function register(event) {
+      event.preventDefault();
+
       const nombre = document.getElementById("nombre").value.trim();
       const tipo_documento = document.getElementById("tipo_documento").value.trim();
       const documento = document.getElementById("documento").value.trim();
@@ -136,7 +142,7 @@
       const telefono = document.getElementById("telefono").value.trim();
       const direccion = document.getElementById("direccion").value.trim();
       const fecha = document.getElementById("fecha").value;
-      const Colaborador = document.getElementById("Colaboradores").value; // corregido
+      const rol = document.getElementById("rol").value;
       const usuario = document.getElementById("usuario").value.trim();
       const password = document.getElementById("password").value;
       const confirmar = document.getElementById("confirmar").value;
@@ -148,7 +154,10 @@
       }
 
       const errorPassword = validarSeguridadPassword(password);
-      if (errorPassword) { alert(errorPassword); return false; }
+      if (errorPassword) {
+        alert(errorPassword);
+        return false;
+      }
 
       if (password !== confirmar) {
         alert("Las contraseñas no coinciden.");
@@ -172,9 +181,10 @@
         return false;
       }
 
+      // Crear el nuevo usuario con el rol seleccionado
       const nuevoUsuario = {
         nombre, tipo_documento, documento, correo, telefono, direccion, fecha,
-        Colaborador, usuario, password,
+        rol, usuario, password,
         historial: [], carrito: []
       };
 
