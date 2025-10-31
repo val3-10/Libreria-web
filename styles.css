@@ -62,7 +62,7 @@
     transform: scale(1.05);
   }
   .btn-carrito {
-  position: absolute;
+  position: fixed;
   top: 290px;        
   right: 20px;      
   display: inline-block;
@@ -803,44 +803,7 @@ button {
 .password-field button:hover svg {
   fill: #000;
 }
-/* Ajuste manual de posiciones (sin cambiar el diseño) */
-.barra-cliente {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 45px;
-  background: rgba(3, 0, 48, 0.95);
-  backdrop-filter: blur(6px);
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 0 20px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-}
 
-/* Carrito a la izquierda */
-.btn-carrito {
-  position: absolute;
-  left: 50px;
-  top: 8px;
-}
-
-/* Perfil al centro */
-.btn-perfil {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  top: 8px;
-}
-
-/* Cerrar sesión a la derecha */
-.btn-cerrar {
-  position: absolute;
-  right: 20px;
-  top: 8px;
-}
 /* ====== MENÚ FLOTANTE DE TRES PUNTOS ====== */
 .menu-flotante {
   position: fixed;
@@ -867,7 +830,7 @@ button {
 }
 
 /* ====== MENÚ DESPLEGABLE DEL FLOTANTE ====== */
-.menu-flotante-opciones {
+.menu-flotante-opciones2 {
   position: absolute;
   top: 48px;
   right: 0;
@@ -883,7 +846,7 @@ button {
 }
 
 /* Botones del menú flotante */
-.menu-flotante-opciones .btn-menu {
+.menu-flotante-opciones2 .btn-menu {
   background-color: #1f2937;
   color: #ffffff;
   border: none;
@@ -898,7 +861,7 @@ button {
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
-.menu-flotante-opciones .btn-menu:hover {
+.menu-flotante-opciones2 .btn-menu:hover {
   background-color: #374151 !important;
   transform: scale(1.03);
 }

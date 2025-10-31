@@ -26,18 +26,14 @@
   </div>
 
   <!-- ====== MENÚ FLOTANTE DE TRES PUNTOS ====== -->
-<div class="menu-flotante" onclick="toggleMenu()">⋮</div>
-
-<div class="menu-opciones" id="menuOpciones">
-  <button class="btn-menu" onclick="logout()">Cerrar sesión</button>
-  <button class="btn-menu" onclick="window.location.href='usuario.html'">Perfil</button>
+<div class="menu-flotante">⋮
+  <div class="menu-flotante-opciones2" id="menuOpciones">
+    <button class="btn-menu" onclick="logout()">Cerrar sesión</button>
+    <button class="btn-menu" onclick="volver()">Volver</button>
+    <button class="btn-menu btn-eliminar">Eliminar cuenta</button>
+  </div>
 </div>
 
-<script>
-  function toggleMenu() {
-    const menu = document.getElementById("menuOpciones");
-    menu.style.display = menu.style.display === "flex" ? "none" : "flex";
-  }
 </script>
   <script>
     const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
@@ -108,5 +104,24 @@
     // ---------------- Cargar historial al inicio ----------------
     document.addEventListener("DOMContentLoaded", mostrarHistorial);
   </script>
+  <script>
+// Elementos
+const menuFlotante = document.querySelector('.menu-flotante');
+const menuOpciones = document.getElementById('menuOpciones');
+
+// Abrir/cerrar menú
+menuFlotante.addEventListener('click', (e) => {
+  e.stopPropagation(); // evita cierre inmediato
+  menuOpciones.style.display = menuOpciones.style.display === 'flex' ? 'none' : 'flex';
+});
+
+// Evita que clic dentro del menú cierre
+menuOpciones.addEventListener('click', e => e.stopPropagation());
+
+// Cierra el menú si se hace clic fuera
+window.addEventListener('click', () => {
+  menuOpciones.style.display = 'none';
+});
+</script>
 </body>
 </html>

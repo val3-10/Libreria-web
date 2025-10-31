@@ -6,16 +6,17 @@
   <link rel="stylesheet" href="styles.css"> 
 </head>
 <body>
- <div class="menu-flotante-opciones">
-
+  <!-- === MENÚ FLOTANTE (botón de tres puntos) === -->
+<div class="menu-flotante" id="botonMenu">
   <ion-icon name="ellipsis-vertical-outline"></ion-icon>
 
   <!-- Opciones ocultas -->
-  <div class="menu-opciones" id="menuOpciones">
+  <div class="menu-flotante-opciones2" id="menuOpciones">
     <button class="btn-menu" onclick="verPerfil()">Ver Perfil</button>
     <button class="btn-menu" onclick="volverAlLogin()">Cerrar Sesión</button>
   </div>
 </div>
+
 
   <!-- Botón para carrito -->
  <header>
@@ -416,20 +417,20 @@
 }
 
 // ====== MENÚ FLOTANTE ======
-const menuFlotante = document.querySelector('.menu-flotante');
+const botonMenu = document.getElementById('botonMenu');
 const menuOpciones = document.getElementById('menuOpciones');
 
-menuFlotante.addEventListener('click', (e) => {
-  e.stopPropagation(); // evita que el clic se propague
-  menuOpciones.style.display =
+// Al hacer clic en el botón, muestra u oculta las opciones
+botonMenu.addEventListener('click', (e) => {
+  e.stopPropagation();
+  menuOpciones.style.display = 
     menuOpciones.style.display === 'flex' ? 'none' : 'flex';
 });
 
-// Cierra el menú si se hace clic fuera
+// Cierra el menú si haces clic fuera
 window.addEventListener('click', () => {
   menuOpciones.style.display = 'none';
 });
-
     </script>
 </body>
 </html>
