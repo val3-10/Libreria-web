@@ -889,3 +889,20 @@ button {
   .btn-cerrar:hover {
     background-color: #2e2e2e;
     transform: scale(1.05);}
+    .crear-andminbtn{
+     position: absolute;
+    top: 70px;
+    right: 20px;
+    display: inline-block;
+    width: auto;
+    background-color: #000000;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+
+  .btn-cerrar:hover {
+    background-color: #2e2e2e;
+    transform: scale(1.05);}
