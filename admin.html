@@ -28,6 +28,7 @@
 <header>
   <div class="header-container">
     <button onclick="cerrarSesion()" class="btn-cerrar">Cerrar Sesión</button>
+    <button id="crearAdminBtn">Crear nuevo Admin</button>
   </div>
 </header>
 
@@ -345,6 +346,18 @@
   hiddenIndex.type = "hidden";
   hiddenIndex.id = "proveedorIndex";
   document.body.appendChild(hiddenIndex);
+  /* === VERIFICAR ADMIN === */
+    // Verificar que el usuario actual es un admin
+    const rol = localStorage.getItem("rol");
+    if (rol !== "admin") {
+      alert("No tienes permisos para acceder a esta página.");
+      window.location.href = "login.html";  // Redirigir a login si no es admin
+    }
+
+    // Botón para crear un nuevo administrador
+    document.getElementById("crearAdminBtn").addEventListener("click", function() {
+      window.location.href = "register-admin.html";  // Redirige al formulario de registro de admin
+    });
 
 </script>
 </body>
