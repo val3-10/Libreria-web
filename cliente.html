@@ -31,6 +31,24 @@
 
   <div class="container">
 
+    <!-- SECCIÓN FACTURAS -->
+<div class="seccion">
+  <h2>Mis Facturas</h2>
+  <button onclick="mostrarFacturasGuardadas()" style="margin-bottom:10px;">Ver Facturas</button>
+  <table id="tablaFacturasCliente">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Fecha</th>
+        <th>Total</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+
     <!-- CATÁLOGO -->
     <div class="seccion">
       <h2>Catálogo de Libros</h2>
@@ -92,22 +110,51 @@
       </div>
     </div>
 
-    <!-- PORTAL DE PAGO -->
-    <div id="checkout" class="modal">
-      <div class="modal-contenido">
-        <h3>Portal de Pago</h3>
-        <form>
-          <input type="text" id="tarjeta" placeholder="Número de tarjeta" maxlength="16" oninput="soloNumeros(this)"><br>
-          <input type="text" id="expiracion" placeholder="MM/AA" maxlength="5" oninput="formatoExpiracion(this)"><br>
-          <input type="text" id="cvv" placeholder="CVV" maxlength="3" oninput="soloNumeros(this)"><br>
-          <input type="text" id="titular" placeholder="Nombre del titular"><br>
-          <div class="modal-botones">
-            <button type="button" onclick="finishPurchase()">Pagar</button>
-            <button type="button" onclick="cerrarCheckout()">Cancelar</button>
-          </div>
-        </form>
+   <!-- PORTAL DE PAGO -->
+<div id="checkout" class="modal">
+  <div class="modal-contenido">
+    <h3>Portal de Pago</h3>
+    <form>
+      <input type="text" id="tarjeta" placeholder="Número de tarjeta" maxlength="16" oninput="soloNumeros(this)"><br>
+      <input type="text" id="expiracion" placeholder="MM/AA" maxlength="5" oninput="formatoExpiracion(this)"><br>
+      <input type="text" id="cvv" placeholder="CVV" maxlength="3" oninput="soloNumeros(this)"><br>
+      <input type="text" id="titular" placeholder="Nombre del titular"><br>
+
+      <div class="modal-botones">
+        <button type="button" onclick="finishPurchase()">Pagar</button>
+        <button type="button" onclick="cerrarCheckout()">Cerrar</button>
       </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL FACTURA -->
+<div id="modalFactura" class="modal">
+  <div class="modal-contenido" style="width: 600px; max-height: 700px; overflow-y: auto;">
+    <h3>Factura de Compra</h3>
+    <p><strong>Cliente:</strong> <span id="facturaCliente"></span></p>
+    <p><strong>Correo:</strong> <span id="facturaCorreo"></span></p>
+    <p><strong>Fecha:</strong> <span id="facturaFecha"></span></p>
+
+    <table border="1" width="100%" style="border-collapse: collapse; margin-top: 10px;">
+      <thead>
+        <tr>
+          <th>Libro</th>
+          <th>Cantidad</th>
+          <th>Precio</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody id="facturaTabla"></tbody>
+    </table>
+
+    <h4 style="text-align: right; margin-top: 10px;">Total: $<span id="facturaTotal">0.00</span></h4>
+
+    <div class="modal-botones">
+      <button onclick="cerrarModalFactura()">Cerrar</button>
     </div>
+  </div>
+</div>
 
     <script>
       // ---------------- VARIABLES GLOBALES ----------------
@@ -329,69 +376,113 @@
       }
 
       function finishPurchase() {
-        const tarjeta = document.getElementById('tarjeta').value.trim();
-        const expiracion = document.getElementById('expiracion').value.trim();
-        const cvv = document.getElementById('cvv').value.trim();
-        const titular = document.getElementById('titular').value.trim();
+  const tarjeta = document.getElementById('tarjeta').value.trim();
+  const expiracion = document.getElementById('expiracion').value.trim();
+  const cvv = document.getElementById('cvv').value.trim();
+  const titular = document.getElementById('titular').value.trim();
 
-        if (!/^\d{16}$/.test(tarjeta) || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiracion) || !/^\d{3}$/.test(cvv) || titular.length === 0) {
-          alert("Datos de tarjeta inválidos.");
-          return;
-        }
+  if (!/^\d{16}$/.test(tarjeta) || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiracion) || !/^\d{3}$/.test(cvv) || titular.length === 0) {
+    alert("Datos de tarjeta inválidos.");
+    return;
+  }
 
-        const nombreCliente = usuarioActivo ? usuarioActivo.nombre : "Cliente";
-        const correoCliente = usuarioActivo ? usuarioActivo.correo : "";
-        const fecha = new Date().toLocaleString();
+  const nombreCliente = usuarioActivo ? usuarioActivo.nombre : "Cliente";
+  const correoCliente = usuarioActivo ? usuarioActivo.correo : "";
+  const fecha = new Date().toLocaleString();
 
-        if (compraPendiente && compraPendiente.carrito) {
-          carrito.forEach(item => {
-            const libro = libros.find(l => l.titulo === item.titulo);
-            libro.stock -= item.cantidad;
+  // === FACTURA: preparar detalle antes de vaciar carrito ===
+  let detalleFactura = [];
 
-            transacciones.push({
-              fecha,
-              usuario: nombreCliente,
-              correo: correoCliente, 
-              libro: item.titulo,
-              tipo: "venta",
-              cantidad: item.cantidad,
-              precioTotal: item.precio * item.cantidad
-            });
+  if (compraPendiente && compraPendiente.carrito) {
+    // Copiar contenido del carrito antes de vaciarlo
+    detalleFactura = carrito.map(item => ({
+      titulo: item.titulo,
+      cantidad: item.cantidad,
+      precio: item.precio
+    }));
 
-            historialCliente.push({
-               fecha, libro: item.titulo, tipo: "Compra", estado: "Completado"
-            });
-          });
+    carrito.forEach(item => {
+      const libro = libros.find(l => l.titulo === item.titulo);
+      if (libro) libro.stock -= item.cantidad;
 
-          carrito = [];
-          guardarDatos();
+      transacciones.push({
+        fecha,
+        usuario: nombreCliente,
+        correo: correoCliente,
+        libro: item.titulo,
+        tipo: "venta",
+        cantidad: item.cantidad,
+        precioTotal: item.precio * item.cantidad
+      });
 
-        } else if (compraPendiente && compraPendiente.libro) {
-          const { libro, cantidad } = compraPendiente;
-          libro.stock -= cantidad;
-          const precioTotal = libro.precio * cantidad;
+      historialCliente.push({
+        fecha,
+        libro: item.titulo,
+        tipo: "Compra",
+        estado: "Completado"
+      });
+    });
 
-          transacciones.push({
-            fecha,
-            usuario: nombreCliente,
-            correo: correoCliente, 
-            libro: libro.titulo,
-            tipo: "venta",
-            cantidad,
-            precioTotal
-          });
+    carrito = [];
+    guardarDatos();
 
-          historialCliente.push({
-            fecha, libro: libro.titulo, tipo: "Compra", estado: "Completado"
-          });
-          guardarDatos();
-        }
+  } else if (compraPendiente && compraPendiente.libro) {
+    // Si se compró un solo libro
+    const { libro, cantidad } = compraPendiente;
+    libro.stock -= cantidad;
 
-        mostrarLibrosCliente();
-        mostrarCarrito(); 
-        cerrarCheckout();
-        mostrarMensaje('success', 'Compra realizada con éxito');
-      }
+    detalleFactura = [{
+      titulo: libro.titulo,
+      cantidad,
+      precio: libro.precio
+    }];
+
+    transacciones.push({
+      fecha,
+      usuario: nombreCliente,
+      correo: correoCliente,
+      libro: libro.titulo,
+      tipo: "venta",
+      cantidad,
+      precioTotal: libro.precio * cantidad
+    });
+
+    historialCliente.push({
+      fecha,
+      libro: libro.titulo,
+      tipo: "Compra",
+      estado: "Completado"
+    });
+    guardarDatos();
+  }
+
+  // === Calcular total ===
+  const totalFactura = detalleFactura.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
+
+  // === Guardar factura ===
+  const facturas = JSON.parse(localStorage.getItem('facturas')) || [];
+  const nuevaFactura = {
+    id: Date.now(),
+    cliente: nombreCliente,
+    correo: correoCliente,
+    fecha,
+    detalle: detalleFactura,
+    total: totalFactura
+  };
+  facturas.push(nuevaFactura);
+  localStorage.setItem('facturas', JSON.stringify(facturas));
+
+  // === Actualizar interfaz ===
+  mostrarLibrosCliente();
+  mostrarCarrito();
+  cerrarCheckout();
+  mostrarMensaje('success', 'Compra realizada con éxito');
+  mostrarMensaje('success', 'Factura generada correctamente');
+  mostrarFacturasGuardadas();
+
+  compraPendiente = null;
+}
+
 
       //Boton perfil
       function verPerfil() {
@@ -458,6 +549,69 @@ eliminarDelCarrito = function(i) {
 
 // También actualiza al iniciar
 document.addEventListener("DOMContentLoaded", actualizarContadorCarrito);
+
+// ========================
+// VER FACTURAS GUARDADAS
+// ========================
+function mostrarFacturasGuardadas() {
+  const facturas = JSON.parse(localStorage.getItem('facturas')) || [];
+  const tbody = document.querySelector('#tablaFacturasCliente tbody');
+  tbody.innerHTML = '';
+
+  if (facturas.length === 0) {
+    tbody.innerHTML = "<tr><td colspan='4'>No hay facturas registradas</td></tr>";
+    return;
+  }
+
+  facturas.forEach((f, i) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${f.id}</td>
+        <td>${f.fecha}</td>
+        <td>$${f.total.toFixed(2)}</td>
+        <td>
+          <button onclick="verFactura(${i})">Ver</button>
+        </td>
+      </tr>
+    `;
+  });
+
+}
+
+// ========================
+// VER FACTURA ESPECÍFICA
+// ========================
+function verFactura(indice) {
+  const facturas = JSON.parse(localStorage.getItem('facturas')) || [];
+  const factura = facturas[indice];
+  if (!factura) return;
+
+  // Mostrar el mismo modal reutilizado de factura
+  const modal = document.getElementById('modalFactura');
+  const tbody = document.getElementById('facturaTabla');
+
+  document.getElementById('facturaCliente').textContent = factura.cliente;
+  document.getElementById('facturaCorreo').textContent = factura.correo;
+  document.getElementById('facturaFecha').textContent = factura.fecha;
+
+  tbody.innerHTML = '';
+  factura.detalle.forEach(item => {
+    const subtotal = item.precio * item.cantidad;
+    tbody.innerHTML += `
+      <tr>
+        <td>${item.titulo}</td>
+        <td>${item.cantidad}</td>
+        <td>$${item.precio.toFixed(2)}</td>
+        <td>$${subtotal.toFixed(2)}</td>
+      </tr>
+    `;
+  });
+  document.getElementById('facturaTotal').textContent = factura.total.toFixed(2);
+
+  modal.style.display = 'flex';
+}
+
+
     </script>
 </body>
 </html>
