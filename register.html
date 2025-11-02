@@ -41,42 +41,32 @@
       <label for="usuario">Nombre de usuario:</label>
       <input type="text" id="usuario" placeholder="usuario123" required>
 
-            
-           <!-- 🟢 Campo de nueva contraseña con ojo -->
-        <label for="password"> Contraseña:</label>
-        <div class="password-container">
-       <input type="password" id="password" placeholder="••••••••" required oninput="verificarFuerzaPassword()">
-          <span class="toggle-password" onclick="togglePassword('new-password')">
-            <!-- 👁️ SVG ojo abierto -->
-            <svg class="icon-eye" width="22" height="22" viewBox="0 0 24 24" fill="#333">
-              <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5c-1.73-3.89-6-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
-            </svg>
-            <!-- 👁️‍🗨️ SVG ojo tachado -->
-            <svg class="icon-eye-slash" width="22" height="22" viewBox="0 0 24 24" fill="#333" style="display:none">
-              <path d="M12 5C7 5 2.73 8.11 1 12a11.94 11.94 0 0 0 2.12 3.06L2 16.18 3.41 17.6l18.02-18.02L22 1.18 20.59 2.6l-2.12 2.12C16.9 3.84 14.53 3 12 3 7 3 2.73 6.11 1 10c1.73 3.89 6 7 11 7 2.53 0 4.9-.84 6.47-2.27l2.12 2.12L22 15.82l-2.12-2.12A11.94 11.94 0 0 0 23 10c-1.73-3.89-6-7-11-7z"/>
-            </svg>
-          </span>
-        </div>
+      <label for="password">Contraseña:</label>
+      <div class="password-container">
+        <input type="password" id="password" placeholder="••••••••" required oninput="verificarFuerzaPassword()">
+        <span class="toggle-password" onclick="togglePassword('password')">
+          <svg class="icon-eye" width="22" height="22" viewBox="0 0 24 24" fill="#333">
+            <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5c-1.73-3.89-6-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
+          </svg>
+          <svg class="icon-eye-slash" width="22" height="22" viewBox="0 0 24 24" fill="#333" style="display:none">
+            <path d="M12 5C7 5 2.73 8.11 1 12a11.94 11.94 0 0 0 2.12 3.06L2 16.18 3.41 17.6l18.02-18.02L22 1.18 20.59 2.6l-2.12 2.12C16.9 3.84 14.53 3 12 3 7 3 2.73 6.11 1 10c1.73 3.89 6 7 11 7 2.53 0 4.9-.84 6.47-2.27l2.12 2.12L22 15.82l-2.12-2.12A11.94 11.94 0 0 0 23 10c-1.73-3.89-6-7-11-7z"/>
+          </svg>
+        </span>
+      </div>
 
-          <!-- 🟢 Campo de nueva contraseña con ojo -->
+      <label for="confirm-password">Confirmar contraseña:</label>
+      <div class="password-container">
+        <input type="password" id="confirm-password" placeholder="••••••••" required>
+        <span class="toggle-password" onclick="togglePassword('confirm-password')">
+          <svg class="icon-eye" width="22" height="22" viewBox="0 0 24 24" fill="#333">
+            <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5c-1.73-3.89-6-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
+          </svg>
+          <svg class="icon-eye-slash" width="22" height="22" viewBox="0 0 24 24" fill="#333" style="display:none">
+            <path d="M12 5C7 5 2.73 8.11 1 12a11.94 11.94 0 0 0 2.12 3.06L2 16.18 3.41 17.6l18.02-18.02L22 1.18 20.59 2.6l-2.12 2.12C16.9 3.84 14.53 3 12 3 7 3 2.73 6.11 1 10c1.73 3.89 6 7 11 7 2.53 0 4.9-.84 6.47-2.27l2.12 2.12L22 15.82l-2.12-2.12A11.94 11.94 0 0 0 23 10c-1.73-3.89-6-7-11-7z"/>
+          </svg>
+        </span>
+      </div>
 
-      <label for="confirmar">Confirmar contraseña:</label>
-        <div class="password-container">
-          <input type="password" id="confirm-password" placeholder="Contraseña confirmada" required oninput="verificarFuerzaPassword()">
-          <span class="toggle-password" onclick="togglePassword('confirm-password')">
-            <!-- 👁️ SVG ojo abierto -->
-            <svg class="icon-eye" width="22" height="22" viewBox="0 0 24 24" fill="#333">
-              <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5c-1.73-3.89-6-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
-            </svg>
-            <!-- 👁️‍🗨️ SVG ojo tachado -->
-            <svg class="icon-eye-slash" width="22" height="22" viewBox="0 0 24 24" fill="#333" style="display:none">
-              <path d="M12 5C7 5 2.73 8.11 1 12a11.94 11.94 0 0 0 2.12 3.06L2 16.18 3.41 17.6l18.02-18.02L22 1.18 20.59 2.6l-2.12 2.12C16.9 3.84 14.53 3 12 3 7 3 2.73 6.11 1 10c1.73 3.89 6 7 11 7 2.53 0 4.9-.84 6.47-2.27l2.12 2.12L22 15.82l-2.12-2.12A11.94 11.94 0 0 0 23 10c-1.73-3.89-6-7-11-7z"/>
-            </svg>
-          </span>
-        </div>
-
-
-      <!-- Barra de fuerza de contraseña -->
       <div style="margin: -10px 0 15px 0;">
         <div id="barraFuerza" style="height: 8px; width: 100%; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
           <div id="nivelFuerza" style="height: 100%; width: 0%; transition: all 0.3s ease; border-radius: 4px;"></div>
@@ -98,12 +88,10 @@
   </div>
 
   <script>
-    // Mostrar / ocultar contraseña
     function togglePassword(id) {
       const input = document.getElementById(id);
       const eye = input.parentNode.querySelector(".icon-eye");
       const eyeSlash = input.parentNode.querySelector(".icon-eye-slash");
-
       if (input.type === "password") {
         input.type = "text";
         eye.style.display = "none";
@@ -114,66 +102,37 @@
         eyeSlash.style.display = "none";
       }
     }
-    // Verificar fuerza de contraseña en tiempo real
+
     function verificarFuerzaPassword() {
       const password = document.getElementById("password").value;
       const barra = document.getElementById("nivelFuerza");
       const texto = document.getElementById("textoFuerza");
-      
+
       let fuerza = 0;
       let requisitos = [];
-      
-      // Verificar cada requisito
-      if (password.length >= 8) {
-        fuerza++;
-      } else {
-        requisitos.push("8 caracteres");
-      }
-      
-      if (/[A-Z]/.test(password)) {
-        fuerza++;
-      } else {
-        requisitos.push("1 mayúscula");
-      }
-      
-      if (/[a-z]/.test(password)) {
-        fuerza++;
-      } else {
-        requisitos.push("1 minúscula");
-      }
-      
-      if (/[0-9]/.test(password)) {
-        fuerza++;
-      } else {
-        requisitos.push("1 número");
-      }
-      
-      if (/[@$!%*?&]/.test(password)) {
-        fuerza++;
-      } else {
-        requisitos.push("1 carácter especial");
-      }
-      
-      // Actualizar barra y color
+
+      if (password.length >= 8) fuerza++; else requisitos.push("8 caracteres");
+      if (/[A-Z]/.test(password)) fuerza++; else requisitos.push("1 mayúscula");
+      if (/[a-z]/.test(password)) fuerza++; else requisitos.push("1 minúscula");
+      if (/[0-9]/.test(password)) fuerza++; else requisitos.push("1 número");
+      if (/[@$!%*?&]/.test(password)) fuerza++; else requisitos.push("1 carácter especial");
+
       if (fuerza === 0 || password.length === 0) {
         barra.style.width = "0%";
         barra.style.backgroundColor = "#e0e0e0";
         texto.style.color = "#666";
         texto.textContent = "Mínimo 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 carácter especial (@$!%*?&)";
       } else if (fuerza <= 2) {
-        // DÉBIL - Rojo
         barra.style.width = "33%";
         barra.style.backgroundColor = "#f44336";
         texto.style.color = "#f44336";
         texto.textContent = "❌ Débil - Faltan: " + requisitos.join(", ");
       } else if (fuerza <= 4) {
-        // MEDIA - Naranja
         barra.style.width = "66%";
         barra.style.backgroundColor = "#ff9800";
         texto.style.color = "#ff9800";
         texto.textContent = "⚠️ Media - Faltan: " + requisitos.join(", ");
       } else {
-        // FUERTE - Verde
         barra.style.width = "100%";
         barra.style.backgroundColor = "#4caf50";
         texto.style.color = "#4caf50";
@@ -181,34 +140,13 @@
       }
     }
 
-    // ✅ Validación de seguridad de contraseña
     function validarSeguridadPassword(password) {
-      // Mínimo 8 caracteres
-      if (password.length < 8) {
-        return "La contraseña debe tener al menos 8 caracteres.";
-      }
-      
-      // Al menos una letra mayúscula
-      if (!/[A-Z]/.test(password)) {
-        return "La contraseña debe contener al menos una letra mayúscula.";
-      }
-      
-      // Al menos una letra minúscula
-      if (!/[a-z]/.test(password)) {
-        return "La contraseña debe contener al menos una letra minúscula.";
-      }
-      
-      // Al menos un número
-      if (!/[0-9]/.test(password)) {
-        return "La contraseña debe contener al menos un número.";
-      }
-      
-      // Al menos un carácter especial
-      if (!/[@$!%*?&]/.test(password)) {
-        return "La contraseña debe contener al menos un carácter especial (@$!%*?&).";
-      }
-      
-      return null; // Contraseña válida
+      if (password.length < 8) return "La contraseña debe tener al menos 8 caracteres.";
+      if (!/[A-Z]/.test(password)) return "La contraseña debe contener al menos una letra mayúscula.";
+      if (!/[a-z]/.test(password)) return "La contraseña debe contener al menos una letra minúscula.";
+      if (!/[0-9]/.test(password)) return "La contraseña debe contener al menos un número.";
+      if (!/[@$!%*?&]/.test(password)) return "La contraseña debe contener al menos un carácter especial (@$!%*?&).";
+      return null;
     }
 
     function register() {
@@ -221,63 +159,22 @@
       const fecha = document.getElementById("fecha").value;
       const usuario = document.getElementById("usuario").value.trim();
       const password = document.getElementById("password").value;
-      const confirmar = document.getElementById("confirmar").value;
+      const confirmar = document.getElementById("confirm-password").value;
       const terminos = document.getElementById("terminos").checked;
 
-      // ✅ Validación de dominio @booknest.com
-      if (!correo.endsWith("@booknest.com")) {
-        alert("Solo se permiten correos con el dominio @booknest.com");
-        return false;
-      }
-
-      // ✅ Validación de seguridad de contraseña
-      const errorPassword = validarSeguridadPassword(password);
-      if (errorPassword) {
-        alert(errorPassword);
-        return false;
-      }
-
-      if (password !== confirmar) {
-        alert("Las contraseñas no coinciden.");
-        return false;
-      }
-
-      if (!terminos) {
-        alert("Debes aceptar los términos y condiciones.");
-        return false;
-      }
+      if (!correo.endsWith("@booknest.com")) { alert("Solo @booknest.com"); return false; }
+      const errorPass = validarSeguridadPassword(password); if (errorPass) { alert(errorPass); return false; }
+      if (password !== confirmar) { alert("Contraseñas no coinciden"); return false; }
+      if (!terminos) { alert("Debes aceptar los términos"); return false; }
 
       const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+      if (usuarios.some(u => u.correo === correo)) { alert("Correo ya registrado"); return false; }
+      if (usuarios.some(u => u.usuario === usuario)) { alert("Usuario ya en uso"); return false; }
 
-      if (usuarios.some(u => u.correo === correo)) {
-        alert("Este correo ya está registrado.");
-        return false;
-      }
-
-      if (usuarios.some(u => u.usuario === usuario)) {
-        alert("Ese nombre de usuario ya está en uso.");
-        return false;
-      }
-
-      // --- CAMBIO: añadir historial y carrito propios ---
-      const nuevoUsuario = {
-        nombre,
-        tipo_documento,
-        documento,
-        correo,
-        telefono,
-        direccion,
-        fecha,
-        usuario,
-        password,
-        historial: [],   
-        carrito: []      
-      };
-
-      usuarios.push(nuevoUsuario);
+      usuarios.push({ nombre, tipo_documento, documento, correo, telefono, direccion, fecha, usuario, password, historial: [], carrito: [] });
       localStorage.setItem("usuarios", JSON.stringify(usuarios));
 
-      alert("Cuenta creada exitosamente. Ahora puedes iniciar sesión.");
+      alert("Cuenta creada exitosamente");
       window.location.href = "login.html";
       return false;
     }
