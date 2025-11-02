@@ -19,7 +19,7 @@
         <input type="password" id="password" required>
         <span class="toggle-password" onclick="togglePassword('password')">
 
-          <!-- 👁️ SVG ojo abierto (como el de la captura de Freepik) -->
+          <!-- 👁 SVG ojo abierto (como el de la captura de Freepik) -->
           <svg class="icon-eye" width="22" height="22" viewBox="0 0 24 24" fill="#333">
             <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5c-1.73-3.89-6-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
           </svg>
@@ -92,7 +92,7 @@
         localStorage.setItem("carrito", JSON.stringify(usuario.carrito || []));
         localStorage.setItem("rol", "cliente");
 
-        alert(`Bienvenido ${usuario.nombre}`);
+        alert(Bienvenido ${usuario.nombre});
         window.location.href = "cliente.html";
       } else {
         alert("Correo o contraseña incorrectos. Verifica tus datos.");
