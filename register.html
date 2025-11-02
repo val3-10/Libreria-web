@@ -41,13 +41,11 @@
       <label for="usuario">Nombre de usuario:</label>
       <input type="text" id="usuario" placeholder="usuario123" required>
 
-      <label for="password">Contraseña:</label>
-      <input type="password" id="password" placeholder="••••••••" required oninput="verificarFuerzaPassword()">
-      
+            
            <!-- 🟢 Campo de nueva contraseña con ojo -->
-        <label for="new-password">Nueva contraseña:</label>
+        <label for="password"> Contraseña:</label>
         <div class="password-container">
-          <input type="password" id="new-password" placeholder="Nueva contraseña" required oninput="verificarFuerzaPassword()">
+       <input type="password" id="password" placeholder="••••••••" required oninput="verificarFuerzaPassword()">
           <span class="toggle-password" onclick="togglePassword('new-password')">
             <!-- 👁️ SVG ojo abierto -->
             <svg class="icon-eye" width="22" height="22" viewBox="0 0 24 24" fill="#333">
@@ -61,7 +59,8 @@
         </div>
 
           <!-- 🟢 Campo de nueva contraseña con ojo -->
-        <label for="confirm-password">Confirmar contraseña:</label>
+
+      <label for="confirmar">Confirmar contraseña:</label>
         <div class="password-container">
           <input type="password" id="confirm-password" placeholder="Contraseña confirmada" required oninput="verificarFuerzaPassword()">
           <span class="toggle-password" onclick="togglePassword('confirm-password')">
@@ -86,9 +85,6 @@
           Mínimo 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 carácter especial (@$!%*?&)
         </small>
       </div>
-
-      <label for="confirmar">Confirmar contraseña:</label>
-      <input type="password" id="confirmar" placeholder="••••••••" required>
 
       <label>
         <input type="checkbox" id="terminos" required>
