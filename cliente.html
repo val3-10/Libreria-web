@@ -17,685 +17,401 @@
   </div>
 </div>
 
-
- <!-- Botón para carrito -->
- <header>
+<!-- Botón para carrito -->
+<header>
   <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-      <button onclick="abrirCarrito()" class="btn-carrito">
-  Mi carrito 
-  <ion-icon name="cart-outline"></ion-icon>
-  <span id="contadorCarrito" class="contador-carrito">0</span>
-</button>
-  </header>
+  <button onclick="abrirCarrito()" class="btn-carrito">
+    Mi carrito 
+    <ion-icon name="cart-outline"></ion-icon>
+    <span id="contadorCarrito" class="contador-carrito">0</span>
+  </button>
+</header>
 
-  <div class="container">
+<div class="container">
 
-    <!-- SECCIÓN FACTURAS -->
-<div class="seccion">
-  <h2>Mis Facturas</h2>
-  <!-- Botón para ver facturas -->
-<button onclick="toggleFacturas()" style="margin-bottom:10px;">Ver Facturas</button>
-  <table id="tablaFacturasCliente">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Fecha</th>
-        <th>Total</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
+  <!-- SECCIÓN FACTURAS -->
+  <div class="seccion">
+    <h2>Mis Facturas</h2>
+    <button onclick="toggleFacturas()" style="margin-bottom:10px;">Ver Facturas</button>
+    <table id="tablaFacturasCliente">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Fecha</th>
+          <th>Total</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
+  <!-- CATÁLOGO -->
+  <div class="seccion">
+    <h2>Catálogo de Libros</h2>
+    <div id="catalogoLibros" class="catalogo-libros"></div>
+  </div>
 
-    <!-- CATÁLOGO -->
-    <div class="seccion">
-      <h2>Catálogo de Libros</h2>
-      <div id="catalogoLibros" class="catalogo-libros"></div>
-    </div>
-
-    <!-- MODAL CARRITO -->
-    <div id="modalCarrito" class="modal">
-      <div class="modal-contenido" style="width: 800px; max-height: 800px; overflow-y: auto;">
-        <h3>Carrito de Compras</h3>
-        <table id="tablaCarrito">
-          <thead>
-            <tr>
-              <th>Libro</th>
-              <th>Cantidad</th>
-              <th>Precio</th>
-              <th>Total</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <div style="text-align: right; margin-top: 10px;">
-          <button onclick="pagarCarrito()" style="width:auto; padding:8px 16px;">Proceder al Pago</button>
-          <button onclick="cerrarCarrito()" style="width:auto; padding:8px 16px;">Cerrar</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- HISTORIAL (esta asi comentado por lo que si lo borraba tal cual afectaba algo y por si a futuro se necesita) -->
-    <!--
-    <div class="seccion">
-      <h2>Mi Historial</h2>
-      <button onclick="borrarHistorial()" style="margin-bottom:10px;">Borrar historial</button>
-      <table id="tablaHistorialCliente">
+  <!-- MODAL CARRITO -->
+  <div id="modalCarrito" class="modal">
+    <div class="modal-contenido" style="width: 800px; max-height: 800px; overflow-y: auto;">
+      <h3>Carrito de Compras</h3>
+      <table id="tablaCarrito">
         <thead>
           <tr>
-            <th>Fecha</th>
             <th>Libro</th>
-            <th>Tipo</th>
-            <th>Estado</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Total</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
-    </div>
-    -->
-
-    <!-- MODAL para ingresar cantidad -->
-    <div id="modalCantidad" class="modal">
-      <div class="modal-contenido">
-        <h3 id="modalTitulo"></h3>
-        <p id="modalSub"></p>
-        <input type="number" id="cantidadInput" min="1">
-        <div class="modal-botones">
-          <button onclick="confirmarCantidad()">Aceptar</button>
-          <button onclick="cerrarModal()">Cancelar</button>
-        </div>
+      <div style="text-align: right; margin-top: 10px;">
+        <button onclick="pagarCarrito()" style="width:auto; padding:8px 16px;">Proceder al Pago</button>
+        <button onclick="cerrarCarrito()" style="width:auto; padding:8px 16px;">Cerrar</button>
       </div>
     </div>
+  </div>
 
-   <!-- PORTAL DE PAGO -->
-<div id="checkout" class="modal">
-  <div class="modal-contenido">
-    <h3>Portal de Pago</h3>
-    <form>
-      <input type="text" id="tarjeta" placeholder="Número de tarjeta" maxlength="16" oninput="soloNumeros(this)"><br>
-      <input type="text" id="expiracion" placeholder="MM/AA" maxlength="5" oninput="formatoExpiracion(this)"><br>
-      <input type="text" id="cvv" placeholder="CVV" maxlength="3" oninput="soloNumeros(this)"><br>
-      <input type="text" id="titular" placeholder="Nombre del titular"><br>
+  <!-- MODAL para ingresar cantidad -->
+  <div id="modalCantidad" class="modal">
+    <div class="modal-contenido">
+      <h3 id="modalTitulo"></h3>
+      <p id="modalSub"></p>
+      <input type="number" id="cantidadInput" min="1">
+      <div class="modal-botones">
+        <button onclick="confirmarCantidad()">Aceptar</button>
+        <button onclick="cerrarModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PORTAL DE PAGO -->
+  <div id="checkout" class="modal">
+    <div class="modal-contenido">
+      <h3>Portal de Pago</h3>
+      <form>
+        <input type="text" id="tarjeta" placeholder="Número de tarjeta" maxlength="16" oninput="detectarTipoTarjeta(this)">
+        <small id="tipoTarjeta" style="display:block; margin-top:5px; font-weight:bold;"></small>
+
+        <input type="text" id="expiracion" placeholder="MM/AA" maxlength="5" oninput="formatoExpiracion(this)"><br>
+        <input type="text" id="cvv" placeholder="CVV" maxlength="3" oninput="soloNumeros(this)"><br>
+        <input type="text" id="titular" placeholder="Nombre del titular"><br>
+
+        <div class="modal-botones">
+          <button type="button" onclick="finishPurchase()">Pagar</button>
+          <button type="button" onclick="cerrarCheckout()">Cerrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL FACTURA -->
+  <div id="modalFactura" class="modal">
+    <div class="modal-contenido" style="width: 600px; max-height: 700px; overflow-y: auto;">
+      <h3>Factura de Compra</h3>
+      <p><strong>Cliente:</strong> <span id="facturaCliente"></span></p>
+      <p><strong>Correo:</strong> <span id="facturaCorreo"></span></p>
+      <p><strong>Fecha:</strong> <span id="facturaFecha"></span></p>
+      <p><strong>Tipo de tarjeta:</strong> <span id="facturaTipo"></span></p>
+      <p><strong>Últimos 4 dígitos:</strong> <span id="facturaUltimos4"></span></p>
+
+      <table border="1" width="100%" style="border-collapse: collapse; margin-top: 10px;">
+        <thead>
+          <tr>
+            <th>Libro</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody id="facturaTabla"></tbody>
+      </table>
+
+      <h4 style="text-align: right; margin-top: 10px;">Total: $<span id="facturaTotal">0.00</span></h4>
 
       <div class="modal-botones">
-        <button type="button" onclick="finishPurchase()">Pagar</button>
-        <button type="button" onclick="cerrarCheckout()">Cerrar</button>
+        <button onclick="cerrarModalFactura()">Cerrar</button>
       </div>
-    </form>
-  </div>
-</div>
-
-<!-- MODAL FACTURA -->
-<div id="modalFactura" class="modal">
-  <div class="modal-contenido" style="width: 600px; max-height: 700px; overflow-y: auto;">
-    <h3>Factura de Compra</h3>
-    <p><strong>Cliente:</strong> <span id="facturaCliente"></span></p>
-    <p><strong>Correo:</strong> <span id="facturaCorreo"></span></p>
-    <p><strong>Fecha:</strong> <span id="facturaFecha"></span></p>
-
-    <table border="1" width="100%" style="border-collapse: collapse; margin-top: 10px;">
-      <thead>
-        <tr>
-          <th>Libro</th>
-          <th>Cantidad</th>
-          <th>Precio</th>
-          <th>Subtotal</th>
-        </tr>
-      </thead>
-      <tbody id="facturaTabla"></tbody>
-    </table>
-
-    <h4 style="text-align: right; margin-top: 10px;">Total: $<span id="facturaTotal">0.00</span></h4>
-
-    <div class="modal-botones">
-      <button onclick="cerrarModalFactura()">Cerrar</button>
     </div>
   </div>
-</div>
 
-    <script>
-      // ---------------- VARIABLES GLOBALES ----------------
-      const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
-      let libros = JSON.parse(localStorage.getItem("libros")) || [];
-      let transacciones = JSON.parse(localStorage.getItem("transacciones")) || [];
+<script>
+  const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+  let libros = JSON.parse(localStorage.getItem("libros")) || [];
+  let carrito = usuarioActivo ? (JSON.parse(localStorage.getItem(`carrito_${usuarioActivo.usuario}`)) || []) : [];
+  let historialCliente = usuarioActivo ? (JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || []) : [];
+  let transacciones = JSON.parse(localStorage.getItem("transacciones")) || [];
 
-      // Historial y carrito específicos del usuario
-      let historialCliente = usuarioActivo ? (JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || []) : [];
-      let carrito = usuarioActivo ? (JSON.parse(localStorage.getItem(`carrito_${usuarioActivo.usuario}`)) || []) : [];
+  let accionPendiente = null;
+  let libroSeleccionado = null;
+  let indiceSeleccionado = null;
+  let compraPendiente = null;
 
-      let accionPendiente = null;
-      let libroSeleccionado = null;
-      let indiceSeleccionado = null;
-      let compraPendiente = null;
+  document.addEventListener("DOMContentLoaded", () => {
+    mostrarLibrosCliente();
+    mostrarCarrito();
+    actualizarContadorCarrito();
+  });
 
-      document.addEventListener("DOMContentLoaded", () => {
-        mostrarLibrosCliente();
-        mostrarCarrito();
-        // historial comentado para no fallar, ya no se llama mostrarHistorialCliente()
-        // mostrarHistorialCliente();
-      });
-
-      // ------------------- FUNCIONES GENERALES ----------------
-      function volverAlLogin() {
-        localStorage.removeItem("rol");
-        window.location.href = "login.html";
-      }
-
-      function mostrarMensaje(tipo, mensaje) {
-        const toast = document.createElement('div');
-        toast.className = `toast ${tipo}`;
-        toast.textContent = mensaje;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-      }
-
-      function guardarDatos() {
-        localStorage.setItem("libros", JSON.stringify(libros));
-        localStorage.setItem("transacciones", JSON.stringify(transacciones));
-        if (usuarioActivo) {
-          localStorage.setItem(`carrito_${usuarioActivo.usuario}`, JSON.stringify(carrito));
-          // ¡GUARDAR EL HISTORIAL CADA VEZ QUE SE LLAMA!
-          localStorage.setItem(`historial_${usuarioActivo.usuario}`, JSON.stringify(historialCliente));
-        }
-      }
-
-      // ------------------- CATÁLOGO ----------------
-      function mostrarLibrosCliente() {
-        const contenedor = document.getElementById("catalogoLibros");
-        contenedor.innerHTML = "";
-
-        if (libros.length === 0) {
-          contenedor.innerHTML = "<p>No hay libros disponibles</p>";
-          return;
-        }
-
-        libros.forEach((libro, i) => {
-          const carta = document.createElement("div");
-          carta.className = "carta-libro";
-
-          carta.innerHTML = `
-            <img src="${libro.caratula || 'img/sin-imagen.png'}" alt="Portada">
-            <h3>${libro.titulo}</h3>
-            <p>Autor: ${libro.autor}</p>
-            <p>Estado: ${libro.estado}</p>
-            <p>Precio: $${libro.precio ? libro.precio.toFixed(2) : 0}</p>
-            <p>Stock: ${libro.stock}</p>
-            <button onclick="abrirModal('comprar', ${i})">Comprar</button>
-            <button onclick="abrirModal('prestamo', ${i})">Pedir Préstamo</button>
-            <button onclick="agregarCarrito(${i})">Agregar al Carrito</button>
-          `;
-          contenedor.appendChild(carta);
-        });
-      }
-
-      function abrirModal(tipo, i) {
-        accionPendiente = tipo;
-        libroSeleccionado = libros[i];
-        indiceSeleccionado = i;
-        document.getElementById('modalTitulo').textContent =
-          tipo === 'comprar'
-            ? `Comprar "${libroSeleccionado.titulo}"`
-            : `Pedir préstamo de "${libroSeleccionado.titulo}"`;
-        document.getElementById('modalSub').textContent = `Disponible: ${libroSeleccionado.stock} ejemplares`;
-        document.getElementById('cantidadInput').value = 1;
-        document.getElementById('cantidadInput').max = libroSeleccionado.stock;
-        document.getElementById('modalCantidad').style.display = 'flex';
-      }
-
-      function cerrarModal() {
-        document.getElementById('modalCantidad').style.display = 'none';
-        accionPendiente = null;
-      }
-
-      function confirmarCantidad() {
-        const cantidad = parseInt(document.getElementById('cantidadInput').value);
-        if (isNaN(cantidad) || cantidad <= 0) return;
-
-        if (cantidad > libroSeleccionado.stock) {
-          mostrarMensaje('error', 'Cantidad superior al stock disponible');
-          return;
-        }
-
-        if (accionPendiente === 'comprar') showCheckout(libroSeleccionado, cantidad);
-        else if (accionPendiente === 'prestamo') ejecutarPrestamo(cantidad);
-
-        cerrarModal();
-      }
-
-      function ejecutarPrestamo(cantidad) {
-        const nombreCliente = usuarioActivo ? usuarioActivo.nombre : "Cliente";
-        const correoCliente = usuarioActivo ? usuarioActivo.correo : "";
-        const fecha = new Date().toLocaleString();
-
-        libroSeleccionado.stock -= cantidad;
-
-        transacciones.push({
-          fecha,
-          usuario: nombreCliente,
-          correo: correoCliente, 
-          libro: libroSeleccionado.titulo,
-          tipo: "prestamo",
-          cantidad,
-          duracion: "7 días"
-        });
-
-        historialCliente.push({
-          fecha, libro: libroSeleccionado.titulo, tipo: "Préstamo", estado: "Activo"
-        });
-        guardarDatos(); // Guardar inmediatamente
-      }
-
-      // ------------------- CARRITO ----------------
-      function agregarCarrito(i) {
-        const libro = libros[i];
-
-        if (libro.stock <= 0) {
-          mostrarMensaje('error', 'No hay stock disponible');
-          return;
-        }
-
-        const existente = carrito.find(item => item.titulo === libro.titulo);
-        if (existente) existente.cantidad++;
-        else carrito.push({ titulo: libro.titulo, precio: libro.precio, cantidad: 1 });
-
-        guardarDatos();
-        mostrarCarrito();
-        mostrarMensaje('success', 'Agregado al carrito');
-      }
-
-      function mostrarCarrito() {
-        const tbody = document.querySelector("#tablaCarrito tbody");
-        tbody.innerHTML = "";
-
-        if (carrito.length === 0) {
-          tbody.innerHTML = "<tr><td colspan='5'>El carrito está vacío</td></tr>";
-          return;
-        }
-
-        carrito.forEach((item, i) => {
-          const total = item.precio * item.cantidad;
-          tbody.innerHTML += `
-            <tr>
-              <td>${item.titulo}</td>
-              <td>${item.cantidad}</td>
-              <td>$${item.precio.toFixed(2)}</td>
-              <td>$${total.toFixed(2)}</td>
-              <td><button onclick="eliminarDelCarrito(${i})">Eliminar</button></td>
-            </tr>`;
-        });
-      }
-
-      function eliminarDelCarrito(i) {
-        carrito.splice(i, 1);
-        guardarDatos();
-        mostrarCarrito();
-      }
-
-      function pagarCarrito() {
-        if (carrito.length === 0) {
-          mostrarMensaje('error', 'El carrito está vacío');
-          return;
-        }
-        compraPendiente = { carrito: true };
-        document.getElementById('checkout').style.display = 'flex';
-      }
-
-      function abrirCarrito() {
-        mostrarCarrito();
-        document.getElementById('modalCarrito').style.display = 'flex';
-      }
-
-      function cerrarCarrito() {
-        document.getElementById('modalCarrito').style.display = 'none';
-      }
-
-      // ------------------- PORTAL DE PAGO ----------------
-      function showCheckout(libro, cantidad) {
-        compraPendiente = { libro, cantidad };
-        document.getElementById('checkout').style.display = 'flex';
-      }
-
-      function cerrarCheckout() {
-        document.getElementById('checkout').style.display = 'none';
-        compraPendiente = null;
-        document.getElementById('tarjeta').value = '';
-        document.getElementById('expiracion').value = '';
-        document.getElementById('cvv').value = '';
-        document.getElementById('titular').value = '';
-      }
-
-      function soloNumeros(input) { input.value = input.value.replace(/\D/g, ''); }
-
-      function formatoExpiracion(input) {
-        let v = input.value.replace(/\D/g, '');
-        if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2, 4);
-        input.value = v;
-      }
-
-      function finishPurchase() {
-  const tarjeta = document.getElementById('tarjeta').value.trim();
-  const expiracion = document.getElementById('expiracion').value.trim();
-  const cvv = document.getElementById('cvv').value.trim();
-  const titular = document.getElementById('titular').value.trim();
-
-  if (!/^\d{16}$/.test(tarjeta) || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiracion) || !/^\d{3}$/.test(cvv) || titular.length === 0) {
-    alert("Datos de tarjeta inválidos.");
-    return;
+  function volverAlLogin() {
+    localStorage.removeItem("rol");
+    window.location.href = "login.html";
   }
 
-  const nombreCliente = usuarioActivo ? usuarioActivo.nombre : "Cliente";
-  const correoCliente = usuarioActivo ? usuarioActivo.correo : "";
-  const fecha = new Date().toLocaleString();
+  function mostrarMensaje(tipo, mensaje) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${tipo}`;
+    toast.textContent = mensaje;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
 
-  // === FACTURA: preparar detalle antes de vaciar carrito ===
-  let detalleFactura = [];
+  function guardarDatos() {
+    localStorage.setItem("libros", JSON.stringify(libros));
+    localStorage.setItem("transacciones", JSON.stringify(transacciones));
+    if (usuarioActivo) {
+      localStorage.setItem(`carrito_${usuarioActivo.usuario}`, JSON.stringify(carrito));
+      localStorage.setItem(`historial_${usuarioActivo.usuario}`, JSON.stringify(historialCliente));
+    }
+  }
 
-  if (compraPendiente && compraPendiente.carrito) {
-    // Copiar contenido del carrito antes de vaciarlo
-    detalleFactura = carrito.map(item => ({
-      titulo: item.titulo,
-      cantidad: item.cantidad,
-      precio: item.precio
-    }));
+  function detectarTipoTarjeta(input) {
+    const valor = input.value.replace(/\D/g, "");
+    const tipoSpan = document.getElementById("tipoTarjeta");
+    let tipo = "";
 
-    carrito.forEach(item => {
-      const libro = libros.find(l => l.titulo === item.titulo);
-      if (libro) libro.stock -= item.cantidad;
+    if (/^4/.test(valor)) tipo = "Visa";
+    else if (/^5[1-5]/.test(valor)) tipo = "MasterCard";
+    else if (/^3[47]/.test(valor)) tipo = "American Express";
+    else if (/^6(?:011|5)/.test(valor)) tipo = "Discover";
+    else if (/^35(2[89]|[3-8][0-9])/.test(valor)) tipo = "JCB";
+    else if (/^3(?:0[0-5]|[68])/.test(valor)) tipo = "Diners Club";
+    else tipo = "";
 
-      transacciones.push({
-        fecha,
-        usuario: nombreCliente,
-        correo: correoCliente,
-        libro: item.titulo,
-        tipo: "venta",
-        cantidad: item.cantidad,
-        precioTotal: item.precio * item.cantidad
-      });
+    tipoSpan.textContent = tipo ? `💳 ${tipo}` : "";
+  }
 
-      historialCliente.push({
-        fecha,
-        libro: item.titulo,
-        tipo: "Compra",
-        estado: "Completado"
-      });
+  function mostrarLibrosCliente() {
+    const contenedor = document.getElementById("catalogoLibros");
+    contenedor.innerHTML = "";
+
+    if (libros.length === 0) {
+      contenedor.innerHTML = "<p>No hay libros disponibles</p>";
+      return;
+    }
+
+    libros.forEach((libro, i) => {
+      const carta = document.createElement("div");
+      carta.className = "carta-libro";
+      carta.innerHTML = `
+        <img src="${libro.caratula || 'img/sin-imagen.png'}" alt="Portada">
+        <h3>${libro.titulo}</h3>
+        <p>Autor: ${libro.autor}</p>
+        <p>Estado: ${libro.estado}</p>
+        <p>Precio: $${libro.precio ? libro.precio.toFixed(2) : 0}</p>
+        <p>Stock: ${libro.stock}</p>
+        <button onclick="abrirModal('comprar', ${i})">Comprar</button>
+        <button onclick="abrirModal('prestamo', ${i})">Pedir Préstamo</button>
+        <button onclick="agregarCarrito(${i})">Agregar al Carrito</button>
+      `;
+      contenedor.appendChild(carta);
     });
+  }
 
-    carrito = [];
-    guardarDatos();
+  function abrirModal(tipo, i) {
+    accionPendiente = tipo;
+    libroSeleccionado = libros[i];
+    indiceSeleccionado = i;
+    document.getElementById('modalTitulo').textContent =
+      tipo === 'comprar' ? `Comprar "${libroSeleccionado.titulo}"` : `Pedir préstamo de "${libroSeleccionado.titulo}"`;
+    document.getElementById('modalSub').textContent = `Disponible: ${libroSeleccionado.stock} ejemplares`;
+    document.getElementById('cantidadInput').value = 1;
+    document.getElementById('cantidadInput').max = libroSeleccionado.stock;
+    document.getElementById('modalCantidad').style.display = 'flex';
+  }
 
-  } else if (compraPendiente && compraPendiente.libro) {
-    // Si se compró un solo libro
-    const { libro, cantidad } = compraPendiente;
-    libro.stock -= cantidad;
+  function cerrarModal() { document.getElementById('modalCantidad').style.display = 'none'; accionPendiente = null; }
 
-    detalleFactura = [{
-      titulo: libro.titulo,
-      cantidad,
-      precio: libro.precio
-    }];
+  function confirmarCantidad() {
+    const cantidad = parseInt(document.getElementById('cantidadInput').value);
+    if (isNaN(cantidad) || cantidad <= 0) return;
+    if (cantidad > libroSeleccionado.stock) { mostrarMensaje('error', 'Cantidad superior al stock disponible'); return; }
+    if (accionPendiente === 'comprar') showCheckout(libroSeleccionado, cantidad);
+    else if (accionPendiente === 'prestamo') ejecutarPrestamo(cantidad);
+    cerrarModal();
+  }
+
+  function ejecutarPrestamo(cantidad) {
+    const nombreCliente = usuarioActivo ? usuarioActivo.nombre : "Cliente";
+    const correoCliente = usuarioActivo ? usuarioActivo.correo : "";
+    const fecha = new Date().toLocaleString();
+
+    libroSeleccionado.stock -= cantidad;
 
     transacciones.push({
-      fecha,
-      usuario: nombreCliente,
-      correo: correoCliente,
-      libro: libro.titulo,
-      tipo: "venta",
-      cantidad,
-      precioTotal: libro.precio * cantidad
+      fecha, usuario: nombreCliente, correo: correoCliente,
+      libro: libroSeleccionado.titulo, tipo: "prestamo",
+      cantidad, duracion: "7 días"
     });
 
-    historialCliente.push({
-      fecha,
-      libro: libro.titulo,
-      tipo: "Compra",
-      estado: "Completado"
-    });
+    historialCliente.push({ fecha, libro: libroSeleccionado.titulo, tipo: "Préstamo", estado: "Activo" });
     guardarDatos();
   }
 
-  // === Calcular total ===
-  const totalFactura = detalleFactura.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
+  function agregarCarrito(i) {
+    const libro = libros[i];
+    if (libro.stock <= 0) { mostrarMensaje('error', 'No hay stock disponible'); return; }
+    const existente = carrito.find(item => item.titulo === libro.titulo);
+    if (existente) existente.cantidad++;
+    else carrito.push({ titulo: libro.titulo, precio: libro.precio, cantidad: 1 });
+    guardarDatos();
+    mostrarCarrito();
+    mostrarMensaje('success', 'Agregado al carrito');
+  }
 
-  // === Guardar factura ===
-  const facturas = JSON.parse(localStorage.getItem('facturas')) || [];
-  const nuevaFactura = {
-    id: Date.now(),
-    cliente: nombreCliente,
-    correo: correoCliente,
-    fecha,
-    detalle: detalleFactura,
-    total: totalFactura
-  };
-  facturas.push(nuevaFactura);
-  localStorage.setItem('facturas', JSON.stringify(facturas));
+  function mostrarCarrito() {
+    const tbody = document.querySelector("#tablaCarrito tbody");
+    tbody.innerHTML = "";
+    if (carrito.length === 0) {
+      tbody.innerHTML = "<tr><td colspan='5'>El carrito está vacío</td></tr>";
+    } else {
+      carrito.forEach((item, i) => {
+        const total = item.precio * item.cantidad;
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.titulo}</td>
+            <td>${item.cantidad}</td>
+            <td>$${item.precio.toFixed(2)}</td>
+            <td>$${total.toFixed(2)}</td>
+            <td><button onclick="eliminarDelCarrito(${i})">Eliminar</button></td>
+          </tr>`;
+      });
+    }
+    actualizarContadorCarrito();
+  }
 
-  // === Actualizar interfaz ===
-  mostrarLibrosCliente();
-  mostrarCarrito();
-  cerrarCheckout();
-  mostrarMensaje('success', 'Compra realizada con éxito');
-  mostrarMensaje('success', 'Factura generada correctamente');
-  mostrarFacturasGuardadas();
+  function eliminarDelCarrito(i) { carrito.splice(i, 1); guardarDatos(); mostrarCarrito(); }
 
-  compraPendiente = null;
-}
+  function pagarCarrito() {
+    if (carrito.length === 0) { mostrarMensaje('error', 'El carrito está vacío'); return; }
+    compraPendiente = { carrito: true };
+    document.getElementById('checkout').style.display = 'flex';
+  }
 
+  function abrirCarrito() { mostrarCarrito(); document.getElementById('modalCarrito').style.display = 'flex'; }
+  function cerrarCarrito() { document.getElementById('modalCarrito').style.display = 'none'; }
 
-      //Boton perfil
-      function verPerfil() {
-        window.location.href = "usuario.html";
-      }
+  function showCheckout(libro, cantidad) { compraPendiente = { libro, cantidad }; document.getElementById('checkout').style.display = 'flex'; }
+  function cerrarCheckout() {
+    document.getElementById('checkout').style.display = 'none';
+    compraPendiente = null;
+    document.getElementById('tarjeta').value = '';
+    document.getElementById('expiracion').value = '';
+    document.getElementById('cvv').value = '';
+    document.getElementById('titular').value = '';
+    document.getElementById('tipoTarjeta').textContent = '';
+  }
 
+  function soloNumeros(input) { input.value = input.value.replace(/\D/g, ''); }
+  function formatoExpiracion(input) { let v = input.value.replace(/\D/g, ''); if(v.length>2) v=v.slice(0,2)+'/'+v.slice(2,4); input.value=v; }
 
-      function generarFactura() {
-  const factura = {
-    id: Date.now(),
-    cliente: document.getElementById("nombreCliente").value,
-    correo: document.getElementById("correoCliente").value,
-    libro: document.getElementById("nombreLibro").textContent,
-    cantidad: document.getElementById("cantidad").value,
-    total: calcularTotal() // o el total que ya tengas
-  };
+  function finishPurchase() {
+    const tarjeta = document.getElementById('tarjeta').value.trim();
+    const expiracion = document.getElementById('expiracion').value.trim();
+    const cvv = document.getElementById('cvv').value.trim();
+    const titular = document.getElementById('titular').value.trim();
+    if(!/^\d{16}$/.test(tarjeta)||!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiracion)||!/^\d{3}$/.test(cvv)||titular.length===0){
+      alert("Datos de tarjeta inválidos."); return;
+    }
 
-  // Guarda la factura en localStorage
-  let facturas = JSON.parse(localStorage.getItem("facturas")) || [];
-  facturas.push(factura);
-  localStorage.setItem("facturas", JSON.stringify(facturas));
+    const nombreCliente = usuarioActivo ? usuarioActivo.nombre : "Cliente";
+    const correoCliente = usuarioActivo ? usuarioActivo.correo : "";
+    const fecha = new Date().toLocaleString();
+    let detalleFactura = [];
 
-  alert("Factura generada y guardada correctamente.");
-}
+    if(compraPendiente && compraPendiente.carrito){
+      detalleFactura = carrito.map(item=>({titulo:item.titulo,cantidad:item.cantidad,precio:item.precio}));
+      carrito.forEach(item=>{ const libro = libros.find(l=>l.titulo===item.titulo); if(libro) libro.stock -= item.cantidad; });
+      carrito = [];
+      guardarDatos();
+    } else if(compraPendiente && compraPendiente.libro){
+      const {libro,cantidad}=compraPendiente;
+      libro.stock -= cantidad;
+      detalleFactura=[{titulo:libro.titulo,cantidad,precio:libro.precio}];
+      guardarDatos();
+    }
 
-// ====== MENÚ FLOTANTE ======
-const botonMenu = document.getElementById('botonMenu');
-const menuOpciones = document.getElementById('menuOpciones');
+    const totalFactura = detalleFactura.reduce((sum,item)=>sum+item.precio*item.cantidad,0);
+    const tipoTarjeta = document.getElementById("tipoTarjeta").textContent.replace("💳 ","")||"—";
+    const ultimos4 = tarjeta.slice(-4);
 
-// Al hacer clic en el botón, muestra u oculta las opciones
-botonMenu.addEventListener('click', (e) => {
-  e.stopPropagation();
-  menuOpciones.style.display = 
-    menuOpciones.style.display === 'flex' ? 'none' : 'flex';
-});
+    const facturas = JSON.parse(localStorage.getItem('facturas')) || [];
+    const nuevaFactura = { id:Date.now(), cliente:nombreCliente, correo:correoCliente, fecha, detalle:detalleFactura, total:totalFactura, tarjetaTipo:tipoTarjeta, tarjetaUltimos4:ultimos4 };
+    facturas.push(nuevaFactura);
+    localStorage.setItem('facturas', JSON.stringify(facturas));
 
-// Cierra el menú si haces clic fuera
-window.addEventListener('click', () => {
-  menuOpciones.style.display = 'none';
-});
-// === CONTADOR DE CARRITO (versión estable para cliente.html) ===
+    mostrarLibrosCliente(); mostrarCarrito(); cerrarCheckout(); mostrarFacturasGuardadas();
+    mostrarMensaje('success','Compra realizada y factura generada');
+    compraPendiente=null;
+  }
 
-// Actualiza el numerito del carrito
-function actualizarContadorCarrito() {
-  const contador = document.getElementById("contadorCarrito");
-  if (!contador) return;
+  function verPerfil(){ window.location.href="usuario.html"; }
 
-  const totalItems = carrito.reduce((total, item) => total + (item.cantidad || 1), 0);
-  contador.textContent = totalItems > 0 ? totalItems : 0;
-}
+  const botonMenu=document.getElementById('botonMenu');
+  const menuOpciones=document.getElementById('menuOpciones');
+  botonMenu.addEventListener('click', e=>{ e.stopPropagation(); menuOpciones.style.display = menuOpciones.style.display==='flex'?'none':'flex'; });
+  window.addEventListener('click',()=>{ menuOpciones.style.display='none'; });
 
-// Interceptamos funciones existentes para no romper nada
-const _agregarCarrito = agregarCarrito;
-agregarCarrito = function(i) {
-  _agregarCarrito(i);
-  actualizarContadorCarrito();
-};
+  function actualizarContadorCarrito(){
+    const contador=document.getElementById("contadorCarrito");
+    if(!contador) return;
+    const totalItems=carrito.reduce((total,item)=>total+(item.cantidad||1),0);
+    contador.textContent=totalItems>0?totalItems:0;
+  }
 
-const _eliminarDelCarrito = eliminarDelCarrito;
-eliminarDelCarrito = function(i) {
-  _eliminarDelCarrito(i);
-  actualizarContadorCarrito();
-};
+  function toggleFacturas(){
+    const seccionTabla=document.getElementById('tablaFacturasCliente');
+    seccionTabla.style.display = seccionTabla.style.display==='table'?'none':'table';
+    mostrarFacturasGuardadas();
+  }
 
-// También actualiza al iniciar
-document.addEventListener("DOMContentLoaded", actualizarContadorCarrito);
-//  Actualizar contador del carrito
-actualizarContadorCarrito();
-
-compraPendiente = null;
-function mostrarCarrito() {
-  const tbody = document.querySelector("#tablaCarrito tbody");
-  tbody.innerHTML = "";
-
-  if (carrito.length === 0) {
-    tbody.innerHTML = "<tr><td colspan='5'>El carrito está vacío</td></tr>";
-  } else {
-    carrito.forEach((item, i) => {
-      const total = item.precio * item.cantidad;
-      tbody.innerHTML += `
-        <tr>
-          <td>${item.titulo}</td>
-          <td>${item.cantidad}</td>
-          <td>$${item.precio.toFixed(2)}</td>
-          <td>$${total.toFixed(2)}</td>
-          <td><button onclick="eliminarDelCarrito(${i})">Eliminar</button></td>
-        </tr>`;
+  function mostrarFacturasGuardadas(){
+    const tbody=document.querySelector("#tablaFacturasCliente tbody");
+    const facturas = JSON.parse(localStorage.getItem('facturas')) || [];
+    tbody.innerHTML="";
+    if(facturas.length===0) tbody.innerHTML="<tr><td colspan='4'>No hay facturas</td></tr>";
+    else facturas.forEach((f,i)=>{
+      tbody.innerHTML+=`<tr>
+        <td>${f.id}</td><td>${f.fecha}</td><td>$${f.total.toFixed(2)}</td>
+        <td><button onclick="verFactura(${i})">Ver</button></td>
+      </tr>`;
     });
   }
 
-  // ✅ Mantener contador siempre sincronizado
-  actualizarContadorCarrito();
-}
-
-// ========================
-// VER FACTURAS GUARDADAS
-// ========================
-function mostrarFacturasGuardadas() {
-  const facturas = JSON.parse(localStorage.getItem('facturas')) || [];
-  const tbody = document.querySelector('#tablaFacturasCliente tbody');
-  tbody.innerHTML = '';
-
-  if (facturas.length === 0) {
-    tbody.innerHTML = "<tr><td colspan='4'>No hay facturas registradas</td></tr>";
-    return;
+  function verFactura(indice){
+    const facturas=JSON.parse(localStorage.getItem('facturas'))||[];
+    if(!facturas[indice]) return;
+    const f=facturas[indice];
+    document.getElementById('facturaCliente').textContent=f.cliente;
+    document.getElementById('facturaCorreo').textContent=f.correo;
+    document.getElementById('facturaFecha').textContent=f.fecha;
+    document.getElementById('facturaTipo').textContent=f.tarjetaTipo;
+    document.getElementById('facturaUltimos4').textContent=f.tarjetaUltimos4;
+    const tbody=document.getElementById('facturaTabla'); tbody.innerHTML="";
+    f.detalle.forEach(d=>{ tbody.innerHTML+=`<tr>
+      <td>${d.titulo}</td><td>${d.cantidad}</td><td>$${d.precio.toFixed(2)}</td><td>$${(d.cantidad*d.precio).toFixed(2)}</td>
+    </tr>`; });
+    document.getElementById('facturaTotal').textContent=f.total.toFixed(2);
+    document.getElementById('modalFactura').style.display='flex';
   }
 
-  facturas.forEach((f, i) => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${f.id}</td>
-        <td>${f.fecha}</td>
-        <td>$${f.total.toFixed(2)}</td>
-        <td>
-          <button onclick="verFactura(${i})">Ver</button>
-          <!-- 🔽 AQUI VA EL NUEVO BOTÓN -->
-        <button onclick="eliminarFactura(${i})">Eliminar</button>
-        </td>
-      </tr>
-    `;
-  });
+  function cerrarModalFactura(){ document.getElementById('modalFactura').style.display='none'; }
 
-}
-
-// ========================
-// VER FACTURA ESPECÍFICA
-// ========================
-function verFactura(indice) {
-  const facturas = JSON.parse(localStorage.getItem('facturas')) || [];
-  const factura = facturas[indice];
-  if (!factura) return;
-
-  // Mostrar el mismo modal reutilizado de factura
-  const modal = document.getElementById('modalFactura');
-  const tbody = document.getElementById('facturaTabla');
-
-  document.getElementById('facturaCliente').textContent = factura.cliente;
-  document.getElementById('facturaCorreo').textContent = factura.correo;
-  document.getElementById('facturaFecha').textContent = factura.fecha;
-
-  tbody.innerHTML = '';
-  factura.detalle.forEach(item => {
-    const subtotal = item.precio * item.cantidad;
-    tbody.innerHTML += `
-      <tr>
-        <td>${item.titulo}</td>
-        <td>${item.cantidad}</td>
-        <td>$${item.precio.toFixed(2)}</td>
-        <td>$${subtotal.toFixed(2)}</td>
-      </tr>
-    `;
-  });
-  document.getElementById('facturaTotal').textContent = factura.total.toFixed(2);
-
-  modal.style.display = 'flex';
-}
-function cerrarModalFactura() {
-  const modal = document.getElementById("modalFactura");
-  if (modal) modal.style.display = "none";
-}
-function eliminarFactura(indice) {
-  const facturas = JSON.parse(localStorage.getItem('facturas')) || [];
-  if (!facturas[indice]) return;
-
-  const confirmar = confirm(`¿Seguro que deseas eliminar la factura #${facturas[indice].id}?`);
-  if (!confirmar) return;
-
-  facturas.splice(indice, 1);
-  localStorage.setItem('facturas', JSON.stringify(facturas));
-  mostrarFacturasGuardadas();
-  cerrarModalFactura();
-
-  alert("Factura eliminada correctamente ✅");
-}
-function toggleFacturas() {
-  const seccionTabla = document.getElementById('tablaFacturasCliente');
-  
-  // Si está visible, la escondemos
-  if (seccionTabla.style.display === 'table') {
-    seccionTabla.style.display = 'none';
-    return;
-  }
-
-  // Si está oculta, la mostramos y llenamos con las facturas
-  seccionTabla.style.display = 'table';
-  mostrarFacturasGuardadas();
-}
-
-function mostrarFacturasGuardadas() {
-  const facturas = JSON.parse(localStorage.getItem('facturas')) || [];
-  const tbody = document.querySelector('#tablaFacturasCliente tbody');
-  tbody.innerHTML = '';
-
-  if (facturas.length === 0) {
-    tbody.innerHTML = "<tr><td colspan='4'>No hay facturas registradas</td></tr>";
-    return;
-  }
-
-  facturas.forEach((f, i) => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${f.id}</td>
-        <td>${f.fecha}</td>
-        <td>$${f.total.toFixed(2)}</td>
-        <td>
-          <button onclick="verFactura(${i})">Ver</button>
-          <button onclick="eliminarFactura(${i})">Eliminar</button>
-        </td>
-      </tr>
-    `;
-  });
-}
-    </script>
+</script>
+</div>
 </body>
 </html>

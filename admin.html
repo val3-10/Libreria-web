@@ -221,7 +221,7 @@
           <td>${libro.autor}</td>
           <td>${libro.estado}</td>
           <td>${libro.stock}</td>
-          <td>$${libro.precio.toFixed(2)}</td>
+          <td>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</td>
           <td>${libro.caratula ? `<img src="${libro.caratula}">` : 'Sin imagen'}</td>
           <td><button onclick="eliminarLibro(${i})">Eliminar</button></td>
         </tr>

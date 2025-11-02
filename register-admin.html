@@ -8,7 +8,6 @@
 <body class="register-body">
   <div class="registro-box">
     <h2>Crear cuenta nueva</h2>
-
     <form onsubmit="return register(event)">
       <label for="nombre">Nombre completo:</label>
       <input type="text" id="nombre" placeholder="Juan Paez" required>
@@ -42,9 +41,6 @@
       <label for="usuario">Nombre de usuario:</label>
       <input type="text" id="usuario" placeholder="usuario123" required>
 
-      <label for="password">Contraseña:</label>
-      <input type="password" id="password" placeholder="••••••••" required oninput="verificarFuerzaPassword()">
-
       <label for="rol">Rol:</label>
       <select id="rol" required>
         <option value="">Selecciona un rol</option>
@@ -52,6 +48,34 @@
         <option value="Empleado">Empleado</option>
         <option value="Proveedor">Proveedor</option>
       </select>
+
+      <!-- 🔑 Campo de contraseña con ojito -->
+      <label for="password">Contraseña:</label>
+      <div class="password-container">
+        <input type="password" id="password" placeholder="••••••••" required oninput="verificarFuerzaPassword()">
+        <span class="toggle-password" onclick="togglePassword('password')">
+          <svg class="icon-eye" width="22" height="22" viewBox="0 0 24 24" fill="#333">
+            <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5c-1.73-3.89-6-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
+          </svg>
+          <svg class="icon-eye-slash" width="22" height="22" viewBox="0 0 24 24" fill="#333" style="display:none">
+            <path d="M12 5C7 5 2.73 8.11 1 12a11.94 11.94 0 0 0 2.12 3.06L2 16.18 3.41 17.6l18.02-18.02L22 1.18 20.59 2.6l-2.12 2.12C16.9 3.84 14.53 3 12 3 7 3 2.73 6.11 1 10c1.73 3.89 6 7 11 7 2.53 0 4.9-.84 6.47-2.27l2.12 2.12L22 15.82l-2.12-2.12A11.94 11.94 0 0 0 23 10c-1.73-3.89-6-7-11-7z"/>
+          </svg>
+        </span>
+      </div>
+
+      <!-- 🔑 Confirmar contraseña con ojito -->
+      <label for="confirmar">Confirmar contraseña:</label>
+      <div class="password-container">
+        <input type="password" id="confirmar" placeholder="••••••••" required>
+        <span class="toggle-password" onclick="togglePassword('confirmar')">
+          <svg class="icon-eye" width="22" height="22" viewBox="0 0 24 24" fill="#333">
+            <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5c-1.73-3.89-6-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
+          </svg>
+          <svg class="icon-eye-slash" width="22" height="22" viewBox="0 0 24 24" fill="#333" style="display:none">
+            <path d="M12 5C7 5 2.73 8.11 1 12a11.94 11.94 0 0 0 2.12 3.06L2 16.18 3.41 17.6l18.02-18.02L22 1.18 20.59 2.6l-2.12 2.12C16.9 3.84 14.53 3 12 3 7 3 2.73 6.11 1 10c1.73 3.89 6 7 11 7 2.53 0 4.9-.84 6.47-2.27l2.12 2.12L22 15.82l-2.12-2.12A11.94 11.94 0 0 0 23 10c-1.73-3.89-6-7-11-7z"/>
+          </svg>
+        </span>
+      </div>
 
       <!-- Barra de fuerza de contraseña -->
       <div style="margin: -10px 0 15px 0;">
@@ -62,9 +86,6 @@
           Mínimo 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 carácter especial (@$!%*?&)
         </small>
       </div>
-
-      <label for="confirmar">Confirmar contraseña:</label>
-      <input type="password" id="confirmar" placeholder="••••••••" required>
 
       <label>
         <input type="checkbox" id="terminos" required>
@@ -78,9 +99,21 @@
   </div>
 
   <script>
-    // =======================
-    // Verificar fuerza de contraseña
-    // =======================
+    function togglePassword(id) {
+      const input = document.getElementById(id);
+      const eye = input.parentNode.querySelector(".icon-eye");
+      const eyeSlash = input.parentNode.querySelector(".icon-eye-slash");
+      if (input.type === "password") {
+        input.type = "text";
+        eye.style.display = "none";
+        eyeSlash.style.display = "inline";
+      } else {
+        input.type = "password";
+        eye.style.display = "inline";
+        eyeSlash.style.display = "none";
+      }
+    }
+
     function verificarFuerzaPassword() {
       const password = document.getElementById("password").value;
       const barra = document.getElementById("nivelFuerza");
@@ -117,9 +150,6 @@
       }
     }
 
-    // =======================
-    // Validaciones principales
-    // =======================
     function validarSeguridadPassword(password) {
       if (password.length < 8) return "La contraseña debe tener al menos 8 caracteres.";
       if (!/[A-Z]/.test(password)) return "Debe contener al menos una letra mayúscula.";
@@ -129,9 +159,6 @@
       return null;
     }
 
-    // =======================
-    // Registro del usuario
-    // =======================
     function register(event) {
       event.preventDefault();
 
@@ -181,7 +208,6 @@
         return false;
       }
 
-      // Crear el nuevo usuario con el rol seleccionado
       const nuevoUsuario = {
         nombre, tipo_documento, documento, correo, telefono, direccion, fecha,
         rol, usuario, password,
@@ -198,3 +224,4 @@
   </script>
 </body>
 </html>
+
