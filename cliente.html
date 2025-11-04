@@ -30,13 +30,28 @@
 
 <div class="container">
 
+  <!-- SECCIÓN FACTURAS -->
+  <div class="seccion">
+    <h2>Mis Facturas</h2>
+    <button onclick="toggleFacturas()" style="margin-bottom:10px;">Ver Facturas</button>
+    <table id="tablaFacturasCliente">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Fecha</th>
+          <th>Total</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
   <!-- CATÁLOGO -->
   <div class="seccion">
     <h2>Catálogo de Libros</h2>
     <div id="catalogoLibros" class="catalogo-libros"></div>
   </div>
-
-  
 
   <!-- MODAL CARRITO -->
   <div id="modalCarrito" class="modal">
@@ -94,7 +109,35 @@
     </div>
   </div>
 
- 
+  <!-- MODAL FACTURA -->
+  <div id="modalFactura" class="modal">
+    <div class="modal-contenido" style="width: 600px; max-height: 700px; overflow-y: auto;">
+      <h3>Factura de Compra</h3>
+      <p><strong>Cliente:</strong> <span id="facturaCliente"></span></p>
+      <p><strong>Correo:</strong> <span id="facturaCorreo"></span></p>
+      <p><strong>Fecha:</strong> <span id="facturaFecha"></span></p>
+      <p><strong>Tipo de tarjeta:</strong> <span id="facturaTipo"></span></p>
+      <p><strong>Últimos 4 dígitos:</strong> <span id="facturaUltimos4"></span></p>
+
+      <table border="1" width="100%" style="border-collapse: collapse; margin-top: 10px;">
+        <thead>
+          <tr>
+            <th>Libro</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody id="facturaTabla"></tbody>
+      </table>
+
+      <h4 style="text-align: right; margin-top: 10px;">Total: $<span id="facturaTotal">0.00</span></h4>
+
+      <div class="modal-botones">
+        <button onclick="cerrarModalFactura()">Cerrar</button>
+      </div>
+    </div>
+  </div>
 
 <script>
   const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
@@ -114,7 +157,10 @@
     actualizarContadorCarrito();
   });
 
-  function volverAlLogin() { localStorage.removeItem("rol"); window.location.href = "login.html"; }
+  function volverAlLogin() {
+    localStorage.removeItem("rol");
+    window.location.href = "login.html";
+  }
 
   function mostrarMensaje(tipo, mensaje) {
     const toast = document.createElement('div');
@@ -152,7 +198,12 @@
   function mostrarLibrosCliente() {
     const contenedor = document.getElementById("catalogoLibros");
     contenedor.innerHTML = "";
-    if (libros.length === 0) { contenedor.innerHTML = "<p>No hay libros disponibles</p>"; return; }
+
+    if (libros.length === 0) {
+      contenedor.innerHTML = "<p>No hay libros disponibles</p>";
+      return;
+    }
+
     libros.forEach((libro, i) => {
       const carta = document.createElement("div");
       carta.className = "carta-libro";
@@ -209,8 +260,6 @@
 
     historialCliente.push({ fecha, libro: libroSeleccionado.titulo, tipo: "Préstamo", estado: "Activo" });
     guardarDatos();
-
-    mostrarMensaje('success', 'Préstamo realizado correctamente');
   }
 
   function agregarCarrito(i) {
@@ -275,9 +324,8 @@
     const expiracion = document.getElementById('expiracion').value.trim();
     const cvv = document.getElementById('cvv').value.trim();
     const titular = document.getElementById('titular').value.trim();
-    if(!/^\d{16}$/.test(tarjeta) || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiracion) || !/^\d{3}$/.test(cvv) || titular.length===0){
-      alert("Datos de tarjeta inválidos."); 
-      return;
+    if(!/^\d{16}$/.test(tarjeta)||!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiracion)||!/^\d{3}$/.test(cvv)||titular.length===0){
+      alert("Datos de tarjeta inválidos."); return;
     }
 
     const nombreCliente = usuarioActivo ? usuarioActivo.nombre : "Cliente";
@@ -286,59 +334,29 @@
     let detalleFactura = [];
 
     if(compraPendiente && compraPendiente.carrito){
-      detalleFactura = carrito.map(item => ({titulo:item.titulo, cantidad:item.cantidad, precio:item.precio}));
-      carrito.forEach(item => {
-        const libro = libros.find(l => l.titulo === item.titulo);
-        if(libro) libro.stock -= item.cantidad;
-      });
+      detalleFactura = carrito.map(item=>({titulo:item.titulo,cantidad:item.cantidad,precio:item.precio}));
+      carrito.forEach(item=>{ const libro = libros.find(l=>l.titulo===item.titulo); if(libro) libro.stock -= item.cantidad; });
       carrito = [];
       guardarDatos();
-      mostrarMensaje('success','Compra realizada y factura generada');
-
     } else if(compraPendiente && compraPendiente.libro){
-      const {libro, cantidad} = compraPendiente;
+      const {libro,cantidad}=compraPendiente;
       libro.stock -= cantidad;
-      detalleFactura = [{titulo:libro.titulo, cantidad, precio:libro.precio}];
+      detalleFactura=[{titulo:libro.titulo,cantidad,precio:libro.precio}];
       guardarDatos();
-      mostrarMensaje('success','Compra realizada y factura generada');
     }
 
-    const totalFactura = detalleFactura.reduce((sum,item) => sum + item.precio*item.cantidad, 0);
-    const tipoTarjeta = document.getElementById("tipoTarjeta").textContent.replace("💳 ","") || "—";
+    const totalFactura = detalleFactura.reduce((sum,item)=>sum+item.precio*item.cantidad,0);
+    const tipoTarjeta = document.getElementById("tipoTarjeta").textContent.replace("💳 ","")||"—";
     const ultimos4 = tarjeta.slice(-4);
 
-    // Guardar en facturas del usuario
-    const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`)) || [];
-    const nuevaFactura = {
-      id: Date.now(),
-      cliente: nombreCliente,
-      correo: correoCliente,
-      fecha,
-      detalle: detalleFactura,
-      total: totalFactura,
-      tarjetaTipo: tipoTarjeta,
-      tarjetaUltimos4: ultimos4
-    };
+    const facturas = JSON.parse(localStorage.getItem('facturas')) || [];
+    const nuevaFactura = { id:Date.now(), cliente:nombreCliente, correo:correoCliente, fecha, detalle:detalleFactura, total:totalFactura, tarjetaTipo:tipoTarjeta, tarjetaUltimos4:ultimos4 };
     facturas.push(nuevaFactura);
-    localStorage.setItem(`facturas_${usuarioActivo.usuario}`, JSON.stringify(facturas));
+    localStorage.setItem('facturas', JSON.stringify(facturas));
 
-    // Guardar en historial del usuario
-    detalleFactura.forEach(item => {
-      historialCliente.push({ fecha, libro: item.titulo, tipo: "Compra", estado: "Completada" });
-    });
-    guardarDatos();
-
-    // Guardar también en facturas globales (para admin)
-    let facturasGlobales = JSON.parse(localStorage.getItem("facturas")) || [];
-    facturasGlobales.push(nuevaFactura);
-    localStorage.setItem("facturas", JSON.stringify(facturasGlobales));
-
-    mostrarLibrosCliente(); 
-    mostrarCarrito(); 
-    cerrarCheckout(); 
-    mostrarFacturasGuardadas();
+    mostrarLibrosCliente(); mostrarCarrito(); cerrarCheckout(); mostrarFacturasGuardadas();
     mostrarMensaje('success','Compra realizada y factura generada');
-    compraPendiente = null;
+    compraPendiente=null;
   }
 
   function verPerfil(){ window.location.href="usuario.html"; }
@@ -363,7 +381,7 @@
 
   function mostrarFacturasGuardadas(){
     const tbody=document.querySelector("#tablaFacturasCliente tbody");
-    const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`)) || [];
+    const facturas = JSON.parse(localStorage.getItem('facturas')) || [];
     tbody.innerHTML="";
     if(facturas.length===0) tbody.innerHTML="<tr><td colspan='4'>No hay facturas</td></tr>";
     else facturas.forEach((f,i)=>{
@@ -375,7 +393,7 @@
   }
 
   function verFactura(indice){
-    const facturas=JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`))||[];
+    const facturas=JSON.parse(localStorage.getItem('facturas'))||[];
     if(!facturas[indice]) return;
     const f=facturas[indice];
     document.getElementById('facturaCliente').textContent=f.cliente;
