@@ -279,7 +279,6 @@
   }
 
   /* === PROVEEDORES === */
-  /* === PROVEEDORES === */
   function agregarProveedor() {
     const nombre = document.getElementById("nombreProveedor").value.trim();
     const contacto = document.getElementById("contactoProveedor").value.trim();
@@ -346,6 +345,7 @@
   hiddenIndex.type = "hidden";
   hiddenIndex.id = "proveedorIndex";
   document.body.appendChild(hiddenIndex);
+  
   /* === VERIFICAR ADMIN === */
     // Verificar que el usuario actual es un admin
     const rol = localStorage.getItem("rol");
