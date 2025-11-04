@@ -161,6 +161,7 @@
 
     function register(event) {
       event.preventDefault();
+      
 
       const nombre = document.getElementById("nombre").value.trim();
       const tipo_documento = document.getElementById("tipo_documento").value.trim();
@@ -208,18 +209,33 @@
         return false;
       }
 
-      const nuevoUsuario = {
-        nombre, tipo_documento, documento, correo, telefono, direccion, fecha,
-        rol, usuario, password,
-        historial: [], carrito: []
-      };
+     const nuevoUsuario = {
+  nombre,
+  tipo_documento,
+  documento,
+  correo,
+  telefono,
+  direccion,
+  fecha,
+  usuario,
+  password,
+  rol 
+};
+usuarios.push(nuevoUsuario);
+localStorage.setItem("usuarios", JSON.stringify(usuarios));
+localStorage.setItem("usuarioActivo", JSON.stringify(nuevoUsuario)); // ✅
 
-      usuarios.push(nuevoUsuario);
-      localStorage.setItem("usuarios", JSON.stringify(usuarios));
+if (rol === "Admin") {
+    alert("Cuenta creada correctamente como Administrador");
+    window.location.href = "admin.html"; // redirige a panel de admin
+} else if (rol === "Empleado") {
+    alert("Cuenta creada correctamente como Empleado");
+    window.location.href = "empleado.html"; // redirige a panel de empleado
+} else {
+    alert("Cuenta creada correctamente como Cliente");
+    window.location.href = "cliente.html"; // redirige a panel de cliente
+}
 
-      alert("Cuenta creada exitosamente. Ahora puedes iniciar sesión.");
-      window.location.href = "login.html";
-      return false;
     }
   </script>
 </body>

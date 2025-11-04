@@ -6,123 +6,333 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="site-header"></header>
 
-  <div class="container">
-    <div class="seccion">
-      <h2>Mi historial</h2>
-      <table id="tablaHistorial">
-        <thead>
-          <tr>
-            <th>Título</th>
-            <th>Acción</th>
-            <th>Fecha</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <button onclick="borrarHistorial()" style="margin-top:10px;">Borrar historial</button>
-    </div>
-  </div>
-
-  <!-- ====== MENÚ FLOTANTE DE TRES PUNTOS ====== -->
-<div class="menu-flotante">⋮
+<!-- MENÚ FLOTANTE UNIFICADO -->
+<div class="menu-flotante" id="botonMenu">
+  ⋮
   <div class="menu-flotante-opciones2" id="menuOpciones">
+    <button class="btn-menu" onclick="volverAlCatalogo()">Volver</button>
     <button class="btn-menu" onclick="logout()">Cerrar sesión</button>
-    <button class="btn-menu" onclick="volver()">Volver</button>
-    <button class="btn-menu btn-eliminar">Eliminar cuenta</button>
+    <button class="btn-menu btn-eliminar" onclick="eliminarCuenta()">Eliminar cuenta</button>
   </div>
 </div>
 
-</script>
-  <script>
-    const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+<div class="container">
 
-    // ---------------- Mostrar historial ----------------
-    function mostrarHistorial() {
-      const tbody = document.querySelector("#tablaHistorial tbody");
-      if (!usuarioActivo) return;
+  <!-- HISTORIAL -->
+  <div class="seccion">
+    <h2>Mi historial</h2>
+    <table id="tablaHistorial">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Acción</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button onclick="borrarHistorial()" style="margin-top:10px;">Borrar historial</button>
+  </div>
 
-      // Obtenemos el historial del usuario
-      const historial = JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || [];
-      tbody.innerHTML = "";
+  <!-- FACTURAS -->
+  <div class="seccion">
+    <h2>Mis Facturas</h2>
+    <button onclick="toggleFacturas()" style="margin-bottom:10px;">Ver Facturas</button>
+    <table id="tablaFacturasCliente" style="display:none;">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Fecha</th>
+          <th>Total</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-      if (historial.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3">Aún no tienes compras ni préstamos.</td></tr>`;
-      } else {
-        historial.forEach(item => {
-          tbody.innerHTML += `
-            <tr>
-              <td>${item.libro || item.titulo}</td>
-              <td>${item.tipo || item.accion}</td>
-              <td>${item.fecha}</td>
-            </tr>`;
-        });
-      }
-    }
+  <!-- PRÉSTAMOS -->
+  <div class="seccion">
+    <h2>Información de mis Préstamos</h2>
+    <button onclick="toggleHistorialPrestamos()" style="margin-bottom:10px;">Mis Préstamos</button>
+    <table id="tablaHistorialCliente" style="display:none;">
+      <thead>
+        <tr>
+          <th>Libro</th>
+          <th>Fecha del préstamo</th>
+          <th>Vencimiento</th>
+          <th>Tiempo restante</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-    // ---------------- Borrar historial ----------------
-    function borrarHistorial() {
-      if (!usuarioActivo) return;
+</div>
 
-      const confirmar = confirm("¿Estás seguro de que quieres borrar tu historial?");
-      if (!confirmar) return;
+<!-- MODAL FACTURA -->
+<div id="modalFactura" class="modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+  <div class="modal-contenido" style="width:600px; max-height:700px; overflow-y:auto; background:white; padding:20px; border-radius:8px; margin:auto; box-sizing:border-box;">
+    <h3>Factura de Compra</h3>
+    <p><strong>Cliente:</strong> <span id="facturaCliente" data-id=""></span></p>
+    <p><strong>Correo:</strong> <span id="facturaCorreo"></span></p>
+    <p><strong>Fecha:</strong> <span id="facturaFecha"></span></p>
+    <p><strong>Tipo de tarjeta:</strong> <span id="facturaTipo"></span></p>
+    <p><strong>Últimos 4 dígitos:</strong> <span id="facturaUltimos4"></span></p>
 
-      // Eliminamos solo el historial, no las compras ni el carrito
-      localStorage.removeItem(`historial_${usuarioActivo.usuario}`);
-      mostrarHistorial();
-      alert("Historial borrado correctamente");
-    }
+    <table border="1" width="100%" style="border-collapse:collapse; margin-top:10px;">
+      <thead>
+        <tr>
+          <th>Libro</th>
+          <th>Cantidad</th>
+          <th>Precio</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody id="facturaTabla"></tbody>
+    </table>
 
-    
-    // ---------------- Otros botones ----------------
-    function volver() { window.location.href = "cliente.html"; }
-    function logout() { localStorage.removeItem("rol"); window.location.href = "login.html"; }
+    <h4 style="text-align:right; margin-top:10px;">Total: $<span id="facturaTotal">0.00</span></h4>
+    <div style="display:flex; justify-content:space-between; margin-top:15px;">
+      <button onclick="cerrarModalFactura()">Cerrar</button>
+      <button onclick="eliminarFactura()">Eliminar factura</button>
+    </div>
+  </div>
+</div>
 
-   document.querySelector(".btn-eliminar")?.addEventListener("click", function() {
+<script>
+const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+
+// =================== HISTORIAL ===================
+function mostrarHistorial() {
+  const tbody = document.querySelector("#tablaHistorial tbody");
   if (!usuarioActivo) return;
+  const historial = JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || [];
+  tbody.innerHTML = historial.length === 0 
+    ? `<tr><td colspan="3">Aún no tienes compras ni préstamos.</td></tr>` 
+    : historial.map(item => `<tr><td>${item.libro || item.titulo}</td><td>${item.tipo || item.accion}</td><td>${item.fecha}</td></tr>`).join('');
+}
 
-  const confirmar = confirm("¿Estas seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.");
-  if (!confirmar) return;
+function borrarHistorial() {
+  if(!usuarioActivo) return;
+  if(!confirm("¿Estás seguro de que quieres borrar tu historial?")) return;
+  localStorage.removeItem(`historial_${usuarioActivo.usuario}`);
+  mostrarHistorial();
+  alert("Historial borrado correctamente");
+}
+// =================== PRÉSTAMOS ===================
 
-  // 1. Eliminar usuario del array global de usuarios
-  const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-  const index = usuarios.findIndex(u => u.correo === usuarioActivo.correo);
-  if (index !== -1) usuarios.splice(index, 1);
-  localStorage.setItem("usuarios", JSON.stringify(usuarios));
+let intervalPrestamos = null; // guardamos el intervalo global para evitar duplicados
 
-  // 2. Eliminar datos del usuario
-  localStorage.removeItem("usuarioActivo"); // Perfil activo
-  localStorage.removeItem(`historial_${usuarioActivo.usuario}`); // Historial
-  localStorage.removeItem(`carrito_${usuarioActivo.usuario}`); // Carrito
+function toggleHistorialPrestamos() {
+  const tabla = document.getElementById('tablaHistorialCliente');
+  if (!tabla) return;
 
-  alert("Tu cuenta ha sido eliminada correctamente.");
+  if (tabla.style.display === 'table') {
+    tabla.style.display = 'none';
+    clearInterval(intervalPrestamos); // parar contador al ocultar
+  } else {
+    tabla.style.display = 'table';
+    mostrarHistorialPrestamos();
+  }
+}
+function parseFecha(fechaStr) {
+  // fechaStr esperado: "DD/MM/YYYY"
+  const partes = fechaStr.split("/");
+  if (partes.length !== 3) return new Date(fechaStr); // fallback
+  const dia = parseInt(partes[0], 10);
+  const mes = parseInt(partes[1], 10) - 1; // meses 0-11
+  const anio = parseInt(partes[2], 10);
+  return new Date(anio, mes, dia);
+}
 
-  // 3. Redirigir al login
-  window.location.href = "login.html";
-});
+function mostrarHistorialPrestamos() {
+  const tbody = document.querySelector('#tablaHistorialCliente tbody');
+  if (!tbody || !usuarioActivo) return;
 
-    // ---------------- Cargar historial al inicio ----------------
-    document.addEventListener("DOMContentLoaded", mostrarHistorial);
-  </script>
-  <script>
-// Elementos
-const menuFlotante = document.querySelector('.menu-flotante');
+  const historial = JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || [];
+  console.log("Historial completo:", historial); // depuración
+
+  // Filtrar solo préstamos (ignorando mayúsculas/minúsculas)
+  const prestamos = historial.filter(item => item.tipo && item.tipo.toLowerCase() === "préstamo");
+
+  if (prestamos.length === 0) {
+    tbody.innerHTML = "<tr><td colspan='5'>No hay préstamos registrados</td></tr>";
+    return;
+  }
+
+  // Generar filas
+  tbody.innerHTML = prestamos.map((item, index) => {
+    // Convertir fecha a objeto Date
+    const fechaPrestamo = parseFecha(item.fecha);
+    const plazo = 30; // días para devolver
+    const fechaVenc = new Date(fechaPrestamo);
+    fechaVenc.setDate(fechaPrestamo.getDate() + plazo);
+
+    const ahora = new Date();
+    let diffMs = fechaVenc - ahora;
+    let estado = diffMs <= 0 ? "Vencido" : "Activo";
+
+    // Calcular tiempo restante
+    diffMs = Math.max(diffMs, 0);
+    const dias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const horas = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const segundos = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+    item._contador = diffMs; // guardar contador
+
+    return `<tr id="prestamo-${index}">
+      <td>${item.libro}</td>
+      <td>${item.fecha}</td>
+      <td>${fechaVenc.toLocaleDateString()}</td>
+      <td id="restante-${index}">${dias}d ${horas}h ${minutos}m ${segundos}s</td>
+      <td>${estado}</td>
+    </tr>`;
+  }).join('');
+
+  // Iniciar contador solo una vez
+  clearInterval(intervalPrestamos);
+  intervalPrestamos = setInterval(() => {
+    prestamos.forEach((item, index) => {
+      const tdRestante = document.getElementById(`restante-${index}`);
+      const fila = document.getElementById(`prestamo-${index}`);
+      if (!tdRestante) return;
+
+      item._contador -= 1000;
+      if (item._contador <= 0) {
+        tdRestante.textContent = "0d 0h 0m 0s";
+        fila.querySelector("td:last-child").textContent = "Vencido";
+        return;
+      }
+
+      const dias = Math.floor(item._contador / (1000 * 60 * 60 * 24));
+      const horas = Math.floor((item._contador % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutos = Math.floor((item._contador % (1000 * 60 * 60)) / (1000 * 60));
+      const segundos = Math.floor((item._contador % (1000 * 60)) / 1000);
+
+      tdRestante.textContent = `${dias}d ${horas}h ${minutos}m ${segundos}s`;
+    });
+  }, 1000);
+
+
+  // Iniciar contador en tiempo real
+  iniciarContador(prestamos);
+}
+
+// Función para actualizar los contadores cada segundo
+function iniciarContador(prestamos) {
+  prestamos.forEach((item, index) => {
+    const fila = document.getElementById(`prestamo-${index}`);
+    const tdRestante = document.getElementById(`restante-${index}`);
+    if(!tdRestante) return;
+
+    // Usamos setInterval para actualizar cada segundo
+    const interval = setInterval(() => {
+      item._contador -= 1000; // restamos 1 segundo
+      if(item._contador <= 0){
+        tdRestante.textContent = "0d 0h 0m 0s";
+        fila.querySelector("td:last-child").textContent = "Vencido";
+        clearInterval(interval);
+        return;
+      }
+      const dias = Math.floor(item._contador / (1000 * 60 * 60 * 24));
+      const horas = Math.floor((item._contador % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutos = Math.floor((item._contador % (1000 * 60 * 60)) / (1000 * 60));
+      const segundos = Math.floor((item._contador % (1000 * 60)) / 1000);
+      tdRestante.textContent = `${dias}d ${horas}h ${minutos}m ${segundos}s`;
+    }, 1000);
+  });
+}
+// =================== FACTURAS ===================
+function toggleFacturas() {
+  const tabla = document.getElementById('tablaFacturasCliente');
+  tabla.style.display = tabla.style.display==='table'?'none':'table';
+  mostrarFacturas();
+}
+
+function mostrarFacturas() {
+  const tbody = document.querySelector('#tablaFacturasCliente tbody');
+  const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`))||[];
+  tbody.innerHTML = facturas.length===0 
+    ? "<tr><td colspan='4'>No tienes facturas disponibles.</td></tr>" 
+    : facturas.map((f,i)=>`<tr>
+      <td>${f.id}</td><td>${f.fecha}</td><td>$${f.total.toFixed(2)}</td>
+      <td><button onclick="verFactura(${i})">Ver</button></td>
+    </tr>`).join('');
+}
+
+function verFactura(indice){
+  const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`))||[];
+  if(!facturas[indice]) return;
+  const f = facturas[indice];
+
+  document.getElementById('facturaCliente').textContent = f.cliente;
+  document.getElementById('facturaCorreo').textContent = f.correo;
+  document.getElementById('facturaFecha').textContent = f.fecha;
+  document.getElementById('facturaTipo').textContent = f.tarjetaTipo;
+  document.getElementById('facturaUltimos4').textContent = f.tarjetaUltimos4;
+
+  const tbody = document.getElementById('facturaTabla');
+  tbody.innerHTML = f.detalle.map(d=>`<tr>
+    <td>${d.titulo}</td><td>${d.cantidad}</td><td>$${d.precio.toFixed(2)}</td><td>$${(d.cantidad*d.precio).toFixed(2)}</td>
+  </tr>`).join('');
+
+  document.getElementById('facturaTotal').textContent = f.total.toFixed(2);
+  document.getElementById('modalFactura').style.display='flex';
+  document.getElementById('facturaCliente').setAttribute('data-id', indice);
+}
+
+function cerrarModalFactura() { document.getElementById('modalFactura').style.display='none'; }
+
+function eliminarFactura(){
+  const indice = parseInt(document.getElementById("facturaCliente").getAttribute('data-id'));
+  const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`)) || [];
+  if(indice<0||!facturas[indice]) return;
+  if(!confirm("¿Deseas eliminar esta factura?")) return;
+  facturas.splice(indice,1);
+  localStorage.setItem(`facturas_${usuarioActivo.usuario}`, JSON.stringify(facturas));
+  cerrarModalFactura();
+  mostrarFacturas();
+  alert("Factura eliminada correctamente");
+}
+
+// =================== MENÚ ===================
+const menuFlotante = document.getElementById('botonMenu');
 const menuOpciones = document.getElementById('menuOpciones');
+menuFlotante.addEventListener('click', e=>{ e.stopPropagation(); menuOpciones.style.display = menuOpciones.style.display==='flex'?'none':'flex'; });
+menuOpciones.addEventListener('click', e=>e.stopPropagation());
+window.addEventListener('click', ()=>{ menuOpciones.style.display='none'; });
 
-// Abrir/cerrar menú
-menuFlotante.addEventListener('click', (e) => {
-  e.stopPropagation(); // evita cierre inmediato
-  menuOpciones.style.display = menuOpciones.style.display === 'flex' ? 'none' : 'flex';
-});
+// =================== BOTONES ===================
+function volverAlCatalogo(){ window.location.href='cliente.html'; }
+function logout(){ localStorage.removeItem("rol"); window.location.href='login.html'; }
 
-// Evita que clic dentro del menú cierre
-menuOpciones.addEventListener('click', e => e.stopPropagation());
+function eliminarCuenta(){
+  if(!usuarioActivo) return;
+  if(!confirm("¿Estas seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.")) return;
+  const usuarios = JSON.parse(localStorage.getItem("usuarios"))||[];
+  const index = usuarios.findIndex(u=>u.correo===usuarioActivo.correo);
+  if(index!==-1) usuarios.splice(index,1);
+  localStorage.setItem("usuarios", JSON.stringify(usuarios));
+  localStorage.removeItem("usuarioActivo");
+  localStorage.removeItem(`historial_${usuarioActivo.usuario}`);
+  localStorage.removeItem(`carrito_${usuarioActivo.usuario}`);
+  localStorage.removeItem(`facturas_${usuarioActivo.usuario}`);
+  alert("Tu cuenta ha sido eliminada correctamente.");
+  window.location.href="login.html";
+}
 
-// Cierra el menú si se hace clic fuera
-window.addEventListener('click', () => {
-  menuOpciones.style.display = 'none';
+// =================== INICIO ===================
+document.addEventListener("DOMContentLoaded", ()=>{
+  mostrarHistorial();
+  mostrarHistorialPrestamos();
+  mostrarFacturas();
+  document.getElementById('modalFactura').style.display='none';
 });
 </script>
+
 </body>
 </html>
