@@ -64,6 +64,7 @@
           <th>Vencimiento</th>
           <th>Tiempo restante</th>
           <th>Estado</th>
+          <th>Accion</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -124,7 +125,7 @@ function borrarHistorial() {
 }
 // =================== PRÉSTAMOS ===================
 
-let intervalPrestamos = null; // guardamos el intervalo global para evitar duplicados
+let intervalPrestamos = null; 
 
 function toggleHistorialPrestamos() {
   const tabla = document.getElementById('tablaHistorialCliente');
@@ -132,120 +133,197 @@ function toggleHistorialPrestamos() {
 
   if (tabla.style.display === 'table') {
     tabla.style.display = 'none';
-    clearInterval(intervalPrestamos); // parar contador al ocultar
+    clearInterval(intervalPrestamos);
   } else {
     tabla.style.display = 'table';
     mostrarHistorialPrestamos();
   }
 }
 function parseFecha(fechaStr) {
-  // fechaStr esperado: "DD/MM/YYYY"
   const partes = fechaStr.split("/");
-  if (partes.length !== 3) return new Date(fechaStr); // fallback
+  if (partes.length !== 3) return new Date(fechaStr); 
   const dia = parseInt(partes[0], 10);
-  const mes = parseInt(partes[1], 10) - 1; // meses 0-11
+  const mes = parseInt(partes[1], 10) - 1; 
   const anio = parseInt(partes[2], 10);
   return new Date(anio, mes, dia);
 }
+
+let prestamosActivos = []; 
 
 function mostrarHistorialPrestamos() {
   const tbody = document.querySelector('#tablaHistorialCliente tbody');
   if (!tbody || !usuarioActivo) return;
 
   const historial = JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || [];
-  console.log("Historial completo:", historial); // depuración
-
-  // Filtrar solo préstamos (ignorando mayúsculas/minúsculas)
   const prestamos = historial.filter(item => item.tipo && item.tipo.toLowerCase() === "préstamo");
 
   if (prestamos.length === 0) {
-    tbody.innerHTML = "<tr><td colspan='5'>No hay préstamos registrados</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='6'>No hay préstamos registrados</td></tr>";
     return;
   }
 
-  // Generar filas
-  tbody.innerHTML = prestamos.map((item, index) => {
-    // Convertir fecha a objeto Date
+  tbody.innerHTML = ""; 
+  prestamosActivos = []; 
+
+  prestamos.forEach((item, index) => {
     const fechaPrestamo = parseFecha(item.fecha);
-    const plazo = 30; // días para devolver
-    const fechaVenc = new Date(fechaPrestamo);
-    fechaVenc.setDate(fechaPrestamo.getDate() + plazo);
+    const fechaVenc = item.fechaDevolucion ? parseFecha(item.fechaDevolucion) : (() => {
+      const temp = new Date(fechaPrestamo);
+      temp.setDate(temp.getDate() + 30);
+      return temp;
+    })();
 
     const ahora = new Date();
     let diffMs = fechaVenc - ahora;
-    let estado = diffMs <= 0 ? "Vencido" : "Activo";
-
-    // Calcular tiempo restante
+    let estado = item.devuelto ? "Devuelto" : (diffMs <= 0 ? "Vencido" : "Activo");
     diffMs = Math.max(diffMs, 0);
-    const dias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const horas = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    const segundos = Math.floor((diffMs % (1000 * 60)) / 1000);
+    item._contador = item._contador || diffMs;
 
-    item._contador = diffMs; // guardar contador
+    const fila = document.createElement("tr");
+    fila.id = `prestamo-${index}`;
+    fila.innerHTML = `
+      <td>${item.libro}</td>
+      <td>${item.fecha}</td>
+      <td>${fechaVenc.toLocaleDateString()}</td>
+      <td id="restante-${index}">${formatTiempo(item._contador)}</td>
+      <td id="estado-${index}">${estado}</td>
+      <td id="accion-${index}">
+        ${item.devuelto ? "" : `<button onclick="marcarDevuelto(${index})">Devolver</button>`}
+      </td>
+    `;
+    tbody.appendChild(fila);
+
+    if (!item.devuelto) {
+      const interval = setInterval(() => {
+        const tdRestante = document.getElementById(`restante-${index}`);
+        const tdEstado = document.getElementById(`estado-${index}`);
+        const tdAccion = document.getElementById(`accion-${index}`);
+        if (!tdRestante) return;
+
+        item._contador -= 1000;
+        if (item._contador <= 0) {
+          tdRestante.textContent = "0d 0h 0m 0s";
+          if(tdEstado) tdEstado.textContent = "Vencido";
+          if(tdAccion) tdAccion.innerHTML = "";
+          clearInterval(interval);
+          return;
+        }
+        tdRestante.textContent = formatTiempo(item._contador);
+      }, 1000);
+
+      prestamosActivos.push({ item, index, interval });
+      item._interval = interval; 
+    }
+  });
+}
+
+// Formateo de tiempo
+function formatTiempo(ms) {
+  const dias = Math.floor(ms / (1000 * 60 * 60 * 24));
+  const horas = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutos = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+  return `${dias}d ${horas}h ${minutos}m`;
+}
+
+// Marcar como devuelto o pausar un contador
+function marcarDevuelto(index) {
+  const usuario = usuarioActivo.usuario;
+  const historial = JSON.parse(localStorage.getItem(`historial_${usuario}`)) || [];
+  const prestamos = historial.filter(item => item.tipo && item.tipo.toLowerCase() === "préstamo");
+  if(!prestamos[index]) return;
+
+ 
+  if(prestamos[index]._interval) clearInterval(prestamos[index]._interval);
+
+ 
+  const tdRestante = document.getElementById(`restante-${index}`);
+  if(tdRestante) {
+    const partes = tdRestante.textContent.match(/(\d+)d (\d+)h (\d+)m/);
+    if(partes) {
+      const dias = parseInt(partes[1]);
+      const horas = parseInt(partes[2]);
+      const minutos = parseInt(partes[3]);
+      prestamos[index]._contador = ((dias*24 + horas)*60 + minutos)*60*1000;
+    }
+  }
+
+  prestamos[index].devuelto = true;
+
+  // Guardar historial completo
+  const idx = historial.findIndex(item => item.fecha === prestamos[index].fecha && item.libro === prestamos[index].libro);
+  if(idx !== -1) historial[idx] = prestamos[index];
+  localStorage.setItem(`historial_${usuario}`, JSON.stringify(historial));
+
+  // Actualizar visualmente
+  const tdEstado = document.getElementById(`estado-${index}`);
+  const tdAccion = document.getElementById(`accion-${index}`);
+  if(tdEstado) tdEstado.textContent = "Devuelto";
+  if(tdAccion) tdAccion.innerHTML = "";
+}
+
+// Mostrar los préstamos respetando contadores pausados
+function mostrarHistorialPrestamos() {
+  const tbody = document.querySelector('#tablaHistorialCliente tbody');
+  if (!tbody || !usuarioActivo) return;
+
+  const historial = JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || [];
+  const prestamos = historial.filter(item => item.tipo && item.tipo.toLowerCase() === "préstamo");
+
+  tbody.innerHTML = prestamos.map((item, index) => {
+    const ahora = new Date();
+    let contador = item._contador;
+    if(contador === undefined) {
+      const fechaPrestamo = parseFecha(item.fecha);
+      const fechaVenc = item.fechaDevolucion ? parseFecha(item.fechaDevolucion) : (() => {
+        const temp = new Date(fechaPrestamo);
+        temp.setDate(temp.getDate() + 30);
+        return temp;
+      })();
+      contador = fechaVenc - ahora;
+      item._contador = contador;
+    }
+
+    const estado = item.devuelto ? "Devuelto" : (contador <= 0 ? "Vencido" : "Activo");
 
     return `<tr id="prestamo-${index}">
       <td>${item.libro}</td>
       <td>${item.fecha}</td>
-      <td>${fechaVenc.toLocaleDateString()}</td>
-      <td id="restante-${index}">${dias}d ${horas}h ${minutos}m ${segundos}s</td>
-      <td>${estado}</td>
+      <td>${item.fechaDevolucion || ''}</td>
+      <td id="restante-${index}">${formatTiempo(contador)}</td>
+      <td id="estado-${index}">${estado}</td>
+      <td id="accion-${index}">
+        ${item.devuelto ? "" : `<button onclick="marcarDevuelto(${index})">Devolver</button>`}
+      </td>
     </tr>`;
   }).join('');
 
-  // Iniciar contador solo una vez
-  clearInterval(intervalPrestamos);
-  intervalPrestamos = setInterval(() => {
-    prestamos.forEach((item, index) => {
+  // Iniciar intervalos solo para préstamos activos
+  prestamos.forEach((item, index) => {
+    if(item.devuelto) return;
+    if(item._interval) clearInterval(item._interval);
+
+    item._interval = setInterval(() => {
       const tdRestante = document.getElementById(`restante-${index}`);
-      const fila = document.getElementById(`prestamo-${index}`);
-      if (!tdRestante) return;
+      const tdEstado = document.getElementById(`estado-${index}`);
+      const tdAccion = document.getElementById(`accion-${index}`);
+      if(!tdRestante) return;
 
       item._contador -= 1000;
-      if (item._contador <= 0) {
-        tdRestante.textContent = "0d 0h 0m 0s";
-        fila.querySelector("td:last-child").textContent = "Vencido";
+      if(item._contador <= 0) {
+        tdRestante.textContent = "0d 0h 0m";
+        if(tdEstado) tdEstado.textContent = "Vencido";
+        if(tdAccion) tdAccion.innerHTML = "";
+        clearInterval(item._interval);
         return;
       }
-
-      const dias = Math.floor(item._contador / (1000 * 60 * 60 * 24));
-      const horas = Math.floor((item._contador % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutos = Math.floor((item._contador % (1000 * 60 * 60)) / (1000 * 60));
-      const segundos = Math.floor((item._contador % (1000 * 60)) / 1000);
-
-      tdRestante.textContent = `${dias}d ${horas}h ${minutos}m ${segundos}s`;
-    });
-  }, 1000);
-
-
-  // Iniciar contador en tiempo real
-  iniciarContador(prestamos);
-}
-
-// Función para actualizar los contadores cada segundo
-function iniciarContador(prestamos) {
-  prestamos.forEach((item, index) => {
-    const fila = document.getElementById(`prestamo-${index}`);
-    const tdRestante = document.getElementById(`restante-${index}`);
-    if(!tdRestante) return;
-
-    // Usamos setInterval para actualizar cada segundo
-    const interval = setInterval(() => {
-      item._contador -= 1000; // restamos 1 segundo
-      if(item._contador <= 0){
-        tdRestante.textContent = "0d 0h 0m 0s";
-        fila.querySelector("td:last-child").textContent = "Vencido";
-        clearInterval(interval);
-        return;
-      }
-      const dias = Math.floor(item._contador / (1000 * 60 * 60 * 24));
-      const horas = Math.floor((item._contador % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutos = Math.floor((item._contador % (1000 * 60 * 60)) / (1000 * 60));
-      const segundos = Math.floor((item._contador % (1000 * 60)) / 1000);
-      tdRestante.textContent = `${dias}d ${horas}h ${minutos}m ${segundos}s`;
+      tdRestante.textContent = formatTiempo(item._contador);
     }, 1000);
   });
+
+ 
+  localStorage.setItem(`historial_${usuarioActivo.usuario}`, JSON.stringify(historial));
 }
+
 // =================== FACTURAS ===================
 function toggleFacturas() {
   const tabla = document.getElementById('tablaFacturasCliente');
@@ -259,7 +337,9 @@ function mostrarFacturas() {
   tbody.innerHTML = facturas.length===0 
     ? "<tr><td colspan='4'>No tienes facturas disponibles.</td></tr>" 
     : facturas.map((f,i)=>`<tr>
-      <td>${f.id}</td><td>${f.fecha}</td><td>$${f.total.toFixed(2)}</td>
+      <td>${f.id}</td>
+      <td>${f.fecha}</td>
+      <td>$${f.total.toLocaleString('es-CO', )}</td>
       <td><button onclick="verFactura(${i})">Ver</button></td>
     </tr>`).join('');
 }
@@ -277,10 +357,13 @@ function verFactura(indice){
 
   const tbody = document.getElementById('facturaTabla');
   tbody.innerHTML = f.detalle.map(d=>`<tr>
-    <td>${d.titulo}</td><td>${d.cantidad}</td><td>$${d.precio.toFixed(2)}</td><td>$${(d.cantidad*d.precio).toFixed(2)}</td>
-  </tr>`).join('');
+    <td>${d.titulo}</td>
+    <td>${d.cantidad}</td>
+   <td>$${d.precio.toLocaleString('es-CO', )}</td>
+  <td>$${(d.cantidad*d.precio).toLocaleString('es-CO', )}</td>
+</tr>`).join('');
 
-  document.getElementById('facturaTotal').textContent = f.total.toFixed(2);
+ document.getElementById('facturaTotal').textContent = f.total.toLocaleString('es-CO',);
   document.getElementById('modalFactura').style.display='flex';
   document.getElementById('facturaCliente').setAttribute('data-id', indice);
 }
@@ -332,6 +415,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
   mostrarFacturas();
   document.getElementById('modalFactura').style.display='none';
 });
+
 </script>
 
 </body>

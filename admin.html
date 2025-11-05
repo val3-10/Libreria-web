@@ -230,36 +230,46 @@
   }
 
   /* === TRANSACCIONES === */
-  function mostrarTransacciones() {
-    const ventasBody = document.querySelector("#tablaVentas tbody");
-    const prestamosBody = document.querySelector("#tablaPrestamos tbody");
-    ventasBody.innerHTML = "";
-    prestamosBody.innerHTML = "";
+function mostrarTransacciones() {
+  const ventasBody = document.querySelector("#tablaVentas tbody");
+  const prestamosBody = document.querySelector("#tablaPrestamos tbody");
+  ventasBody.innerHTML = "";
+  prestamosBody.innerHTML = "";
 
-    transacciones.forEach((t, index) => {
-      if (t.tipo === "venta") {
-        ventasBody.innerHTML += `
-          <tr>
-            <td>${t.fecha}</td>
-            <td>${t.usuario || 'Cliente desconocido'}</td>
-            <td>${t.libro}</td>
-            <td>${t.cantidad || 1}</td>
-            <td>$${t.precioTotal || 0}</td>
-            <td><button onclick="eliminarTransaccion(${index})">Eliminar</button></td>
-          </tr>`;
-      } else if (t.tipo === "prestamo") {
-        prestamosBody.innerHTML += `
-          <tr>
-            <td>${t.fecha}</td>
-            <td>${t.usuario || 'Cliente desconocido'}</td>
-            <td>${t.libro}</td>
-            <td>${t.cantidad || 1}</td>
-            <td>${t.duracion || '-'}</td>
-            <td><button onclick="eliminarTransaccion(${index})">Eliminar</button></td>
-          </tr>`;
-      }
-    });
-  }
+  transacciones.forEach((t, index) => {
+    if (t.tipo === "venta") {
+      ventasBody.innerHTML += `
+        <tr>
+          <td>${t.fecha}</td>
+          <td>${t.usuario || 'Cliente desconocido'}</td>
+          <td>${t.libro}</td>
+          <td>${t.cantidad || 1}</td>
+          <td>$${t.total || 0}</td>
+          <td><button onclick="eliminarTransaccion(${index})">Eliminar</button></td>
+        </tr>`;
+    } 
+    
+ else if (t.tipo === "prestamo") {
+  
+  let duracionTexto = '-';
+ if (t.duracion) {
+  duracionTexto = `${t.duracion} día${t.duracion > 1 ? 's' : ''}`;
+}
+
+  prestamosBody.innerHTML += `
+    <tr>
+      <td>${t.fecha}</td>
+      <td>${t.usuario}</td>
+      <td>${t.libro}</td>
+      <td>${t.cantidad}</td>
+      <td>${duracionTexto}</td>
+      <td><button onclick="eliminarTransaccion(${index})">Eliminar</button></td>
+    </tr>`;
+}
+  });
+}
+
+
 
   function eliminarTransaccion(index) {
     if (!confirm("¿Deseas eliminar este registro?")) return;
