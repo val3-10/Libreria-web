@@ -163,7 +163,6 @@
         <p>Estado: ${libro.estado}</p>
          <td>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</td>
         <p>Stock: ${libro.stock}</p>
-        <button onclick="abrirModal('comprar', ${i})">Comprar</button>
         <button onclick="abrirModal('prestamo', ${i})">Pedir Préstamo</button>
         <button onclick="agregarCarrito(${i})">Agregar al Carrito</button>
       `;
