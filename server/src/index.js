@@ -15,6 +15,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Rutas
+app.use('/api/auth', require('./routes/auth'));
+
 // Health check (incluye verificación de BD)
 app.get('/api/health', async (_req, res) => {
   const dbOk = await db.healthCheck();
@@ -38,10 +41,6 @@ app.get('/api/ping-db', async (_req, res) => {
     });
   }
 });
-
-// Aquí puedes montar más rutas (usuarios, libros, ventas, etc.)
-// app.use('/api/usuarios', require('./routes/usuarios'));
-// app.use('/api/libros', require('./routes/libros'));
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
