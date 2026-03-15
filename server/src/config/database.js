@@ -1,6 +1,10 @@
 /**
  * Conexión a SQL Server para Libreria-web (Booknest).
  * Usa el paquete mssql con pool de conexiones.
+ *
+ * Papel en el flujo: el FRONTEND llama al BACKEND (API en routes/auth.js, etc.);
+ * el backend usa este módulo para ejecutar consultas SQL contra la BASE DE DATOS.
+ * Solo el servidor (backend) se conecta a la BD; el navegador no tiene acceso directo.
  */
 
 const sql = require('mssql');

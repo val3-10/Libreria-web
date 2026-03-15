@@ -168,6 +168,9 @@
       if (!terminos) { alert("Debes aceptar los términos"); return false; }
 
       try {
+        // Frontend → API: enviamos los datos del formulario al backend (POST).
+        // El backend (server/src/routes/auth.js) recibe el body, valida y hace INSERT en la BD.
+        // Ver login.html para más detalles del flujo Frontend → API → Base de datos.
         const response = await fetch('http://localhost:3000/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

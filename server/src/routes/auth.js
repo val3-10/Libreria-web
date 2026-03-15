@@ -1,3 +1,18 @@
+/**
+ * Rutas de autenticación (API de auth).
+ *
+ * Este archivo es parte del BACKEND. El frontend (login.html, register.html, etc.)
+ * llama a estas rutas mediante fetch() con la URL base + /api/auth/...
+ *
+ * Flujo: Frontend (fetch POST) → Express recibe en esta ruta → lee req.body →
+ * consulta la base de datos (config/database.js) → responde con res.json().
+ *
+ * ¿Por qué POST para login?
+ * - El frontend envía correo y contraseña en el cuerpo (body) de la petición.
+ * - POST es el método adecuado para "enviar" datos al servidor; GET pondría
+ *   los datos en la URL (inseguro para contraseñas).
+ */
+
 const express = require('express');
 const db = require('../config/database');
 
@@ -5,8 +20,10 @@ const { sql } = db;
 const router = express.Router();
 
 // POST /api/auth/login
+// El frontend llama a esta ruta con fetch('.../api/auth/login', { method: 'POST', body: JSON.stringify({ correo, password }) })
 router.post('/login', async (req, res) => {
   try {
+    // Datos que envió el frontend en el body de la petición POST
     const { correo, password } = req.body || {};
 
     if (!correo || !password) {
@@ -17,12 +34,15 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Solo se permiten correos con el dominio @booknest.com.' });
     }
 
+    // Conexión a la base de datos (SQL Server). El backend es quien habla con la BD;
+    // el frontend nunca se conecta directamente.
     const pool = await db.getPool();
     const request = pool.request();
 
     request.input('correo', sql.NVarChar, correo);
     request.input('password', sql.NVarChar, password);
 
+    // Consulta SQL a la tabla Usuarios: buscar un usuario con ese correo y contraseña
     const result = await request.query(
       'SELECT TOP 1 Id, Nombre, Correo, Usuario, Rol, Activo ' +
         'FROM Usuarios ' +
@@ -35,6 +55,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Correo o contraseña incorrectos.' });
     }
 
+    // Respuesta que recibe el frontend: un JSON con los datos del usuario
     return res.json({
       user: {
         id: user.Id,

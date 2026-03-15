@@ -198,6 +198,8 @@
       }
 
       try {
+        // Frontend → API: enviamos los datos al backend con POST (crear recurso).
+        // El backend (auth.js) valida y hace INSERT en la tabla Usuarios.
         const response = await fetch('http://localhost:3000/api/auth/register-admin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

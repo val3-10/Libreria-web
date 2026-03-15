@@ -58,6 +58,39 @@
 
   <script>
 
+    /*
+     * =============================================================================
+     * FLUJO FRONTEND → BACKEND (API) → BASE DE DATOS
+     * =============================================================================
+     *
+     * 1. FRONTEND (esta página): El usuario escribe correo y contraseña y pulsa
+     *    "Entrar". El JavaScript recoge los datos y los envía al BACKEND mediante
+     *    una petición HTTP (fetch) a la URL del servidor (ej: http://localhost:3000/api/auth/login).
+     *
+     * 2. API / BACKEND (servidor Node.js en server/): Es el intermediario. Recibe
+     *    la petición, valida los datos y se conecta a la BASE DE DATOS para
+     *    comprobar si el usuario existe y la contraseña es correcta. Luego
+     *    devuelve una respuesta (éxito o error) en formato JSON.
+     *
+     * 3. BASE DE DATOS (SQL Server): Guarda usuarios, libros, etc. El backend
+     *    ejecuta consultas SQL (SELECT, INSERT...) contra la BD; el frontend
+     *    NUNCA se conecta directamente a la BD por seguridad.
+     *
+     * ¿Qué es una API? (Application Programming Interface)
+     * Es un "contrato" entre el frontend y el backend: el backend expone URLs
+     * (endpoints) como /api/auth/login. El frontend llama a esa URL enviando
+     * datos (por ejemplo en JSON) y recibe una respuesta. La API es la capa
+     * que permite que la web (navegador) hable con el servidor y la base de datos.
+     *
+     * ¿Por qué usamos POST para el login?
+     * - POST sirve para ENVIAR datos al servidor (correo y contraseña en el body).
+     * - No ponemos la contraseña en la URL (como haría GET) porque la URL puede
+     *   quedar en historial y logs; POST envía los datos en el cuerpo de la
+     *   petición, más seguro para datos sensibles.
+     * - GET se usa para "pedir" información (ej: listar libros); POST para
+     *   "enviar" o "crear" (login, registro, etc.).
+     */
+
     // Función para mostrar u ocultar la contraseña
     function togglePassword(inputId) {
 
@@ -127,18 +160,21 @@
 
       try {
 
-        // Enviar datos al backend usando fetch
+        // Llamada al backend: fetch hace una petición HTTP a la API del servidor.
+        // La API está en /api/auth/login (definida en server/src/routes/auth.js).
         const response = await fetch('http://localhost:3000/api/auth/login', {
 
-          // Método HTTP
+          // POST: enviamos datos (correo, password) en el cuerpo de la petición.
+          // El backend los recibe en req.body y luego consulta la base de datos.
           method: 'POST',
 
-          // Cabecera indicando que se envía JSON
+          // Indica que el cuerpo de la petición es JSON (el backend lo interpreta así).
           headers: {
             'Content-Type': 'application/json',
           },
 
-          // Convertir los datos a JSON
+          // Los datos que envía el frontend al backend; el backend los usa para
+          // buscar el usuario en la BD (tabla Usuarios).
           body: JSON.stringify({ correo: email, password }),
         });
 
