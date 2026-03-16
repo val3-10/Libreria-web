@@ -212,5 +212,76 @@ router.post('/register-admin', async (req, res) => {
   }
 });
 
+// POST /api/auth/change-password
+// Permite actualizar la contraseña de un usuario existente.
+// Flujo esperado desde el frontend:
+//   fetch('http://localhost:3000/api/auth/change-password', {
+//     method: 'POST',
+//     headers: { 'Content-Type': 'application/json' },
+//     body: JSON.stringify({
+//       correo: 'usuario@booknest.com',
+//       passwordActual: 'anterior',
+//       passwordNueva: 'nueva',
+//     }),
+//   })
+//     .then((r) => r.json())
+//     .then(console.log);
+router.post('/change-password', async (req, res) => {
+  try {
+    const { correo, passwordActual, passwordNueva } = req.body || {};
+
+    if (!correo || !passwordActual || !passwordNueva) {
+      return res
+        .status(400)
+        .json({ error: 'Correo, contraseña actual y contraseña nueva son obligatorios.' });
+    }
+
+    if (!correo.endsWith('@booknest.com')) {
+      return res.status(400).json({ error: 'Solo se permiten correos con el dominio @booknest.com.' });
+    }
+
+    if (passwordActual === passwordNueva) {
+      return res
+        .status(400)
+        .json({ error: 'La contraseña nueva debe ser diferente a la actual.' });
+    }
+
+    const pool = await db.getPool();
+
+    // Verificar que el usuario exista y que la contraseña actual sea correcta.
+    const reqSelect = pool.request();
+    reqSelect.input('Correo', sql.NVarChar, correo);
+    reqSelect.input('PasswordHash', sql.NVarChar, passwordActual);
+
+    const selectResult = await reqSelect.query(
+      'SELECT TOP 1 Id, Correo, Usuario, Activo ' +
+        'FROM Usuarios ' +
+        'WHERE Correo = @Correo AND PasswordHash = @PasswordHash AND Activo = 1',
+    );
+
+    const user = selectResult.recordset && selectResult.recordset[0];
+
+    if (!user) {
+      return res.status(401).json({ error: 'Correo o contraseña actual incorrectos.' });
+    }
+
+    // Actualizar la contraseña del usuario.
+    const reqUpdate = pool.request();
+    reqUpdate.input('Id', sql.Int, user.Id);
+    reqUpdate.input('PasswordHash', sql.NVarChar, passwordNueva);
+
+    await reqUpdate.query(
+      'UPDATE Usuarios ' +
+        'SET PasswordHash = @PasswordHash, FechaActualizacion = SYSUTCDATETIME() ' +
+        'WHERE Id = @Id',
+    );
+
+    return res.json({ message: 'Contraseña actualizada correctamente.' });
+  } catch (err) {
+    console.error('Error en /api/auth/change-password:', err);
+    return res.status(500).json({ error: 'Error interno al cambiar la contraseña.' });
+  }
+});
+
 module.exports = router;
 
