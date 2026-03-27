@@ -74,7 +74,7 @@
   cursor: pointer;
   transition: background 0.3s ease, transform 0.2s ease;
   padding: 8px 16px;
-  font-size: 5 rem;
+  font-size: 1.2rem;
 }
 
 .btn-carrito:hover {
@@ -82,29 +82,114 @@
   transform: scale(1.05);
 }
 
-  /* ========================= */
+.btn-toggle-buscador {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: #1f2937;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.btn-toggle-buscador:hover {
+  background: #2e2e2e;
+  transform: scale(1.01);
+}
+
+.btn-toggle-buscador i {
+  font-size: 1.05rem;
+}
+
+.btn-toggle-buscador .buscador-text {
+  display: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.buscador-wrapper:hover .buscador-text {
+  display: inline;
+}
+
+.buscador-panel {
+  display: none;
+  width: 100%;
+}
+
+.buscador-panel.visible {
+  display: block;
+}
+
+.buscador-panel input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #b1b5c3;
+  outline: none;
+  margin-bottom: 10px;
+}
+
+.carta-botones {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-fav {
+  background: #ff4081;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+}
+
+.btn-fav:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+.btn-fav i {
+  font-size: 1rem;
+}
+
+/* ========================= */
   /* CONTENEDOR PRINCIPAL */
   /* ========================= */
-  .container {
-    max-width: 900px; 
-    width: 90%; 
-    margin: 0 auto;
-    padding: 20px;
-    background: transparent; /* Fondo transparente para ver el body */
-  }
+.container {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto; 
+}
  
   /* SECCIONES */
 
   .seccion {
-    background: #e6ebf1;
-    backdrop-filter: blur(6px);
-    padding: 20px;
-    margin: 20px auto;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgb(0, 0, 0);
-    text-align: left;
-    display: block;
-  }
+  background: #e6ebf1;
+  backdrop-filter: blur(6px);
+  padding: 20px;
+  margin: 20px auto; /* 🔥 centra horizontal */
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgb(0, 0, 0);
+  text-align: left;
+
+  width: 100%;
+  max-width: 800px; /* 🔥 evita que se estire raro */
+}
 
   /* CAMPOS DE FORMULARIOS */
   input, select, button {
@@ -114,6 +199,7 @@
     border: none;
     border-radius: 10px;
     font-size: 1rem;
+    
   }
 
   input, select {
@@ -247,7 +333,7 @@
 
   /* Estados visuales para libros */
   .venta { color: green; font-weight: bold; }
-  .prestamo { color: blue; font-weight: bold; }
+
   .disponible { color: black; font-weight: bold; }
 
   /* Botón de eliminar */
@@ -499,17 +585,19 @@
 
   .carta-libro button {
     margin: 5px 5px 0 5px;
-    padding: 5px 10px;
+    padding: 6px 12px;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     background-color: #000000;
     color: white;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    transition: background 0.2s ease, transform 0.2s ease;
   }
 
   .carta-libro button:hover {
     background-color: #2e2e2e;
+    transform: translateY(-1px);
   }
 
   /* Efectos hover */
@@ -914,3 +1002,197 @@ button {
   .btn-cerrar:hover {
     background-color: #2e2e2e;
     transform: scale(1.05);}
+
+    /* SIDEBAR */
+.sidebar {
+  width: 70px;
+  height: 100vh;
+  background: #1e1e2f;
+  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  transition: width 0.3s;
+  z-index: 1000; /* 🔥 siempre encima pero controlado */
+}
+
+/* EXPANSIÓN */
+.sidebar:hover {
+  width: 250px;
+}
+/* RESET */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* LAYOUT GENERAL */
+/* ========================= */
+.layout {
+  display: flex;
+}
+
+/* ========================= */
+/* SIDEBAR */
+/* ========================= */
+.sidebar {
+  width: 70px;
+  height: 100vh;
+  background: #1e1e2f;
+  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  transition: width 0.3s;
+  z-index: 1000;
+}
+
+/* EXPANDIR SIDEBAR */
+.sidebar:hover {
+  width: 250px;
+}
+
+/* LOGO */
+.logo {
+  text-align: center;
+  margin: 20px 0;
+}
+
+/* LISTA */
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+/* ITEM */
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.3s ease, transform 0.2s ease;
+  border-radius: 8px;
+  margin: 6px;
+  background: #1f2937;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.menu-item:hover {
+  background: #2e2e4d;
+  transform: translateY(-1px);
+}
+
+.menu-item:active {
+  transform: translateY(0);
+}
+
+/* ICONO */
+.icon {
+  font-size: 20px;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* TEXTO */
+.text {
+  opacity: 0;
+  white-space: nowrap;
+  transition: 0.3s;
+}
+
+/* MOSTRAR TEXTO */
+.sidebar:hover .text {
+  opacity: 1;
+}
+
+/* SUBMENÚ */
+.submenu {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  background: #2a2a40;
+  width: 200px;
+  list-style: none;
+  padding: 0;
+  display: none;
+}
+
+/* MOSTRAR SUBMENU SOLO SI SIDEBAR ESTÁ ABIERTO */
+.sidebar:hover .menu-item:hover .submenu {
+  display: block;
+}
+
+/* ITEMS SUBMENU */
+.submenu li {
+  padding: 12px;
+  cursor: pointer;
+}
+
+.submenu li:hover {
+  background: #444466;
+}
+
+/* CONTENIDO */
+.main-content {
+  margin-left: 70px;
+  width: calc(100% - 70px);
+  min-height: 100vh;
+
+  display: flex;
+  justify-content: center;   
+  align-items: flex-start;   
+  padding: 20px;
+  transition: all 0.3s ease;
+  margin: 0 auto;
+}
+
+/* 🔥 CLAVE: centra el contenido real */
+.container {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto; 
+}
+
+/* CUANDO SIDEBAR SE EXPANDE */
+.sidebar:hover ~ .main-content {
+  margin-left: 250px;
+  width: calc(100% - 250px);
+}
+
+/* EVITAR BUGS DE SUPERPOSICIÓN */
+.main-content {
+  position: relative;
+  z-index: 1;
+  margin: 0 auto;
+}
+
+/* SECCIONES DE SAGAS */
+.seccion-saga {
+  margin-bottom: 30px;
+}
+
+.seccion-saga h3 {
+  color: #333;
+  margin-bottom: 15px;
+  font-size: 1.5em;
+}
+
+/* Contenedor para sagas */
+.sagas-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  width: 100%;
+}
+
+/* Libros dentro de una saga - layout horizontal */
+.saga-libros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  width: 100%;
+  align-items: flex-start;
+}

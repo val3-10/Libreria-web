@@ -223,17 +223,20 @@
 };
 usuarios.push(nuevoUsuario);
 localStorage.setItem("usuarios", JSON.stringify(usuarios));
-localStorage.setItem("usuarioActivo", JSON.stringify(nuevoUsuario)); // ✅
+localStorage.setItem("usuarioActivo", JSON.stringify(nuevoUsuario));
 
 if (rol === "Admin") {
+    localStorage.setItem("rol", "admin");
     alert("Cuenta creada correctamente como Administrador");
-    window.location.href = "admin.html"; // redirige a panel de admin
+    window.location.href = "admin.html";
 } else if (rol === "Empleado") {
+    localStorage.setItem("rol", "empleado");
     alert("Cuenta creada correctamente como Empleado");
-    window.location.href = "empleado.html"; // redirige a panel de empleado
+    window.location.href = "cliente.html";
 } else {
+    localStorage.setItem("rol", "cliente");
     alert("Cuenta creada correctamente como Cliente");
-    window.location.href = "cliente.html"; // redirige a panel de cliente
+    window.location.href = "cliente.html";
 }
 
     }

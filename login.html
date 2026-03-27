@@ -37,6 +37,7 @@
 
     <a href="forgot-password.html">¿Olvidaste tu contraseña?</a>
     <p>¿No tienes cuenta? <a href="register.html">Crear cuenta</a></p>
+    <p><a href="index.html">Volver al catálogo</a></p>
   </div>
 
   <script>
@@ -81,8 +82,8 @@
 
       if (usuario) {
         localStorage.setItem("usuarioActivo", JSON.stringify(usuario));
-        localStorage.setItem("historialCliente", JSON.stringify(usuario.historial || []));
-        localStorage.setItem("carrito", JSON.stringify(usuario.carrito || []));
+        localStorage.setItem(`historial_${usuario.usuario}`, JSON.stringify(usuario.historial || []));
+        localStorage.setItem(`carrito_${usuario.usuario}`, JSON.stringify(usuario.carrito || []));
         localStorage.setItem("rol", "cliente");
         alert(`Bienvenido ${usuario.nombre}`);
         window.location.href = "cliente.html";
