@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Perfil del Usuario - Booknest</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-straight/css/uicons-solid-straight.css">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <h2 class="logo">
+      <i class="fi fi-ss-book-open-cover"></i>
+    </h2>
+
+    <ul>
+
+      <li class="menu-item" onclick="mostrarSeccion('historial')">
+        <span class="icon"><i class="fi fi-rr-time-past"></i></span>
+        <span class="text">Historial</span>
+      </li>
+
+      <li class="menu-item" onclick="mostrarSeccion('facturas')">
+        <span class="icon"><i class="fi fi-rr-receipt"></i></span>
+        <span class="text">Facturas</span>
+      </li>
+
+      <li class="menu-item" onclick="volverAlCatalogo()">
+        <span class="icon"><i class="fi fi-rr-arrow-left"></i></span>
+        <span class="text">Volver al Catálogo</span>
+      </li>
+
+      <li class="menu-item" onclick="logout()">
+        <span class="icon"><i class="fi fi-rr-exit"></i></span>
+        <span class="text">Cerrar Sesión</span>
+      </li>
+
+      <li class="menu-item" onclick="eliminarCuenta()" style="color: #ff6b6b;">
+        <span class="icon"><i class="fi fi-rr-trash"></i></span>
+        <span class="text">Eliminar Cuenta</span>
+      </li>
+
+    </ul>
+  </div>
+
+  <!-- CONTENIDO -->
+  <div class="main-content">
+
+  <!-- HISTORIAL -->
+  <div id="seccion-historial" class="seccion">
+    <h2>Mi historial</h2>
+    <table id="tablaHistorial">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Acción</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button onclick="borrarHistorial()" style="margin-top:10px;">Borrar historial</button>
+  </div>
+
+  <!-- FACTURAS -->
+  <div id="seccion-facturas" class="seccion" style="display:none;">
+    <h2>Mis Facturas</h2>
+    <table id="tablaFacturasCliente">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Fecha</th>
+          <th>Total</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+
+<!-- MODAL FACTURA -->
+<div id="modalFactura" class="modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+  <div class="modal-contenido" style="width:600px; max-height:700px; overflow-y:auto; background:white; padding:20px; border-radius:8px; margin:auto; box-sizing:border-box;">
+    <h3>Factura de Compra</h3>
+    <p><strong>Cliente:</strong> <span id="facturaCliente" data-id=""></span></p>
+    <p><strong>Correo:</strong> <span id="facturaCorreo"></span></p>
+    <p><strong>Fecha:</strong> <span id="facturaFecha"></span></p>
+    <p><strong>Tipo de tarjeta:</strong> <span id="facturaTipo"></span></p>
+    <p><strong>Últimos 4 dígitos:</strong> <span id="facturaUltimos4"></span></p>
+
+    <table border="1" width="100%" style="border-collapse:collapse; margin-top:10px;">
+      <thead>
+        <tr>
+          <th>Libro</th>
+          <th>Cantidad</th>
+          <th>Precio</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody id="facturaTabla"></tbody>
+    </table>
+
+    <h4 style="text-align:right; margin-top:10px;">Total: $<span id="facturaTotal">0.00</span></h4>
+    <div style="display:flex; justify-content:space-between; margin-top:15px;">
+      <button onclick="cerrarModalFactura()">Cerrar</button>
+      <button onclick="eliminarFactura()">Eliminar factura</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+if (!usuarioActivo || localStorage.getItem("rol") !== "cliente") {
+  window.location.href = "index.html";
+}
+
+// =================== HISTORIAL ===================
+function mostrarHistorial() {
+  const tbody = document.querySelector("#tablaHistorial tbody");
+  if (!usuarioActivo) return;
+  const historial = JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || [];
+  tbody.innerHTML = historial.length === 0 
+    ? `<tr><td colspan="3">Aún no tienes compras registradas.</td></tr>` 
+    : historial.map(item => `<tr><td>${item.libro || item.titulo}</td><td>${item.tipo || item.accion}</td><td>${item.fecha}</td></tr>`).join('');
+}
+
+function borrarHistorial() {
+  if(!usuarioActivo) return;
+  if(!confirm("¿Estás seguro de que quieres borrar tu historial?")) return;
+  localStorage.removeItem(`historial_${usuarioActivo.usuario}`);
+  mostrarHistorial();
+  alert("Historial borrado correctamente");
+}
+
+
+// =================== FACTURAS ===================
+function mostrarFacturas() {
+  const tbody = document.querySelector('#tablaFacturasCliente tbody');
+  const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`))||[];
+  tbody.innerHTML = facturas.length===0 
+    ? "<tr><td colspan='4'>No tienes facturas disponibles.</td></tr>" 
+    : facturas.map((f,i)=>`<tr>
+      <td>${f.id}</td>
+      <td>${f.fecha}</td>
+      <td>$${f.total.toLocaleString('es-CO', )}</td>
+      <td><button onclick="verFactura(${i})">Ver</button></td>
+    </tr>`).join('');
+}
+
+function verFactura(indice){
+  const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`))||[];
+  if(!facturas[indice]) return;
+  const f = facturas[indice];
+
+  document.getElementById('facturaCliente').textContent = f.cliente;
+  document.getElementById('facturaCorreo').textContent = f.correo;
+  document.getElementById('facturaFecha').textContent = f.fecha;
+  document.getElementById('facturaTipo').textContent = f.tarjetaTipo;
+  document.getElementById('facturaUltimos4').textContent = f.tarjetaUltimos4;
+
+  const tbody = document.getElementById('facturaTabla');
+  tbody.innerHTML = f.detalle.map(d=>`<tr>
+    <td>${d.titulo}</td>
+    <td>${d.cantidad}</td>
+   <td>$${d.precio.toLocaleString('es-CO', )}</td>
+  <td>$${(d.cantidad*d.precio).toLocaleString('es-CO', )}</td>
+</tr>`).join('');
+
+ document.getElementById('facturaTotal').textContent = f.total.toLocaleString('es-CO',);
+  document.getElementById('modalFactura').style.display='flex';
+  document.getElementById('facturaCliente').setAttribute('data-id', indice);
+}
+
+function cerrarModalFactura() { document.getElementById('modalFactura').style.display='none'; }
+
+function eliminarFactura(){
+  const indice = parseInt(document.getElementById("facturaCliente").getAttribute('data-id'));
+  const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`)) || [];
+  if(indice<0||!facturas[indice]) return;
+  if(!confirm("¿Deseas eliminar esta factura?")) return;
+  facturas.splice(indice,1);
+  localStorage.setItem(`facturas_${usuarioActivo.usuario}`, JSON.stringify(facturas));
+  cerrarModalFactura();
+  mostrarFacturas();
+  alert("Factura eliminada correctamente");
+}
+
+// =================== MENÚ ===================
+function mostrarSeccion(seccion) {
+  const secciones = document.querySelectorAll('.seccion');
+  secciones.forEach(s => s.style.display = 'none');
+  document.getElementById(`seccion-${seccion}`).style.display = 'block';
+
+  if (seccion === 'historial') {
+    mostrarHistorial();
+  } else if (seccion === 'facturas') {
+    mostrarFacturas();
+  }
+}
+
+const menuFlotante = document.getElementById('botonMenu');
+const menuOpciones = document.getElementById('menuOpciones');
+if (menuFlotante && menuOpciones) {
+  menuFlotante.addEventListener('click', e=>{ e.stopPropagation(); menuOpciones.style.display = menuOpciones.style.display==='flex'?'none':'flex'; });
+  menuOpciones.addEventListener('click', e=>e.stopPropagation());
+  window.addEventListener('click', ()=>{ menuOpciones.style.display='none'; });
+}
+
+// =================== BOTONES ===================
+function volverAlCatalogo(){ window.location.href='cliente.html'; }
+function logout(){ localStorage.removeItem("rol"); localStorage.removeItem("usuarioActivo"); window.location.href='index.html'; }
+
+function eliminarCuenta(){
+  if(!usuarioActivo) return;
+  if(!confirm("¿Estas seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.")) return;
+  const usuarios = JSON.parse(localStorage.getItem("usuarios"))||[];
+  const index = usuarios.findIndex(u=>u.correo===usuarioActivo.correo);
+  if(index!==-1) usuarios.splice(index,1);
+  localStorage.setItem("usuarios", JSON.stringify(usuarios));
+  localStorage.removeItem("usuarioActivo");
+  localStorage.removeItem(`historial_${usuarioActivo.usuario}`);
+  localStorage.removeItem(`carrito_${usuarioActivo.usuario}`);
+  localStorage.removeItem(`facturas_${usuarioActivo.usuario}`);
+  alert("Tu cuenta ha sido eliminada correctamente.");
+  window.location.href="login.html";
+}
+
+// =================== INICIO ===================
+document.addEventListener("DOMContentLoaded", ()=>{
+  mostrarSeccion('historial');
+  document.getElementById('modalFactura').style.display='none';
+});
+
+</script>
+
+  </div>
+
+</div>
+
+</body>
+</html>

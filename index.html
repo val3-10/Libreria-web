@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Booknest - Catálogo</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-straight/css/uicons-solid-straight.css">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css">
+</head>
+<body>
+
+<!-- iconos de los botones -->
+<header>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <h2 class="logo">
+      <i class="fi fi-ss-book-open-cover"></i>
+    </h2>
+
+    <div class="buscador-wrapper">
+      <button id="toggleBuscador" class="btn-toggle-buscador" onclick="toggleBuscador()">
+        <i class="fi fi-rr-search"></i>
+        <span class="buscador-text">Buscar</span>
+      </button>
+      <div id="buscadorPanel" class="buscador-panel">
+        <input
+          type="text"
+          id="buscadorLibros"
+          placeholder="Buscar libro por título o autor..."
+          oninput="buscarLibros()"
+        >
+      </div>
+    </div>
+
+    <ul>
+      <li class="menu-item" onclick="mostrarSeccion('catalogo')">
+        <span class="icon"><i class="fi fi-rr-books"></i></span>
+        <span class="text">Catálogo</span>
+      </li>
+      <li class="menu-item" onclick="mostrarSeccion('sagas')">
+        <span class="icon"><i class="fi fi-rr-books"></i></span>
+        <span class="text">Sagas</span>
+      </li>
+      <li class="menu-item" onclick="irALogin()">
+        <span class="icon"><i class="fi fi-rr-sign-in-alt"></i></span>
+        <span class="text">Iniciar Sesión</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- CONTENIDO -->
+  <div class="main-content">
+
+  <!-- CATÁLOGO -->
+  <div id="seccionCatalogo" class="seccion">
+    <h2>Catálogo de Libros</h2>
+    <div id="catalogoLibros" class="catalogo-libros"></div>
+  </div>
+
+  <!-- SAGAS -->
+  <div id="seccionSagas" class="seccion" style="display: none;">
+    <h2>Sagas</h2>
+    <div id="sagasContainer" class="sagas-container"></div>
+  </div>
+
+  </div>
+
+  <!-- MODAL PARA INICIAR SESIÓN -->
+  <div id="modalLogin" class="modal">
+    <div class="modal-contenido">
+      <h3>¿Quieres iniciar sesión para comprar?</h3>
+      <p>Para agregar al carrito y realizar compras, necesitas estar registrado.</p>
+      <div class="modal-botones">
+        <button onclick="irALogin()">Sí, iniciar sesión</button>
+        <button onclick="cerrarModalLogin()">No, continuar viendo</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let libros = JSON.parse(localStorage.getItem("libros")) || [];
+  let vistaSagas = false;
+
+  document.addEventListener("DOMContentLoaded", () => {
+    mostrarLibrosCatalogo();
+  });
+
+  function mostrarLibrosCatalogo() {
+    const contenedor = document.getElementById("catalogoLibros");
+    contenedor.innerHTML = "";
+
+    if (libros.length === 0) {
+      contenedor.innerHTML = "<p>No hay libros disponibles</p>";
+      return;
+    }
+
+    // Vista catálogo normal (sin agrupar por saga)
+    const librosOrdenados = [...libros].sort((a, b) => a.titulo.localeCompare(b.titulo));
+
+    librosOrdenados.forEach((libro) => {
+      const carta = document.createElement("div");
+      carta.className = "carta-libro";
+
+      carta.innerHTML = `
+        <img src="${libro.caratula || 'img/BookNest.png'}">
+        <h3>${libro.titulo}</h3>
+        <p>Autor: ${libro.autor}</p>
+        <p>Estado: ${libro.estado}</p>
+        <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
+        <p>Stock: ${libro.stock}</p>
+        <div class="carta-botones">
+          <button onclick="mostrarModalLogin()">
+            <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
+          </button>
+        </div>
+      `;
+
+      contenedor.appendChild(carta);
+    });
+  }
+
+  function mostrarSagas() {
+    const contenedor = document.getElementById("sagasContainer");
+    contenedor.innerHTML = "";
+
+    if (libros.length === 0) {
+      contenedor.innerHTML = "<p>No hay libros disponibles</p>";
+      return;
+    }
+
+    // Agrupar por sagas
+    const sagas = {};
+    const librosSinSaga = [];
+    
+    libros.forEach(libro => {
+      if (libro.saga && libro.saga.trim()) {
+        if (!sagas[libro.saga]) sagas[libro.saga] = [];
+        sagas[libro.saga].push(libro);
+      } else {
+        librosSinSaga.push(libro);
+      }
+    });
+
+    // Ordenar sagas alfabéticamente
+    const sagasOrdenadas = Object.keys(sagas).sort((a, b) => a.localeCompare(b));
+
+    // Mostrar sagas con libros en layout horizontal
+    sagasOrdenadas.forEach((saga) => {
+      const librosSaga = sagas[saga];
+      const seccionSaga = document.createElement("div");
+      seccionSaga.className = "seccion-saga";
+      
+      const titulo = document.createElement("h3");
+      titulo.textContent = saga;
+      seccionSaga.appendChild(titulo);
+
+      const contenedorLibros = document.createElement("div");
+      contenedorLibros.className = "saga-libros";
+
+      librosSaga.sort((a, b) => a.titulo.localeCompare(b.titulo)).forEach((libro) => {
+        const carta = document.createElement("div");
+        carta.className = "carta-libro";
+
+        carta.innerHTML = `
+          <img src="${libro.caratula || 'img/BookNest.png'}">
+          <h3>${libro.titulo}</h3>
+          <p>Autor: ${libro.autor}</p>
+          <p>Estado: ${libro.estado}</p>
+          <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
+          <p>Stock: ${libro.stock}</p>
+          <div class="carta-botones">
+            <button onclick="mostrarModalLogin()">
+              <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
+            </button>
+          </div>
+        `;
+
+        contenedorLibros.appendChild(carta);
+      });
+
+      seccionSaga.appendChild(contenedorLibros);
+      contenedor.appendChild(seccionSaga);
+    });
+
+    // Mostrar libros sin saga (si existen)
+    if (librosSinSaga.length > 0) {
+      const seccionSinSaga = document.createElement("div");
+      seccionSinSaga.className = "seccion-saga";
+      
+      const titulo = document.createElement("h3");
+      titulo.textContent = "Otros Libros";
+      seccionSinSaga.appendChild(titulo);
+
+      const contenedorLibros = document.createElement("div");
+      contenedorLibros.className = "saga-libros";
+
+      librosSinSaga.sort((a, b) => a.titulo.localeCompare(b.titulo)).forEach((libro) => {
+        const carta = document.createElement("div");
+        carta.className = "carta-libro";
+
+        carta.innerHTML = `
+          <img src="${libro.caratula || 'img/BookNest.png'}">
+          <h3>${libro.titulo}</h3>
+          <p>Autor: ${libro.autor}</p>
+          <p>Estado: ${libro.estado}</p>
+          <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
+          <p>Stock: ${libro.stock}</p>
+          <div class="carta-botones">
+            <button onclick="mostrarModalLogin()">
+              <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
+            </button>
+          </div>
+        `;
+
+        contenedorLibros.appendChild(carta);
+      });
+
+      seccionSinSaga.appendChild(contenedorLibros);
+      contenedor.appendChild(seccionSinSaga);
+    }
+  }
+
+  function buscarLibros() {
+    const texto = document.getElementById("buscadorLibros").value.toLowerCase();
+    
+    // Determinar en qué sección estamos
+    const seccionCatalogo = document.getElementById('seccionCatalogo');
+    const seccionSagas = document.getElementById('seccionSagas');
+    
+    if (!texto) {
+      // Si el input queda vacío, mostrar la sección actual completamente
+      if (seccionSagas.style.display !== 'none') {
+        mostrarSagas();
+      } else {
+        mostrarLibrosCatalogo();
+      }
+      return;
+    }
+
+    const filtrados = [...libros].sort((a, b) => a.titulo.localeCompare(b.titulo)).filter(libro =>
+      libro.titulo.toLowerCase().includes(texto) ||
+      libro.autor.toLowerCase().includes(texto)
+    );
+
+    // Si estamos en sagas, mostrar filtrados en sagas
+    if (seccionSagas.style.display !== 'none') {
+      mostrarLibrosFiltradosSagas(filtrados);
+    } else {
+      // Si estamos en catálogo, mostrar filtrados en catálogo
+      mostrarLibrosFiltradosCatalogo(filtrados);
+    }
+  }
+
+  function mostrarLibrosFiltradosCatalogo(filtrados) {
+    const contenedor = document.getElementById("catalogoLibros");
+    contenedor.innerHTML = "";
+
+    if (filtrados.length === 0) {
+      contenedor.innerHTML = "<p>No se encontraron libros</p>";
+      return;
+    }
+
+    filtrados.forEach((libro) => {
+      const carta = document.createElement("div");
+      carta.className = "carta-libro";
+
+      carta.innerHTML = `
+        <img src="${libro.caratula || 'img/BookNest.png'}">
+        <h3>${libro.titulo}</h3>
+        <p>Autor: ${libro.autor}</p>
+        <p>Estado: ${libro.estado}</p>
+        <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
+        <p>Stock: ${libro.stock}</p>
+        <div class="carta-botones">
+          <button onclick="mostrarModalLogin()">
+            <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
+          </button>
+        </div>
+      `;
+      contenedor.appendChild(carta);
+    });
+  }
+
+  function mostrarLibrosFiltradosSagas(filtrados) {
+    const contenedor = document.getElementById("sagasContainer");
+    contenedor.innerHTML = "";
+
+    if (filtrados.length === 0) {
+      contenedor.innerHTML = "<p>No se encontraron libros</p>";
+      return;
+    }
+
+    // Agrupar por sagas en orden
+    const sagas = {};
+    const librosSinSaga = [];
+    
+    filtrados.forEach(libro => {
+      if (libro.saga && libro.saga.trim()) {
+        if (!sagas[libro.saga]) sagas[libro.saga] = [];
+        sagas[libro.saga].push(libro);
+      } else {
+        librosSinSaga.push(libro);
+      }
+    });
+
+    // Ordenar sagas de A a la Z
+    const sagasOrdenadas = Object.keys(sagas).sort((a, b) => a.localeCompare(b));
+
+    // Mostrar sagas buscadas
+    sagasOrdenadas.forEach((saga) => {
+      const librosSaga = sagas[saga];
+      const seccionSaga = document.createElement("div");
+      seccionSaga.className = "seccion-saga";
+      
+      const titulo = document.createElement("h3");
+      titulo.textContent = saga;
+      seccionSaga.appendChild(titulo);
+
+      const contenedorLibros = document.createElement("div");
+      contenedorLibros.className = "saga-libros";
+
+      librosSaga.sort((a, b) => a.titulo.localeCompare(b.titulo)).forEach((libro) => {
+        const carta = document.createElement("div");
+        carta.className = "carta-libro";
+
+        carta.innerHTML = `
+          <img src="${libro.caratula || 'img/BookNest.png'}">
+          <h3>${libro.titulo}</h3>
+          <p>Autor: ${libro.autor}</p>
+          <p>Estado: ${libro.estado}</p>
+          <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
+          <p>Stock: ${libro.stock}</p>
+          <div class="carta-botones">
+            <button onclick="mostrarModalLogin()">
+              <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
+            </button>
+          </div>
+        `;
+        contenedorLibros.appendChild(carta);
+      });
+
+      seccionSaga.appendChild(contenedorLibros);
+      contenedor.appendChild(seccionSaga);
+    });
+
+    // Mostrar libros sin saga 
+    if (librosSinSaga.length > 0) {
+      const seccionSinSaga = document.createElement("div");
+      seccionSinSaga.className = "seccion-saga";
+      
+      const titulo = document.createElement("h3");
+      titulo.textContent = "Otros Libros";
+      seccionSinSaga.appendChild(titulo);
+
+      const contenedorLibros = document.createElement("div");
+      contenedorLibros.className = "saga-libros";
+
+      librosSinSaga.sort((a, b) => a.titulo.localeCompare(b.titulo)).forEach((libro) => {
+        const carta = document.createElement("div");
+        carta.className = "carta-libro";
+
+        carta.innerHTML = `
+          <img src="${libro.caratula || 'img/BookNest.png'}">
+          <h3>${libro.titulo}</h3>
+          <p>Autor: ${libro.autor}</p>
+          <p>Estado: ${libro.estado}</p>
+          <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
+          <p>Stock: ${libro.stock}</p>
+          <div class="carta-botones">
+            <button onclick="mostrarModalLogin()">
+              <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
+            </button>
+          </div>
+        `;
+        contenedorLibros.appendChild(carta);
+      });
+
+      seccionSinSaga.appendChild(contenedorLibros);
+      contenedor.appendChild(seccionSinSaga);
+    }
+  }
+
+  function toggleBuscador() {
+    const panel = document.getElementById('buscadorPanel');
+    if (!panel) return;
+    panel.classList.toggle('visible');
+    const input = document.getElementById('buscadorLibros');
+    if (panel.classList.contains('visible') && input) input.focus();
+  }
+
+  function mostrarSeccion(tipo) {
+    const seccionCatalogo = document.getElementById('seccionCatalogo');
+    const seccionSagas = document.getElementById('seccionSagas');
+    
+    // Ocultar todas las secciones primero
+    if (seccionCatalogo) seccionCatalogo.style.display = 'none';
+    if (seccionSagas) seccionSagas.style.display = 'none';
+    
+    // Mostrar solo la sección seleccionada
+    if (tipo === 'catalogo') {
+      if (seccionCatalogo) seccionCatalogo.style.display = 'block';
+      mostrarLibrosCatalogo();
+    } else if (tipo === 'sagas') {
+      if (seccionSagas) seccionSagas.style.display = 'block';
+      mostrarSagas();
+    }
+  }
+
+  function mostrarModalLogin() {
+    document.getElementById('modalLogin').style.display = 'flex';
+  }
+
+  function cerrarModalLogin() {
+    document.getElementById('modalLogin').style.display = 'none';
+  }
+
+  function irALogin() {
+    window.location.href = "login.html";
+  }
+
+  function mostrarMensaje(tipo, mensaje) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${tipo}`;
+    toast.textContent = mensaje;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+</script>
+</body>
+</html>
