@@ -1306,3 +1306,13 @@ body {
   object-fit: cover;
   border-radius: 10px;
 }
+
+/*Click*/
+.card-destacada {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.card-destacada:hover {
+  transform: scale(1.05);
+}
