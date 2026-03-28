@@ -899,6 +899,27 @@ function mostrarGaleriaDestacados() {
 
   contenedor.innerHTML = "";
 
+  const destacados = libros.slice(0, 5);
+
+  destacados.forEach(libro => {
+    const card = document.createElement("div");
+    card.className = "card-destacada";
+
+    card.innerHTML = `
+      <img src="${libro.caratula || 'img/BookNest.png'}">
+      <p>${libro.titulo}</p>
+    `;
+
+    card.onclick = () => {
+      agregarCarritoPorTitulo(encodeURIComponent(libro.titulo));
+    };
+
+    contenedor.appendChild(card);
+  });
+}
+
+  contenedor.innerHTML = "";
+
   // Tomar solo los primeros 5 libros como destacados
   const destacados = libros.slice(0, 5);
 
@@ -913,7 +934,7 @@ function mostrarGaleriaDestacados() {
 
     contenedor.appendChild(card);
   });
-}
+
 
 </script>
 </div>

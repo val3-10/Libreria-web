@@ -447,9 +447,31 @@
     setTimeout(() => toast.remove(), 3000);
   }
 
-  function mostrarGaleriaDestacados() {
+ function mostrarGaleriaDestacados() {
   const contenedor = document.getElementById("galeriaDestacados");
   if (!contenedor) return;
+
+  contenedor.innerHTML = "";
+
+  const destacados = libros.slice(0, 5);
+
+  destacados.forEach(libro => {
+    const card = document.createElement("div");
+    card.className = "card-destacada";
+
+    card.innerHTML = `
+      <img src="${libro.caratula || 'img/BookNest.png'}">
+      <p>${libro.titulo}</p>
+    `;
+
+  
+    card.onclick = () => {
+      mostrarModalLogin(); 
+    };
+
+    contenedor.appendChild(card);
+  });
+}
 
   contenedor.innerHTML = "";
 
@@ -467,7 +489,7 @@
 
     contenedor.appendChild(card);
   });
-}
+
 </script>
 </body>
 </html>
