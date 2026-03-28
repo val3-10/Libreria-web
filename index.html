@@ -10,6 +10,11 @@
 </head>
 <body>
 
+  <div class="main-content"></div>
+  <!-- GALERÍA DESTACADA -->
+<div class="galeria-destacada">
+  <div class="contenedor-galeria" id="galeriaDestacada"></div>
+</div>
 <!-- iconos de los botones -->
 <header>
   <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
@@ -62,6 +67,7 @@
   <!-- CATÁLOGO -->
   <div id="seccionCatalogo" class="seccion">
     <h2>Catálogo de Libros</h2>
+    <div id="galeriaDestacados" class="galeria-destacados"></div>
     <div id="catalogoLibros" class="catalogo-libros"></div>
   </div>
 
@@ -92,6 +98,7 @@
   let vistaSagas = false;
 
   document.addEventListener("DOMContentLoaded", () => {
+    mostrarGaleriaDestacados();
     mostrarLibrosCatalogo();
   });
 
@@ -435,6 +442,28 @@
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
   }
+
+  function mostrarGaleriaDestacados() {
+  const contenedor = document.getElementById("galeriaDestacados");
+  if (!contenedor) return;
+
+  contenedor.innerHTML = "";
+
+  // Tomar solo los primeros 5 libros como destacados
+  const destacados = libros.slice(0, 5);
+
+  destacados.forEach(libro => {
+    const card = document.createElement("div");
+    card.className = "card-destacada";
+
+    card.innerHTML = `
+      <img src="${libro.caratula || 'img/BookNest.png'}">
+      <p>${libro.titulo}</p>
+    `;
+
+    contenedor.appendChild(card);
+  });
+}
 </script>
 </body>
 </html>
