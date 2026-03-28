@@ -4,23 +4,56 @@
   <meta charset="UTF-8">
   <title>Perfil del Usuario - Booknest</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-straight/css/uicons-solid-straight.css">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css">
+  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css">
 </head>
 <body>
 
-<!-- MENÚ FLOTANTE UNIFICADO -->
-<div class="menu-flotante" id="botonMenu">
-  ⋮
-  <div class="menu-flotante-opciones2" id="menuOpciones">
-    <button class="btn-menu" onclick="volverAlCatalogo()">Volver</button>
-    <button class="btn-menu" onclick="logout()">Cerrar sesión</button>
-    <button class="btn-menu btn-eliminar" onclick="eliminarCuenta()">Eliminar cuenta</button>
-  </div>
-</div>
+<div class="layout">
 
-<div class="container">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <h2 class="logo">
+      <i class="fi fi-ss-book-open-cover"></i>
+    </h2>
+
+    <ul>
+
+      <li class="menu-item" onclick="mostrarSeccion('historial')">
+        <span class="icon"><i class="fi fi-rr-time-past"></i></span>
+        <span class="text">Historial</span>
+      </li>
+
+      <li class="menu-item" onclick="mostrarSeccion('facturas')">
+        <span class="icon"><i class="fi fi-rr-receipt"></i></span>
+        <span class="text">Facturas</span>
+      </li>
+
+      <li class="menu-item" onclick="volverAlCatalogo()">
+        <span class="icon"><i class="fi fi-rr-arrow-left"></i></span>
+        <span class="text">Volver al Catálogo</span>
+      </li>
+
+      <li class="menu-item" onclick="logout()">
+        <span class="icon"><i class="fi fi-rr-exit"></i></span>
+        <span class="text">Cerrar Sesión</span>
+      </li>
+
+      <li class="menu-item" onclick="eliminarCuenta()" style="color: #ff6b6b;">
+        <span class="icon"><i class="fi fi-rr-trash"></i></span>
+        <span class="text">Eliminar Cuenta</span>
+      </li>
+
+    </ul>
+  </div>
+
+  <!-- CONTENIDO -->
+  <div class="main-content">
 
   <!-- HISTORIAL -->
-  <div class="seccion">
+  <div id="seccion-historial" class="seccion">
     <h2>Mi historial</h2>
     <table id="tablaHistorial">
       <thead>
@@ -36,10 +69,9 @@
   </div>
 
   <!-- FACTURAS -->
-  <div class="seccion">
+  <div id="seccion-facturas" class="seccion" style="display:none;">
     <h2>Mis Facturas</h2>
-    <button onclick="toggleFacturas()" style="margin-bottom:10px;">Ver Facturas</button>
-    <table id="tablaFacturasCliente" style="display:none;">
+    <table id="tablaFacturasCliente">
       <thead>
         <tr>
           <th>ID</th>
@@ -52,26 +84,6 @@
     </table>
   </div>
 
-  <!-- PRÉSTAMOS -->
-  <div class="seccion">
-    <h2>Información de mis Préstamos</h2>
-    <button onclick="toggleHistorialPrestamos()" style="margin-bottom:10px;">Mis Préstamos</button>
-    <table id="tablaHistorialCliente" style="display:none;">
-      <thead>
-        <tr>
-          <th>Libro</th>
-          <th>Fecha del préstamo</th>
-          <th>Vencimiento</th>
-          <th>Tiempo restante</th>
-          <th>Estado</th>
-          <th>Accion</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-</div>
 
 <!-- MODAL FACTURA -->
 <div id="modalFactura" class="modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
@@ -105,6 +117,9 @@
 
 <script>
 const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
+if (!usuarioActivo || localStorage.getItem("rol") !== "cliente") {
+  window.location.href = "index.html";
+}
 
 // =================== HISTORIAL ===================
 function mostrarHistorial() {
@@ -112,7 +127,7 @@ function mostrarHistorial() {
   if (!usuarioActivo) return;
   const historial = JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || [];
   tbody.innerHTML = historial.length === 0 
-    ? `<tr><td colspan="3">Aún no tienes compras ni préstamos.</td></tr>` 
+    ? `<tr><td colspan="3">Aún no tienes compras registradas.</td></tr>` 
     : historial.map(item => `<tr><td>${item.libro || item.titulo}</td><td>${item.tipo || item.accion}</td><td>${item.fecha}</td></tr>`).join('');
 }
 
@@ -123,214 +138,9 @@ function borrarHistorial() {
   mostrarHistorial();
   alert("Historial borrado correctamente");
 }
-// =================== PRÉSTAMOS ===================
 
-let intervalPrestamos = null; 
-
-function toggleHistorialPrestamos() {
-  const tabla = document.getElementById('tablaHistorialCliente');
-  if (!tabla) return;
-
-  if (tabla.style.display === 'table') {
-    tabla.style.display = 'none';
-    clearInterval(intervalPrestamos);
-  } else {
-    tabla.style.display = 'table';
-    mostrarHistorialPrestamos();
-  }
-}
-function parseFecha(fechaStr) {
-  const partes = fechaStr.split("/");
-  if (partes.length !== 3) return new Date(fechaStr); 
-  const dia = parseInt(partes[0], 10);
-  const mes = parseInt(partes[1], 10) - 1; 
-  const anio = parseInt(partes[2], 10);
-  return new Date(anio, mes, dia);
-}
-
-let prestamosActivos = []; 
-
-function mostrarHistorialPrestamos() {
-  const tbody = document.querySelector('#tablaHistorialCliente tbody');
-  if (!tbody || !usuarioActivo) return;
-
-  const historial = JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || [];
-  const prestamos = historial.filter(item => item.tipo && item.tipo.toLowerCase() === "préstamo");
-
-  if (prestamos.length === 0) {
-    tbody.innerHTML = "<tr><td colspan='6'>No hay préstamos registrados</td></tr>";
-    return;
-  }
-
-  tbody.innerHTML = ""; 
-  prestamosActivos = []; 
-
-  prestamos.forEach((item, index) => {
-    const fechaPrestamo = parseFecha(item.fecha);
-    const fechaVenc = item.fechaDevolucion ? parseFecha(item.fechaDevolucion) : (() => {
-      const temp = new Date(fechaPrestamo);
-      temp.setDate(temp.getDate() + 30);
-      return temp;
-    })();
-
-    const ahora = new Date();
-    let diffMs = fechaVenc - ahora;
-    let estado = item.devuelto ? "Devuelto" : (diffMs <= 0 ? "Vencido" : "Activo");
-    diffMs = Math.max(diffMs, 0);
-    item._contador = item._contador || diffMs;
-
-    const fila = document.createElement("tr");
-    fila.id = `prestamo-${index}`;
-    fila.innerHTML = `
-      <td>${item.libro}</td>
-      <td>${item.fecha}</td>
-      <td>${fechaVenc.toLocaleDateString()}</td>
-      <td id="restante-${index}">${formatTiempo(item._contador)}</td>
-      <td id="estado-${index}">${estado}</td>
-      <td id="accion-${index}">
-        ${item.devuelto ? "" : `<button onclick="marcarDevuelto(${index})">Devolver</button>`}
-      </td>
-    `;
-    tbody.appendChild(fila);
-
-    if (!item.devuelto) {
-      const interval = setInterval(() => {
-        const tdRestante = document.getElementById(`restante-${index}`);
-        const tdEstado = document.getElementById(`estado-${index}`);
-        const tdAccion = document.getElementById(`accion-${index}`);
-        if (!tdRestante) return;
-
-        item._contador -= 1000;
-        if (item._contador <= 0) {
-          tdRestante.textContent = "0d 0h 0m 0s";
-          if(tdEstado) tdEstado.textContent = "Vencido";
-          if(tdAccion) tdAccion.innerHTML = "";
-          clearInterval(interval);
-          return;
-        }
-        tdRestante.textContent = formatTiempo(item._contador);
-      }, 1000);
-
-      prestamosActivos.push({ item, index, interval });
-      item._interval = interval; 
-    }
-  });
-}
-
-// Formateo de tiempo
-function formatTiempo(ms) {
-  const dias = Math.floor(ms / (1000 * 60 * 60 * 24));
-  const horas = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutos = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-  return `${dias}d ${horas}h ${minutos}m`;
-}
-
-// Marcar como devuelto o pausar un contador
-function marcarDevuelto(index) {
-  const usuario = usuarioActivo.usuario;
-  const historial = JSON.parse(localStorage.getItem(`historial_${usuario}`)) || [];
-  const prestamos = historial.filter(item => item.tipo && item.tipo.toLowerCase() === "préstamo");
-  if(!prestamos[index]) return;
-
- 
-  if(prestamos[index]._interval) clearInterval(prestamos[index]._interval);
-
- 
-  const tdRestante = document.getElementById(`restante-${index}`);
-  if(tdRestante) {
-    const partes = tdRestante.textContent.match(/(\d+)d (\d+)h (\d+)m/);
-    if(partes) {
-      const dias = parseInt(partes[1]);
-      const horas = parseInt(partes[2]);
-      const minutos = parseInt(partes[3]);
-      prestamos[index]._contador = ((dias*24 + horas)*60 + minutos)*60*1000;
-    }
-  }
-
-  prestamos[index].devuelto = true;
-
-  // Guardar historial completo
-  const idx = historial.findIndex(item => item.fecha === prestamos[index].fecha && item.libro === prestamos[index].libro);
-  if(idx !== -1) historial[idx] = prestamos[index];
-  localStorage.setItem(`historial_${usuario}`, JSON.stringify(historial));
-
-  // Actualizar visualmente
-  const tdEstado = document.getElementById(`estado-${index}`);
-  const tdAccion = document.getElementById(`accion-${index}`);
-  if(tdEstado) tdEstado.textContent = "Devuelto";
-  if(tdAccion) tdAccion.innerHTML = "";
-}
-
-// Mostrar los préstamos respetando contadores pausados
-function mostrarHistorialPrestamos() {
-  const tbody = document.querySelector('#tablaHistorialCliente tbody');
-  if (!tbody || !usuarioActivo) return;
-
-  const historial = JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || [];
-  const prestamos = historial.filter(item => item.tipo && item.tipo.toLowerCase() === "préstamo");
-
-  tbody.innerHTML = prestamos.map((item, index) => {
-    const ahora = new Date();
-    let contador = item._contador;
-    if(contador === undefined) {
-      const fechaPrestamo = parseFecha(item.fecha);
-      const fechaVenc = item.fechaDevolucion ? parseFecha(item.fechaDevolucion) : (() => {
-        const temp = new Date(fechaPrestamo);
-        temp.setDate(temp.getDate() + 30);
-        return temp;
-      })();
-      contador = fechaVenc - ahora;
-      item._contador = contador;
-    }
-
-    const estado = item.devuelto ? "Devuelto" : (contador <= 0 ? "Vencido" : "Activo");
-
-    return `<tr id="prestamo-${index}">
-      <td>${item.libro}</td>
-      <td>${item.fecha}</td>
-      <td>${item.fechaDevolucion || ''}</td>
-      <td id="restante-${index}">${formatTiempo(contador)}</td>
-      <td id="estado-${index}">${estado}</td>
-      <td id="accion-${index}">
-        ${item.devuelto ? "" : `<button onclick="marcarDevuelto(${index})">Devolver</button>`}
-      </td>
-    </tr>`;
-  }).join('');
-
-  // Iniciar intervalos solo para préstamos activos
-  prestamos.forEach((item, index) => {
-    if(item.devuelto) return;
-    if(item._interval) clearInterval(item._interval);
-
-    item._interval = setInterval(() => {
-      const tdRestante = document.getElementById(`restante-${index}`);
-      const tdEstado = document.getElementById(`estado-${index}`);
-      const tdAccion = document.getElementById(`accion-${index}`);
-      if(!tdRestante) return;
-
-      item._contador -= 1000;
-      if(item._contador <= 0) {
-        tdRestante.textContent = "0d 0h 0m";
-        if(tdEstado) tdEstado.textContent = "Vencido";
-        if(tdAccion) tdAccion.innerHTML = "";
-        clearInterval(item._interval);
-        return;
-      }
-      tdRestante.textContent = formatTiempo(item._contador);
-    }, 1000);
-  });
-
- 
-  localStorage.setItem(`historial_${usuarioActivo.usuario}`, JSON.stringify(historial));
-}
 
 // =================== FACTURAS ===================
-function toggleFacturas() {
-  const tabla = document.getElementById('tablaFacturasCliente');
-  tabla.style.display = tabla.style.display==='table'?'none':'table';
-  mostrarFacturas();
-}
-
 function mostrarFacturas() {
   const tbody = document.querySelector('#tablaFacturasCliente tbody');
   const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`))||[];
@@ -383,15 +193,29 @@ function eliminarFactura(){
 }
 
 // =================== MENÚ ===================
+function mostrarSeccion(seccion) {
+  const secciones = document.querySelectorAll('.seccion');
+  secciones.forEach(s => s.style.display = 'none');
+  document.getElementById(`seccion-${seccion}`).style.display = 'block';
+
+  if (seccion === 'historial') {
+    mostrarHistorial();
+  } else if (seccion === 'facturas') {
+    mostrarFacturas();
+  }
+}
+
 const menuFlotante = document.getElementById('botonMenu');
 const menuOpciones = document.getElementById('menuOpciones');
-menuFlotante.addEventListener('click', e=>{ e.stopPropagation(); menuOpciones.style.display = menuOpciones.style.display==='flex'?'none':'flex'; });
-menuOpciones.addEventListener('click', e=>e.stopPropagation());
-window.addEventListener('click', ()=>{ menuOpciones.style.display='none'; });
+if (menuFlotante && menuOpciones) {
+  menuFlotante.addEventListener('click', e=>{ e.stopPropagation(); menuOpciones.style.display = menuOpciones.style.display==='flex'?'none':'flex'; });
+  menuOpciones.addEventListener('click', e=>e.stopPropagation());
+  window.addEventListener('click', ()=>{ menuOpciones.style.display='none'; });
+}
 
 // =================== BOTONES ===================
 function volverAlCatalogo(){ window.location.href='cliente.html'; }
-function logout(){ localStorage.removeItem("rol"); window.location.href='login.html'; }
+function logout(){ localStorage.removeItem("rol"); localStorage.removeItem("usuarioActivo"); window.location.href='index.html'; }
 
 function eliminarCuenta(){
   if(!usuarioActivo) return;
@@ -410,13 +234,15 @@ function eliminarCuenta(){
 
 // =================== INICIO ===================
 document.addEventListener("DOMContentLoaded", ()=>{
-  mostrarHistorial();
-  mostrarHistorialPrestamos();
-  mostrarFacturas();
+  mostrarSeccion('historial');
   document.getElementById('modalFactura').style.display='none';
 });
 
 </script>
+
+  </div>
+
+</div>
 
 </body>
 </html>

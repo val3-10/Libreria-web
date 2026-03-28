@@ -5,6 +5,10 @@
   <title>Booknest - Administrador</title>
   <link rel="stylesheet" href="styles.css">
 
+ <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-straight/css/uicons-solid-straight.css">
+ <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css">
+ <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-straight/css/uicons-regular-straight.css">
+ 
   <style>
     /* Imagen de vista previa de la carátula. Se oculta inicialmente */
     #previewCaratula {
@@ -18,37 +22,99 @@
       height: auto;
     }
 
-    .toast-success { background: #4caf50; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px;}
-    .toast-error { background: #f44336; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px;}
-    .toast-info { background: #2196f3; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px;}
+    .toast-success { background: #4caf50; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px; z-index: 9999;}
+    .toast-error { background: #f44336; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px; z-index: 9999;}
+    .toast-info { background: #2196f3; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px; z-index: 9999;}
+    
+    /* Tabla compacta sin scroll */
+    #tablaLibrosAdmin, #tablaVentas, #tablaProveedores {
+      width: 100%;
+      font-size: 0.85rem;
+      border-collapse: collapse;
+      table-layout: auto;
+    }
+    
+    #tablaLibrosAdmin td, #tablaVentas td, #tablaProveedores td,
+    #tablaLibrosAdmin th, #tablaVentas th, #tablaProveedores th {
+      padding: 6px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      max-width: none;
+    }
+    
+    #tablaLibrosAdmin img {
+      max-width: 40px;
+      height: auto;
+    }
+    
+    #tablaLibrosAdmin button, #tablaVentas button, #tablaProveedores button {
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      white-space: nowrap;
+    }
+    
+    .seccion {
+      overflow: visible;
+    }
   </style>
 </head>
 
 <body>
-<header>
-  <div class="header-container">
-    <button onclick="cerrarSesion()" class="btn-cerrar">Cerrar Sesión</button>
-    <button id="crearAdminBtn" class="crear-andminbtn">Crear nuevo Admin</button>
-  </div>
+
+<header style="background-image: url('img/BookNest.png'); background-size: cover; background-position: center; height: 200px;">
 </header>
 
-<div class="container">
-  <div class="menu-opciones">
-    <button onclick="mostrarSeccion('libros')">Registrar Libro</button>
-    <button onclick="mostrarSeccion('ventas')">Registro de Ventas</button>
-    <button onclick="mostrarSeccion('prestamos')">Registro de Préstamos</button>
-    <button onclick="mostrarSeccion('proveedores')">Proveedores</button>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <h2 class="logo"><i class="fi fi-ss-book-open-cover"></i></h2>
+
+    <ul>
+
+      <li class="menu-item" onclick="mostrarSeccion('libros')">
+        <span class="icon"><i class="fi fi-rr-books"></i></span>
+        <span class="text">Libros</span>
+      </li>
+
+      <li class="menu-item" onclick="mostrarSeccion('ventas')">
+        <span class="icon"><i class="fi fi-rs-sack-dollar"></i></span>
+        <span class="text">Ventas</span>
+      </li>
+
+      <li class="menu-item" onclick="mostrarSeccion('proveedores')">
+        <span class="icon"><i class="fi fi-rs-box-alt"></i></span>
+        <span class="text">Proveedores</span>
+      </li>
+
+      <li class="menu-item" onclick="crearNuevoAdmin()">
+        <span class="icon"><i class="fi fi-rr-user-add"></i></span>
+        <span class="text">Crear Admin</span>
+      </li>
+
+      <li class="menu-item" onclick="cerrarSesion()">
+        <span class="icon"><i class="fi fi-rr-exit"></i></span>
+        <span class="text">Cerrar Sesión</span>
+      </li>
+
+    </ul>
+
   </div>
+
+  <!-- CONTENIDO -->
+  <div class="main-content">
+
 
   <!-- SECCIÓN: REGISTRO DE LIBROS -->
   <div id="libros" class="seccion">
     <h2>Registrar Libro</h2>
     <input type="text" id="titulo" placeholder="Título">
     <input type="text" id="autor" placeholder="Autor">
+    <input type="text" id="saga" placeholder="Saga/Serie (opcional)">
     <select id="estado">
       <option value="disponible">Disponible</option>
       <option value="venta">En venta</option>
-      <option value="prestamo">En préstamo</option>
     </select>
     <input type="number" id="stock" placeholder="Stock" min="0">
     <input type="number" id="precio" placeholder="Precio (en $)" min="0">
@@ -61,6 +127,7 @@
         <tr>
           <th>Título</th>
           <th>Autor</th>
+          <th>Saga</th>
           <th>Estado</th>
           <th>Stock</th>
           <th>Precio</th>
@@ -80,9 +147,8 @@
         <tr>
           <th>Fecha</th>
           <th>Cliente</th>
-          <th>Libro</th>
-          <th>Cantidad</th>
-          <th>Precio Total</th>
+          <th>Detalle</th>
+          <th>Total</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -90,22 +156,32 @@
     </table>
   </div>
 
-  <!-- SECCIÓN: REGISTRO DE PRÉSTAMOS -->
-  <div id="prestamos" class="seccion" style="display:none;">
-    <h2>Registro de Préstamos</h2>
-    <table id="tablaPrestamos">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Cliente</th>
-          <th>Libro</th>
-          <th>Cantidad</th>
-          <th>Duración</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+  <!-- MODAL DETALLE VENTA -->
+  <div id="modalVenta" class="modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+    <div class="modal-contenido" style="width:600px; max-height:700px; overflow-y:auto; background:white; padding:20px; border-radius:8px; margin:auto; box-sizing:border-box;">
+      <h3>Detalle de Venta</h3>
+      <p><strong>Cliente:</strong> <span id="ventaCliente"></span></p>
+      <p><strong>Correo:</strong> <span id="ventaCorreo"></span></p>
+      <p><strong>Fecha:</strong> <span id="ventaFecha"></span></p>
+
+      <table border="1" width="100%" style="border-collapse:collapse; margin-top:10px;">
+        <thead>
+          <tr>
+            <th>Libro</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody id="ventaTabla"></tbody>
+      </table>
+
+      <h4 style="text-align:right; margin-top:10px;">Total: $<span id="ventaTotal">0.00</span></h4>
+      <div style="display:flex; justify-content:space-between; margin-top:15px;">
+        <button onclick="cerrarModalVenta()">Cerrar</button>
+        <button onclick="eliminarTransaccion(document.getElementById('ventaCliente').getAttribute('data-index'))">Eliminar Venta</button>
+      </div>
+    </div>
   </div>
 
   <!-- NUEVA SECCIÓN: PROVEEDORES -->
@@ -137,31 +213,35 @@
     mostrarTransacciones();
     mostrarProveedores();
     mostrarSeccion('libros');
+    
+    // Agregar listener para preview de carátula
+    const caratulaInput = document.getElementById("caratula");
+    if (caratulaInput) {
+      caratulaInput.addEventListener("change", function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(ev) {
+            const preview = document.getElementById("previewCaratula");
+            preview.src = ev.target.result;
+            preview.style.display = "block";
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
   });
 
   function cerrarSesion() {
     localStorage.removeItem("rol");
-    window.location.href = "login.html";
+    localStorage.removeItem("usuarioActivo");
+    window.location.href = "index.html";
   }
 
   function mostrarSeccion(id) {
     document.querySelectorAll(".seccion").forEach(s => s.style.display = "none");
     document.getElementById(id).style.display = "block";
   }
-
-  /* === LIBROS === */
-  document.getElementById("caratula").addEventListener("change", function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        const preview = document.getElementById("previewCaratula");
-        preview.src = ev.target.result;
-        preview.style.display = "block";
-      };
-      reader.readAsDataURL(file);
-    }
-  });
 
   function agregarLibro() {
     const caratulaInput = document.getElementById("caratula");
@@ -181,22 +261,41 @@
   function guardarLibroConCaratula(caratula) {
     const titulo = document.getElementById("titulo").value.trim();
     const autor = document.getElementById("autor").value.trim();
+    const saga = document.getElementById("saga").value.trim();
     const estado = document.getElementById("estado").value;
-    const stock = parseInt(document.getElementById("stock").value.trim());
-    const precio = parseFloat(document.getElementById("precio").value.trim());
+    const stockInput = document.getElementById("stock").value.trim();
+    const precioInput = document.getElementById("precio").value.trim();
 
-    if (!titulo || !autor || isNaN(stock) || stock < 0 || isNaN(precio) || precio < 0) {
-      mostrarMensaje('error', 'Complete todos los campos correctamente');
+    // Validación detallada
+    if (!titulo) {
+      mostrarMensaje('error', 'Por favor ingresa el título del libro');
+      return;
+    }
+    if (!autor) {
+      mostrarMensaje('error', 'Por favor ingresa el autor del libro');
+      return;
+    }
+    if (!stockInput || isNaN(parseInt(stockInput)) || parseInt(stockInput) < 0) {
+      mostrarMensaje('error', 'Por favor ingresa un stock válido (número >= 0)');
+      return;
+    }
+    if (!precioInput || isNaN(parseFloat(precioInput)) || parseFloat(precioInput) < 0) {
+      mostrarMensaje('error', 'Por favor ingresa un precio válido (número >= 0)');
       return;
     }
 
-    libros.push({ titulo, autor, estado, stock, precio, caratula });
+    const stock = parseInt(stockInput);
+    const precio = parseFloat(precioInput);
+
+    libros.push({ titulo, autor, saga: saga || "", estado, stock, precio, caratula });
     localStorage.setItem("libros", JSON.stringify(libros));
     mostrarLibrosAdmin();
     mostrarMensaje('success', 'Libro agregado exitosamente');
 
+    // Limpiar formulario
     document.getElementById("titulo").value = "";
     document.getElementById("autor").value = "";
+    document.getElementById("saga").value = "";
     document.getElementById("stock").value = "";
     document.getElementById("precio").value = "";
     document.getElementById("caratula").value = "";
@@ -214,15 +313,21 @@
   function mostrarLibrosAdmin() {
     const tbody = document.querySelector("#tablaLibrosAdmin tbody");
     tbody.innerHTML = "";
+    if (libros.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No hay libros registrados</td></tr>';
+      return;
+    }
     libros.forEach((libro, i) => {
+      const carStatus = libro.caratula ? '✓ Sí' : '✗ No';
       tbody.innerHTML += `
         <tr>
           <td>${libro.titulo}</td>
           <td>${libro.autor}</td>
+          <td>${libro.saga || '-'}</td>
           <td>${libro.estado}</td>
           <td>${libro.stock}</td>
-          <td>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</td>
-          <td>${libro.caratula ? `<img src="${libro.caratula}">` : 'Sin imagen'}</td>
+          <td>$${libro.precio.toLocaleString('es-CO')}</td>
+          <td>${carStatus}</td>
           <td><button onclick="eliminarLibro(${i})">Eliminar</button></td>
         </tr>
       `;
@@ -232,9 +337,7 @@
   /* === TRANSACCIONES === */
 function mostrarTransacciones() {
   const ventasBody = document.querySelector("#tablaVentas tbody");
-  const prestamosBody = document.querySelector("#tablaPrestamos tbody");
   ventasBody.innerHTML = "";
-  prestamosBody.innerHTML = "";
 
   transacciones.forEach((t, index) => {
     if (t.tipo === "venta") {
@@ -242,41 +345,41 @@ function mostrarTransacciones() {
         <tr>
           <td>${t.fecha}</td>
           <td>${t.usuario || 'Cliente desconocido'}</td>
-          <td>${t.libro}</td>
-          <td>${t.cantidad || 1}</td>
+          <td><button onclick="verDetalleVenta(${index})">Ver Detalle</button></td>
           <td>$${t.total || 0}</td>
           <td><button onclick="eliminarTransaccion(${index})">Eliminar</button></td>
         </tr>`;
-    } 
-    
- else if (t.tipo === "prestamo") {
-  
-  let duracionTexto = '-';
- if (t.duracion) {
-  duracionTexto = `${t.duracion} día${t.duracion > 1 ? 's' : ''}`;
-}
-
-  prestamosBody.innerHTML += `
-    <tr>
-      <td>${t.fecha}</td>
-      <td>${t.usuario}</td>
-      <td>${t.libro}</td>
-      <td>${t.cantidad}</td>
-      <td>${duracionTexto}</td>
-      <td><button onclick="eliminarTransaccion(${index})">Eliminar</button></td>
-    </tr>`;
-}
+    }
   });
 }
 
 
 
-  function eliminarTransaccion(index) {
-    if (!confirm("¿Deseas eliminar este registro?")) return;
-    transacciones.splice(index, 1);
-    localStorage.setItem("transacciones", JSON.stringify(transacciones));
-    mostrarTransacciones();
-    mostrarMensaje("info", "Registro eliminado");
+  function verDetalleVenta(index) {
+    const t = transacciones[index];
+    if (!t || t.tipo !== "venta") return;
+
+    document.getElementById('ventaCliente').textContent = t.usuario || 'Cliente desconocido';
+    document.getElementById('ventaCorreo').textContent = t.correo || '';
+    document.getElementById('ventaFecha').textContent = t.fecha;
+    document.getElementById('ventaCliente').setAttribute('data-index', index);
+
+    const tbody = document.getElementById('ventaTabla');
+    tbody.innerHTML = t.detalle ? t.detalle.map(d => `
+      <tr>
+        <td>${d.titulo}</td>
+        <td>${d.cantidad}</td>
+        <td>$${d.precio.toLocaleString('es-CO')}</td>
+        <td>$${(d.cantidad * d.precio).toLocaleString('es-CO')}</td>
+      </tr>
+    `).join('') : '<tr><td colspan="4">No hay detalle disponible</td></tr>';
+
+    document.getElementById('ventaTotal').textContent = t.total.toLocaleString('es-CO');
+    document.getElementById('modalVenta').style.display = 'flex';
+  }
+
+  function cerrarModalVenta() {
+    document.getElementById('modalVenta').style.display = 'none';
   }
 
   /* === MENSAJES === */
@@ -336,6 +439,10 @@ function mostrarTransacciones() {
   function mostrarProveedores() {
     const tbody = document.querySelector("#tablaProveedores tbody");
     tbody.innerHTML = "";
+    if (proveedores.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay proveedores registrados</td></tr>';
+      return;
+    }
     proveedores.forEach((p, i) => {
       tbody.innerHTML += `
         <tr>
@@ -350,6 +457,15 @@ function mostrarTransacciones() {
     });
   }
 
+  function eliminarTransaccion(index) {
+    if (!confirm('¿Deseas eliminar este registro?')) return;
+    transacciones.splice(index, 1);
+    localStorage.setItem("transacciones", JSON.stringify(transacciones));
+    mostrarTransacciones();
+    cerrarModalVenta();
+    mostrarMensaje('success', 'Venta eliminada correctamente');
+  }
+
   // Campo oculto para saber si se está editando
   const hiddenIndex = document.createElement("input");
   hiddenIndex.type = "hidden";
@@ -361,13 +477,14 @@ function mostrarTransacciones() {
     const rol = localStorage.getItem("rol");
     if (rol !== "admin") {
       alert("No tienes permisos para acceder a esta página.");
-      window.location.href = "login.html";  // Redirigir a login si no es admin
+      window.location.href = "index.html";  // Redirigir a index si no es admin
     }
 
     // Botón para crear un nuevo administrador
-    document.getElementById("crearAdminBtn").addEventListener("click", function() {
-      window.location.href = "register-admin.html";  // Redirige al formulario de registro de admin
-    });
+    function crearNuevoAdmin() {
+      window.location.href = "register-admin.html";
+    }
+
 
 </script>
 </body>
