@@ -501,6 +501,7 @@
 
   // Agrega el libro al carrito por título (funciona con libros ordenados o filtrados)
   function agregarCarritoPorTitulo(tituloCodificado) {
+      agregarCarritoPorTitulo(encodeURIComponent(titulo));
     const titulo = decodeURIComponent(tituloCodificado);
     const libro = libros.find(l => l.titulo === titulo);
     if (!libro) {
