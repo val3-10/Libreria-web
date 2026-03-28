@@ -142,20 +142,28 @@
   margin-top: 8px;
 }
 
+.carta-botones button,
+.btn-fav {
+  min-height: 44px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  min-width: 80px;
+  max-width: 100px;
+  box-sizing: border-box;
+}
+
 .btn-fav {
   background: #ff4081;
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 6px 8px;
   cursor: pointer;
   font-weight: bold;
   transition: transform 0.2s ease, opacity 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  height: 36px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .btn-fav:hover {
@@ -182,13 +190,13 @@
   background: #e6ebf1;
   backdrop-filter: blur(6px);
   padding: 20px;
-  margin: 20px auto; /* 🔥 centra horizontal */
+  margin: 20px auto; 
   border-radius: 16px;
   box-shadow: 0 4px 12px rgb(0, 0, 0);
   text-align: left;
 
   width: 100%;
-  max-width: 800px; /* 🔥 evita que se estire raro */
+  max-width: 800px; 
 }
 
   /* CAMPOS DE FORMULARIOS */
@@ -542,19 +550,47 @@
   /* CATÁLOGO LIBROS (tarjetas) */
   /* ========================= */
   .catalogo-libros {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
     gap: 20px;
+    width: 100%;
+    justify-items: center;
+  }
+
+  @media (max-width: 1200px) {
+    .catalogo-libros {
+      grid-template-columns: repeat(3, minmax(180px, 1fr));
+    }
+  }
+
+  @media (max-width: 900px) {
+    .catalogo-libros {
+      grid-template-columns: repeat(2, minmax(160px, 1fr));
+    }
+  }
+
+  @media (max-width: 600px) {
+    .catalogo-libros {
+      grid-template-columns: 1fr;
+    }
   }
 
   .carta-libro {
     background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    width: 180px;
+    width: 100%;
+    max-width: 220px;
+    min-height: 420px;
     text-align: center;
     padding: 10px;
     transition: transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
 
   .carta-libro img {
@@ -568,31 +604,71 @@
   .carta-libro h3 {
     font-size: 1rem;
     margin: 8px 0 4px;
+    min-height: 2.4em;
+    line-height: 1.2em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    word-break: break-word;
+    font-family: inherit;
   }
 
   .carta-libro p {
     font-size: 0.9rem;
     margin: 2px 0;
+    min-height: 2.2em;
+    line-height: 1.1em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    word-break: break-word;
+    font-family: inherit;
   }
 
-  .carta-libro button {
-    margin: 5px 5px 0 5px;
-    padding: 6px 12px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
+  .carta-botones {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  width: auto;
+  margin-top: 8px;
+  padding: 0 6px;
+}
+
+.carta-botones button,
+.btn-fav {
+  min-width: 90px;
+  max-width: 110px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: inherit;
+  min-height: 35px;
     background-color: #000000;
     color: white;
-    font-size: 0.8rem;
-    transition: background 0.2s ease, transform 0.2s ease;
   }
 
-  .carta-libro button:hover {
+  .carta-botones button:hover,
+  .btn-fav:hover {
     background-color: #2e2e2e;
     transform: translateY(-1px);
   }
 
-  /* Efectos hover */
+  .btn-fav {
+    background: #ff4081;
+    color: #fff;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
   .carta-libro:hover {
     transform: translateY(-5px);
   }
@@ -1141,7 +1217,6 @@ body {
   margin: 0 auto;
 }
 
-/* 🔥 CLAVE: centra el contenido real */
 .container {
   max-width: 900px;
   width: 100%;
@@ -1167,9 +1242,11 @@ body {
 }
 
 .seccion-saga h3 {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
   color: #333;
   margin-bottom: 15px;
-  font-size: 1.5em;
 }
 
 /* Contenedor para sagas */
