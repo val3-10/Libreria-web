@@ -94,12 +94,46 @@
 </div>
 
 <script>
-  let libros = JSON.parse(localStorage.getItem("libros")) || [];
+  const API_BASE = 'http://localhost:3000';
+
+  let libros = [];
   let vistaSagas = false;
 
+  async function cargarLibrosDesdeApi() {
+    const contenedor = document.getElementById('catalogoLibros');
+    const galeriaDest = document.getElementById('galeriaDestacados');
+    if (contenedor) contenedor.innerHTML = '<p>Cargando libros…</p>';
+    if (galeriaDest) galeriaDest.innerHTML = '';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/libros`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al cargar el catálogo');
+      }
+      libros = Array.isArray(data.books) ? data.books : [];
+    } catch (e) {
+      console.error(e);
+      libros = [];
+      mostrarMensaje('error', 'No se pudieron cargar los libros. Verifica el servidor y la base de datos.');
+      if (contenedor) {
+        contenedor.innerHTML =
+          '<p>No se pudo obtener el catálogo. Asegúrate de que la API esté en ejecución (npm run start en server).</p>';
+      }
+      return;
+    }
+
+    const seccionSagas = document.getElementById('seccionSagas');
+    if (seccionSagas && seccionSagas.style.display !== 'none') {
+      mostrarSagas();
+    } else {
+      mostrarGaleriaDestacados();
+      mostrarLibrosCatalogo();
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
-    mostrarGaleriaDestacados();
-    mostrarLibrosCatalogo();
+    cargarLibrosDesdeApi();
   });
 
   function mostrarLibrosCatalogo() {
@@ -256,7 +290,7 @@
 
     const filtrados = [...libros].sort((a, b) => a.titulo.localeCompare(b.titulo)).filter(libro =>
       libro.titulo.toLowerCase().includes(texto) ||
-      libro.autor.toLowerCase().includes(texto)
+      (libro.autor || '').toLowerCase().includes(texto)
     );
 
     // Si estamos en sagas, mostrar filtrados en sagas
