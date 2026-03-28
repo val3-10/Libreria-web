@@ -464,9 +464,12 @@
       <p>${libro.titulo}</p>
     `;
 
-  
     card.onclick = () => {
-      mostrarModalLogin(); 
+      // Guardamos lo que quería comprar
+      localStorage.setItem("libroPendiente", libro.titulo);
+
+     
+      mostrarModalLogin();
     };
 
     contenedor.appendChild(card);

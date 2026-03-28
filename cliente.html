@@ -177,6 +177,14 @@
   let vistaSagas = false;
 
   document.addEventListener("DOMContentLoaded", () => {
+   
+const libroPendiente = localStorage.getItem("libroPendiente");
+
+if (libroPendiente) {
+  agregarCarritoPorTitulo(encodeURIComponent(libroPendiente));
+  localStorage.removeItem("libroPendiente");
+}
+
      mostrarGaleriaDestacados();
     mostrarLibrosCliente();
     mostrarCarrito();
@@ -501,27 +509,38 @@
 
   // Agrega el libro al carrito por título (funciona con libros ordenados o filtrados)
   function agregarCarritoPorTitulo(tituloCodificado) {
-      agregarCarritoPorTitulo(encodeURIComponent(titulo));
-    const titulo = decodeURIComponent(tituloCodificado);
-    const libro = libros.find(l => l.titulo === titulo);
-    if (!libro) {
-      mostrarMensaje('error', 'Libro no encontrado');
-      return;
-    }
-    if (libro.stock <= 0) {
-      mostrarMensaje('error', 'No hay stock disponible');
-      return;
-    }
 
-    const existente = carrito.find(item => item.titulo === libro.titulo);
-    if (existente) existente.cantidad++;
-    else carrito.push({ titulo: libro.titulo, precio: libro.precio, cantidad: 1 });
+  const titulo = decodeURIComponent(tituloCodificado);
 
-    guardarDatos();
-    mostrarCarrito();
-    actualizarContadorCarrito();
-    mostrarMensaje('success', 'Agregado al carrito');
+  const libro = libros.find(l => l.titulo === titulo);
+
+  if (!libro) {
+    mostrarMensaje('error', 'Libro no encontrado');
+    return;
   }
+
+  if (libro.stock <= 0) {
+    mostrarMensaje('error', 'No hay stock disponible');
+    return;
+  }
+
+  const existente = carrito.find(item => item.titulo === libro.titulo);
+
+  if (existente) {
+    existente.cantidad++;
+  } else {
+    carrito.push({
+      titulo: libro.titulo,
+      precio: libro.precio,
+      cantidad: 1
+    });
+  }
+
+  guardarDatos();
+  mostrarCarrito();
+  actualizarContadorCarrito();
+  mostrarMensaje('success', 'Agregado al carrito');
+}
 
   function mostrarCarrito() {
     const tbody = document.querySelector("#tablaCarrito tbody");
