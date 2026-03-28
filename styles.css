@@ -1251,55 +1251,27 @@ body {
 }
 
 /* ===== GALERÍA SUPERIOR ===== */
-.galeria-destacada {
-  width: 100%;
-  margin-bottom: 30px;
-}
-
-.contenedor-galeria {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  align-items: center;
-}
-
-/* Cards de la galería  */
-.card-galeria {
-  width: 120px;
-  height: 180px;
-  overflow: hidden;
-  border-radius: 12px;
-  transition: 0.5s;
-  cursor: pointer;
-}
-
-.card-galeria img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* EFECTO HOVER */
-.contenedor-galeria:hover .card-galeria:not(:hover) {
-  opacity: 0.3;
-}
-
-.card-galeria:hover {
-  transform: scale(1.2);
-}
-
 .galeria-destacados {
   display: flex;
   gap: 15px;
   overflow-x: auto;
   margin-bottom: 20px;
+  padding: 10px;
 }
 
+/* ===== CARDS DE LA GALERÍA ===== */
 .card-destacada {
   min-width: 120px;
+  height: 180px;
+  overflow: hidden;
+  border-radius: 12px;
+  transition: all 0.4s ease;
+  cursor: pointer;
+  position: relative;
   text-align: center;
 }
 
+/* ===== IMAGEN ===== */
 .card-destacada img {
   width: 100%;
   height: 150px;
@@ -1307,12 +1279,20 @@ body {
   border-radius: 10px;
 }
 
-/*Click*/
-.card-destacada {
-  cursor: pointer;
-  transition: transform 0.2s;
+/* ===== TEXTO ===== */
+.card-destacada p {
+  margin-top: 5px;
+  font-size: 14px;
 }
 
+/* ===== EFECTO: OPACIDAD A LAS DEMÁS ===== */
+.galeria-destacados:hover .card-destacada:not(:hover) {
+  opacity: 0.3;
+}
+
+/* ===== EFECTO: ZOOM + SOMBRA ===== */
 .card-destacada:hover {
-  transform: scale(1.05);
+  transform: scale(1.2);
+  z-index: 2;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
 }
