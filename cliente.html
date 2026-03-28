@@ -81,6 +81,8 @@
   <!-- CATÁLOGO -->
   <div id="seccionCatalogo" class="seccion">
     <h2>Catálogo de Libros</h2>
+     <div id="galeriaDestacados" class="galeria-destacados"></div>
+
     <div id="catalogoLibros" class="catalogo-libros"></div>
   </div>
 
@@ -175,6 +177,7 @@
   let vistaSagas = false;
 
   document.addEventListener("DOMContentLoaded", () => {
+     mostrarGaleriaDestacados();
     mostrarLibrosCliente();
     mostrarCarrito();
     actualizarContadorCarrito();
@@ -888,6 +891,27 @@ function mostrarLibrosFiltradosSagas(filtrados) {
     seccionSinSaga.appendChild(contenedorLibros);
     contenedor.appendChild(seccionSinSaga);
   }
+}
+function mostrarGaleriaDestacados() {
+  const contenedor = document.getElementById("galeriaDestacados");
+  if (!contenedor) return;
+
+  contenedor.innerHTML = "";
+
+  // Tomar solo los primeros 5 libros como destacados
+  const destacados = libros.slice(0, 5);
+
+  destacados.forEach(libro => {
+    const card = document.createElement("div");
+    card.className = "card-destacada";
+
+    card.innerHTML = `
+      <img src="${libro.caratula || 'img/BookNest.png'}">
+      <p>${libro.titulo}</p>
+    `;
+
+    contenedor.appendChild(card);
+  });
 }
 
 </script>
