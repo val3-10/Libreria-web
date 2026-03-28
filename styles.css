@@ -15,22 +15,6 @@
     text-align: center;
   }
 
-  /* ========================= */
-  /* ENCABEZADO */
-  /* ========================= */
-  header {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: url("img/BookNest.png") no-repeat center fixed; /* Imagen de fondo */
-    background-size: cover;
-    padding: 170px 0;
-    margin-bottom: 1px;
-    border-bottom: 3px solid rgba(0, 0, 0, 0.2);
-    position: relative;
-  }
 
   /* Título principal del header */
   header h1 {
