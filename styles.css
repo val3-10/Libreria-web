@@ -16,15 +16,7 @@
   }
 
 
-  /* Título principal del header */
-  header h1 {
-    font-size: 3rem;
-    font-weight: bold;
-    font-style: italic;
-    color: #d4a017;
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
-    margin: 0;
-  }
+ 
 
   /* Botón para cerrar sesión */
   .btn-cerrar {
