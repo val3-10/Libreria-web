@@ -17,6 +17,7 @@ app.use(express.json());
 
 // Rutas
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/libros', require('./routes/libros'));
 
 // Health check (incluye verificación de BD)
 app.get('/api/health', async (_req, res) => {
@@ -64,6 +65,7 @@ async function start() {
     console.log(`Servidor escuchando en http://localhost:${PORT}`);
     console.log('  GET /api/health   - Estado API y BD');
     console.log('  GET /api/ping-db  - Prueba de consulta SQL');
+    console.log('  GET /api/libros   - Catálogo de libros (BD)');
   });
 }
 
