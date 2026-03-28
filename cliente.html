@@ -228,6 +228,21 @@
     return favoritos.includes(titulo);
   }
 
+  // Función para actualizar la vista según la sección actual
+  function actualizarVistaActual() {
+    const seccionCatalogo = document.getElementById('seccionCatalogo');
+    const seccionSagas = document.getElementById('seccionSagas');
+    const seccionFavoritos = document.getElementById('favoritosSeccion');
+    
+    if (seccionCatalogo.style.display !== 'none') {
+      mostrarLibrosCliente();
+    } else if (seccionSagas.style.display !== 'none') {
+      mostrarSagas();
+    } else if (seccionFavoritos.style.display !== 'none') {
+      mostrarFavoritos();
+    }
+  }
+
   function toggleFavorito(tituloCodificado) {
     const titulo = decodeURIComponent(tituloCodificado);
     const index = favoritos.indexOf(titulo);
@@ -241,8 +256,8 @@
     }
 
     guardarDatos();
-    mostrarLibrosCliente();
-    mostrarFavoritos();
+    // Actualizar la vista actual en lugar de solo mostrar catálogo
+    actualizarVistaActual();
   }
 
   function toggleFavoritos() {
@@ -638,7 +653,7 @@
     localStorage.setItem("facturas", JSON.stringify(facturasGlobales));
 
     // Limpiar UI y mostrar estado actualizado
-    mostrarLibrosCliente(); 
+    actualizarVistaActual();
     mostrarCarrito(); 
     cerrarCheckout(); 
     mostrarFacturasGuardadas();
