@@ -7,13 +7,31 @@
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-straight/css/uicons-solid-straight.css">
 <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css">
 <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
 <body>
+
+  <section class="carrusel-hero-wrap" aria-label="Libros destacados">
+    <div class="carrusel-hero" id="carruselHero">
+      <h2 class="carrusel-hero-heading">Destacados</h2>
+      <div class="carrusel-hero-stage">
+        <button type="button" class="carrusel-arrow carrusel-arrow--side" id="carruselPrev" aria-label="Anterior">
+          <ion-icon name="chevron-back-outline"></ion-icon>
+        </button>
+        <div class="carrusel-hero-viewport">
+          <div class="carrusel-hero-track" id="carruselHeroTrack"></div>
+        </div>
+        <button type="button" class="carrusel-arrow carrusel-arrow--side" id="carruselNext" aria-label="Siguiente">
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </button>
+      </div>
+      <div class="carrusel-hero-dots" id="carruselHeroDots" role="tablist" aria-label="Seleccionar libro"></div>
+    </div>
+  </section>
  
 <!-- Botón para carrito -->
 <header>
-  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <button onclick="abrirCarrito()" class="btn-carrito">
     Mi carrito 
     <ion-icon name="cart-outline"></ion-icon>
@@ -81,8 +99,6 @@
   <!-- CATÁLOGO -->
   <div id="seccionCatalogo" class="seccion">
     <h2>Catálogo de Libros</h2>
-     <div id="galeriaDestacados" class="galeria-destacados"></div>
-
     <div id="catalogoLibros" class="catalogo-libros"></div>
   </div>
 
@@ -167,10 +183,22 @@
 
   const API_BASE = 'http://localhost:3000';
   let libros = [];
-  let carrito = usuarioActivo ? (JSON.parse(localStorage.getItem(`carrito_${usuarioActivo.usuario}`)) || []) : [];
-  let historialCliente = usuarioActivo ? (JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || []) : [];
-  let transacciones = JSON.parse(localStorage.getItem("transacciones")) || [];
-  let favoritos = usuarioActivo ? (JSON.parse(localStorage.getItem(`favoritos_${usuarioActivo.usuario}`)) || []) : [];
+
+  function leerArrayLocalStorage(clave) {
+    try {
+      const raw = localStorage.getItem(clave);
+      if (raw == null || raw === '') return [];
+      const v = JSON.parse(raw);
+      return Array.isArray(v) ? v : [];
+    } catch {
+      return [];
+    }
+  }
+
+  let carrito = usuarioActivo ? leerArrayLocalStorage(`carrito_${usuarioActivo.usuario}`) : [];
+  let historialCliente = usuarioActivo ? leerArrayLocalStorage(`historial_${usuarioActivo.usuario}`) : [];
+  let transacciones = leerArrayLocalStorage('transacciones');
+  let favoritos = usuarioActivo ? leerArrayLocalStorage(`favoritos_${usuarioActivo.usuario}`) : [];
 
   let accionPendiente = null;
   let libroSeleccionado = null;
@@ -178,14 +206,186 @@
   let compraPendiente = null;
   let vistaSagas = false;
 
+  let carruselHeroIndex = 0;
+  let carruselHeroItems = [];
+  let carruselAutoplayId = null;
+  const CARRUSEL_AUTO_MS = 4000;
+  const CARRUSEL_GAP_PX = 12;
+
+  function escapeHtml(text) {
+    if (text == null || text === '') return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function stopCarruselAutoplay() {
+    if (carruselAutoplayId != null) {
+      clearInterval(carruselAutoplayId);
+      carruselAutoplayId = null;
+    }
+  }
+
+  function startCarruselAutoplay() {
+    stopCarruselAutoplay();
+    if (carruselHeroItems.length <= 1) return;
+    carruselAutoplayId = setInterval(() => {
+      const n = carruselHeroItems.length;
+      if (n === 0) return;
+      goCarruselHero((carruselHeroIndex + 1) % n);
+    }, CARRUSEL_AUTO_MS);
+  }
+
+  function carruselHeroNavigate(i) {
+    const n = carruselHeroItems.length;
+    if (n === 0) return;
+    stopCarruselAutoplay();
+    goCarruselHero(i);
+    startCarruselAutoplay();
+  }
+
+  function goCarruselHero(i) {
+    if (carruselHeroItems.length === 0) return;
+    carruselHeroIndex = Math.max(0, Math.min(i, carruselHeroItems.length - 1));
+    updateCarruselHeroTransform();
+    updateCarruselDots();
+  }
+
+  function layoutCarruselHero() {
+    const viewport = document.querySelector('.carrusel-hero-viewport');
+    const track = document.getElementById('carruselHeroTrack');
+    if (!viewport || !track) return;
+    const slides = track.querySelectorAll(
+      '.carrusel-hero-slide:not(.carrusel-hero-slide--empty):not(.carrusel-hero-slide--loading)',
+    );
+    if (slides.length === 0) return;
+    const vw = viewport.getBoundingClientRect().width;
+    const pct = window.matchMedia('(max-width: 640px)').matches ? 0.9 : 0.62;
+    const slideW = Math.min(vw * pct, 720);
+    slides.forEach((s) => {
+      s.style.flex = `0 0 ${slideW}px`;
+    });
+    track.style.gap = `${CARRUSEL_GAP_PX}px`;
+  }
+
+  function updateCarruselHeroTransform() {
+    const viewport = document.querySelector('.carrusel-hero-viewport');
+    const track = document.getElementById('carruselHeroTrack');
+    if (!track || !viewport || carruselHeroItems.length === 0) return;
+    const first = track.querySelector(
+      '.carrusel-hero-slide:not(.carrusel-hero-slide--empty):not(.carrusel-hero-slide--loading)',
+    );
+    if (!first) {
+      track.style.transform = 'translateX(0)';
+      return;
+    }
+    const slideW = first.getBoundingClientRect().width;
+    const gap = CARRUSEL_GAP_PX;
+    const vw = viewport.getBoundingClientRect().width;
+    const step = slideW + gap;
+    const offset = vw / 2 - slideW / 2 - carruselHeroIndex * step;
+    track.style.transform = `translateX(${offset}px)`;
+  }
+
+  function updateCarruselDots() {
+    document.querySelectorAll('#carruselHeroDots .carrusel-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === carruselHeroIndex);
+    });
+  }
+
+  function reflowCarruselHero() {
+    layoutCarruselHero();
+    updateCarruselHeroTransform();
+  }
+
+  function renderCarruselHero() {
+    stopCarruselAutoplay();
+    const track = document.getElementById('carruselHeroTrack');
+    const dots = document.getElementById('carruselHeroDots');
+    const prev = document.getElementById('carruselPrev');
+    const next = document.getElementById('carruselNext');
+    if (!track || !dots) return;
+
+    const maxSlides = 12;
+    carruselHeroItems = libros.slice(0, Math.min(libros.length, maxSlides));
+    carruselHeroIndex = 0;
+    track.innerHTML = '';
+    dots.innerHTML = '';
+    track.style.width = '';
+
+    if (carruselHeroItems.length === 0) {
+      track.innerHTML =
+        '<div class="carrusel-hero-slide carrusel-hero-slide--empty"><p>No hay libros para mostrar en el carrusel.</p></div>';
+      track.style.gap = '0';
+      track.style.transform = 'translateX(0)';
+      if (prev) prev.disabled = true;
+      if (next) next.disabled = true;
+      return;
+    }
+
+    const n = carruselHeroItems.length;
+
+    carruselHeroItems.forEach((libro, i) => {
+      const slide = document.createElement('div');
+      slide.className = 'carrusel-hero-slide carrusel-hero-slide--book';
+      slide.dataset.index = String(i);
+      const precio = libro.precio != null ? Number(libro.precio).toLocaleString('es-CO') : '0';
+      const sinStock = libro.stock <= 0;
+      slide.innerHTML = `
+        <div class="carrusel-hero-cover">
+          <img src="${libro.caratula || 'img/BookNest.png'}" alt="${escapeHtml(libro.titulo)}">
+        </div>
+        <div class="carrusel-hero-meta">
+          <h3>${escapeHtml(libro.titulo)}</h3>
+          <p class="carrusel-hero-autor">${escapeHtml(libro.autor || 'Autor desconocido')}</p>
+          <p class="carrusel-hero-precio">$${precio}</p>
+          <p class="carrusel-hero-stock">${sinStock ? 'Sin stock' : `Stock: ${libro.stock}`}</p>
+          <div class="carrusel-hero-acciones">
+            <button type="button" class="btn-fav btn-fav--carrusel" title="${estaEnFavoritos(libro.titulo) ? 'Remover de favoritos' : 'Agregar a favoritos'}"
+              onclick="event.stopPropagation(); toggleFavorito('${encodeURIComponent(libro.titulo)}')">
+              <i class="${estaEnFavoritos(libro.titulo) ? 'fi fi-ss-heart' : 'fi fi-rr-heart'}"></i>
+            </button>
+            <button type="button" class="btn-carrusel-carrito" ${sinStock ? 'disabled' : ''}
+              onclick="agregarCarritoPorTitulo('${encodeURIComponent(libro.titulo)}')">
+              <i class="fi fi-rr-shopping-cart"></i> Agregar al carrito
+            </button>
+          </div>
+        </div>
+      `;
+      track.appendChild(slide);
+
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'carrusel-dot' + (i === 0 ? ' active' : '');
+      dot.setAttribute('aria-label', `Libro ${i + 1} de ${n}`);
+      dot.addEventListener('click', () => carruselHeroNavigate(i));
+      dots.appendChild(dot);
+    });
+
+    if (prev) prev.disabled = n <= 1;
+    if (next) next.disabled = n <= 1;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        reflowCarruselHero();
+        startCarruselAutoplay();
+      });
+    });
+  }
+
   async function cargarLibrosDesdeApi() {
     const contenedor = document.getElementById('catalogoLibros');
-    const galeriaDest = document.getElementById('galeriaDestacados');
+    const track = document.getElementById('carruselHeroTrack');
     if (contenedor) contenedor.innerHTML = '<p>Cargando libros…</p>';
-    if (galeriaDest) galeriaDest.innerHTML = '';
+    if (track) {
+      track.innerHTML = '<div class="carrusel-hero-slide carrusel-hero-slide--loading"><p>Cargando destacados…</p></div>';
+      track.style.transform = 'translateX(0)';
+    }
 
     try {
-      const res = await fetch(`${API_BASE}/api/libros`);
+      const controller = new AbortController();
+      const to = setTimeout(() => controller.abort(), 20000);
+      const res = await fetch(`${API_BASE}/api/libros`, { signal: controller.signal });
+      clearTimeout(to);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.error || 'Error al cargar el catálogo');
@@ -199,30 +399,81 @@
         contenedor.innerHTML =
           '<p>No se pudo obtener el catálogo. Asegúrate de que la API esté en ejecución (npm run start en server).</p>';
       }
+      try {
+        renderCarruselHero();
+      } catch (err2) {
+        console.error(err2);
+      }
       return;
     }
 
     const seccionSagas = document.getElementById('seccionSagas');
     const seccionFavoritos = document.getElementById('favoritosSeccion');
-    if (seccionSagas && seccionSagas.style.display !== 'none') {
-      mostrarSagas();
-    } else if (seccionFavoritos && seccionFavoritos.style.display !== 'none') {
-      mostrarFavoritos();
-    } else {
-      mostrarGaleriaDestacados();
-      mostrarLibrosCliente();
+    try {
+      renderCarruselHero();
+      if (seccionSagas && seccionSagas.style.display !== 'none') {
+        mostrarSagas();
+      } else if (seccionFavoritos && seccionFavoritos.style.display !== 'none') {
+        mostrarFavoritos();
+      } else {
+        mostrarLibrosCliente();
+      }
+    } catch (err) {
+      console.error('Error al pintar catálogo o carrusel:', err);
+      mostrarMensaje('error', 'Error al mostrar los libros. Revisa la consola o borra datos corruptos del navegador.');
+      if (contenedor) {
+        contenedor.innerHTML =
+          '<p>No se pudo mostrar el catálogo. Prueba recargar la página o borrar el almacenamiento local de este sitio para favoritos/carrito.</p>';
+      }
+      try {
+        renderCarruselHero();
+      } catch (err2) {
+        console.error(err2);
+      }
     }
   }
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    const libroPendiente = localStorage.getItem("libroPendiente");
-    await cargarLibrosDesdeApi();
-    if (libroPendiente) {
-      agregarCarritoPorTitulo(encodeURIComponent(libroPendiente));
-      localStorage.removeItem("libroPendiente");
+  document.addEventListener('DOMContentLoaded', () => {
+    const prev = document.getElementById('carruselPrev');
+    const next = document.getElementById('carruselNext');
+    if (prev) {
+      prev.addEventListener('click', () => {
+        const n = carruselHeroItems.length;
+        if (n === 0) return;
+        carruselHeroNavigate((carruselHeroIndex - 1 + n) % n);
+      });
     }
-    mostrarCarrito();
-    actualizarContadorCarrito();
+    if (next) {
+      next.addEventListener('click', () => {
+        const n = carruselHeroItems.length;
+        if (n === 0) return;
+        carruselHeroNavigate((carruselHeroIndex + 1) % n);
+      });
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.target.matches('input, textarea')) return;
+      const n = carruselHeroItems.length;
+      if (n === 0) return;
+      if (e.key === 'ArrowLeft') carruselHeroNavigate((carruselHeroIndex - 1 + n) % n);
+      if (e.key === 'ArrowRight') carruselHeroNavigate((carruselHeroIndex + 1) % n);
+    });
+    window.addEventListener('pagehide', stopCarruselAutoplay);
+    let carruselResizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(carruselResizeTimer);
+      carruselResizeTimer = setTimeout(() => reflowCarruselHero(), 120);
+    });
+
+    (async () => {
+      const libroPendiente = localStorage.getItem('libroPendiente');
+      await cargarLibrosDesdeApi();
+      if (libroPendiente) {
+        agregarCarritoPorTitulo(encodeURIComponent(libroPendiente));
+        localStorage.removeItem('libroPendiente');
+      }
+      mostrarCarrito();
+      actualizarContadorCarrito();
+    })();
   });
 
   function volverAlLogin() { localStorage.removeItem("rol"); window.location.href = "index.html"; }
@@ -269,6 +520,7 @@
   }
 
   function estaEnFavoritos(titulo) {
+    if (!Array.isArray(favoritos)) return false;
     return favoritos.includes(titulo);
   }
 
@@ -375,6 +627,7 @@
 
   function mostrarLibrosCliente() {
     const contenedor = document.getElementById("catalogoLibros");
+    if (!contenedor) return;
     contenedor.innerHTML = "";
 
     if (libros.length === 0) {
@@ -944,30 +1197,6 @@ function mostrarLibrosFiltradosSagas(filtrados) {
     seccionSinSaga.appendChild(contenedorLibros);
     contenedor.appendChild(seccionSinSaga);
   }
-}
-function mostrarGaleriaDestacados() {
-  const contenedor = document.getElementById("galeriaDestacados");
-  if (!contenedor) return;
-
-  contenedor.innerHTML = "";
-
-  const destacados = libros.slice(0, 5);
-
-  destacados.forEach(libro => {
-    const card = document.createElement("div");
-    card.className = "card-destacada";
-
-    card.innerHTML = `
-      <img src="${libro.caratula || 'img/BookNest.png'}">
-      <p>${libro.titulo}</p>
-    `;
-
-    card.onclick = () => {
-      agregarCarritoPorTitulo(encodeURIComponent(libro.titulo));
-    };
-
-    contenedor.appendChild(card);
-  });
 }
 
 </script>
