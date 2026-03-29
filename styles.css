@@ -172,11 +172,16 @@ body {
   margin: 0 auto; /* Centrado */
 }
 
+
 /* ========================= */
 /* SECCIONES */
 /* ========================= */
-.seccion {
-  background: #e6ebf1; /* Fondo claro */
+
+  .seccion {
+  background: #e6ebf1;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+
   padding: 20px;
   margin: 20px auto; 
   border-radius: 16px; /* Bordes redondeados */
@@ -184,6 +189,911 @@ body {
   text-align: left;
   width: 100%;
   max-width: 800px;
+}
+
+  /* CAMPOS DE FORMULARIOS */
+  input, select, button {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    
+  }
+
+  input, select {
+    background: rgba(255,255,255,0.8);
+    color: #333;
+  }
+
+  /* ========================= */
+  /* CONTENEDOR DE CONTRASEÑA CON OJITO */
+  /* ========================= */
+  .password-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+  }
+
+  .password-container input {
+    width: 100%;
+    padding-right: 45px; /* Espacio para el ícono */
+    margin-bottom: 0; /* Evitar doble margen */
+    box-sizing: border-box; /* ✅ Incluir padding dentro del ancho */
+  }
+
+  .toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-60%);
+    cursor: pointer;
+    font-size: 1.2rem;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: cent er;
+    width: 30px;
+    height: 30px;
+  }
+
+  .toggle-password:hover {
+    transform: translateY(-50%) scale(1.2);
+  }
+
+  .toggle-password:active {
+    transform: translateY(-50%) scale(0.95);
+  }
+
+  /* ========================= */
+  /* BOTONES GENERALES */
+  /* ========================= */
+  button {
+    background: #1f2937;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  button:hover {
+    background: #2e2e2e;
+  }
+
+  /* ========================= */
+  /* BOTONES SECCIÓN LIBROS */
+  /* ========================= */
+  #libros button {
+    background-color: #1f2937;
+    color: white;
+    font-weight: bold;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+
+  #libros button:hover {
+    background-color: #2e2e2e;
+    transform: scale(1.05);
+  }
+
+  /* ========================= */
+  /* MENÚ DE OPCIONES */
+  /* ========================= */
+  .menu-opciones {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .menu-opciones button {
+    background: #e6ebf1;
+    color: rgb(0, 0, 0);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+  }
+
+  .menu-opciones button:hover {
+    background: #b2d5ff;
+    transform: scale(1.05);
+  }
+
+  /* ========================= */
+  /* TABLAS */
+  /* ========================= */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  th, td {
+    padding: 12px;
+    text-align: center;
+    color: #333;
+  }
+
+  th {
+    background: #d4a017;
+    color: #fff;
+  }
+
+  tr:nth-child(even) {
+    background: rgba(127,0,255,0.05);
+  }
+
+  /* Estados visuales para libros */
+  .venta { color: green; font-weight: bold; }
+
+  .disponible { color: black; font-weight: bold; }
+
+  /* Botón de eliminar */
+  .btn-eliminar {
+    background-color: #1f2937;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .btn-eliminar:hover {
+    background-color: #2e2e2e;
+  }
+
+  /* ========================= */
+  /* FORMULARIO REGISTRO */
+  /* ========================= */
+  .registro-box {
+    background: #e6ebf1;
+    padding: 30px 35px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgb(0, 0, 0);
+    width: 350px;
+    text-align: center;
+    margin-top: 40px;
+  }
+
+  .register {
+    background-image: url('img/fondoregister1.jpg');
+     background-size: cover;
+  display: flex;
+  justify-content: center; 
+  align-items: center;     
+  min-height: 100vh;      
+  margin: 0;
+  padding: 0;
+  }
+
+  /* ========================= */
+  /* PORTAL DE PAGO (MODAL) */
+  /* ========================= */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-contenido {
+    background: linear-gradient(135deg, #e6ebf1, #c3cedb);
+    border-radius: 16px;
+    padding: 25px;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    color: #333;
+    animation: aparecer 0.3s ease;
+  }
+
+  .modal-contenido h3 {
+    color: #d4a017;
+    margin-bottom: 10px;
+  }
+
+  /* Inputs del modal */
+  .modal-contenido input {
+    width: 80%;
+    padding: 8px;
+    margin: 10px 0;
+    border: 2px solid #d4a017;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1rem;
+  }
+
+  /* Botones dentro del modal */
+  .modal-botones {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .modal-botones button {
+    background: #000000;
+    border-radius: 10px;
+    color: white;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .modal-botones button:hover {
+    background: #d4a017;
+  }
+
+  /* Animación */
+  @keyframes aparecer {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  /* ========================= */
+  /* NOTIFICACIONES (TOAST) */
+  /* ========================= */
+  .toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    color: #fff;
+    opacity: 0.9;
+    z-index: 1000;
+  }
+
+  .toast.success { background-color: #00ff08; }
+  .toast.error { background-color: #ec1000; }
+  .toast.info { background-color: #319ef7; }
+
+  /* ========================= */
+  /* LOGIN */
+  /* ========================= */
+  .login-body {
+    position: relative;
+    background: url("img/BookNest.png") no-repeat center top;
+     background-size: cover;
+  display: flex;
+  justify-content: center; 
+  align-items: center;     
+  min-height: 100vh;      
+  margin: 0;
+  padding: 0;
+  }
+
+ 
+
+  /* Caja del login */
+  .login-box {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 35px 30px;
+    border-radius: 16px;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    width: 320px;
+    color: #fff;
+  }
+
+  /* Título del login */
+  .login-box h2 {
+    margin-top: 20px;
+    margin-bottom: 25px;
+    font-size: 1.8rem;
+    color: #fff;
+  }
+
+  /* Estilos internos del login */
+  .login-box label {
+    display: block;
+    text-align: left;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #d4a017;
+  }
+
+  .login-box input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    outline: none;
+    background: rgba(255, 255, 255, 0.9);
+    color: #000;
+  }
+
+  .login-box button {
+    background: #000000;
+    color: white;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    width: 100%;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .login-box button:hover {
+    background: #1f2937;
+  }
+
+  .login-box a {
+    color: #d4a017;
+    text-decoration: none;
+  }
+
+  .login-box a:hover {
+    text-decoration: underline;
+  }
+
+  /* ========================= */
+  /* CATÁLOGO LIBROS (tarjetas) */
+  /* ========================= */
+  .catalogo-libros {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 20px;
+    width: 100%;
+    justify-items: center;
+  }
+
+  @media (max-width: 1200px) {
+    .catalogo-libros {
+      grid-template-columns: repeat(3, minmax(180px, 1fr));
+    }
+  }
+
+  @media (max-width: 900px) {
+    .catalogo-libros {
+      grid-template-columns: repeat(2, minmax(160px, 1fr));
+    }
+  }
+
+  @media (max-width: 600px) {
+    .catalogo-libros {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .carta-libro {
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    width: 100%;
+    max-width: 220px;
+    min-height: 420px;
+    text-align: center;
+    padding: 10px;
+    transition: transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .carta-libro img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 8px;
+    transition: transform 0.3s;
+  }
+
+  .carta-libro h3 {
+    font-size: 1rem;
+    margin: 8px 0 4px;
+    min-height: 2.4em;
+    line-height: 1.2em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    word-break: break-word;
+    font-family: inherit;
+  }
+
+  .carta-libro p {
+    font-size: 0.9rem;
+    margin: 2px 0;
+    min-height: 2.2em;
+    line-height: 1.1em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    word-break: break-word;
+    font-family: inherit;
+  }
+
+  .carta-botones {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  width: auto;
+  margin-top: 8px;
+  padding: 0 6px;
+}
+
+.carta-botones button,
+.btn-fav {
+  min-width: 90px;
+  max-width: 110px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: inherit;
+  min-height: 35px;
+    background-color: #000000;
+    color: white;
+  }
+
+  .carta-botones button:hover,
+  .btn-fav:hover {
+    background-color: #2e2e2e;
+    transform: translateY(-1px);
+  }
+
+  .btn-fav {
+    background: #ff4081;
+    color: #fff;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  .carta-libro:hover {
+    transform: scale(1.1);
+  }
+
+  .carta-libro img:hover {
+    transform: scale(1.05);
+  }
+
+  /* ========================= */
+  /* MODAL GENÉRICO */
+  /* ========================= */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .modal-contenido {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    width: 300px;
+  }
+
+  .modal-botones {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+
+  /* ========================= */
+  /* RECUPERAR CONTRASEÑA */
+  /* ========================= */
+  
+  /* Caja del formulario recuperar contraseña */
+  .forgot-box {
+    background: rgba(255,255,255,0.9);
+    padding: 30px 35px;
+    border-radius: 16px;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
+    width: 350px;
+    text-align: center;
+  }
+
+  .forgot-box h2 {
+    margin-bottom: 12px;
+    color: #333;
+  }
+
+  .forgot-box input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+  }
+
+  .forgot-box button {
+    background: #000000;
+    color: white;
+    border: none;
+    padding: 10px;
+    width: 100%;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: .3s;
+  }
+
+  .forgot-box button:hover {
+    background: #2e2e2e;
+  }
+
+  .forgot-box a {
+    color: #000000;
+    text-decoration: none;
+  }
+
+  .forgot-box a:hover {
+    text-decoration: underline;
+  }
+
+  /* fondo de recuperar contraseña */
+ .contraseña-body {
+  position: relative;
+  background: url("img/fondo\ restaurar\ contraseña.png") no-repeat center center;
+  background-size: cover;
+  display: flex;
+  justify-content: center; 
+  align-items: center;     
+  min-height: 100vh;      
+  margin: 0;
+  padding: 0;           
+}
+  /* fondo register */
+ .register-body {
+  position: relative;
+  background: url("img/register\ fondo.png") no-repeat center center;
+  background-size: cover;
+  background-attachment: fixed; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  padding-top: 200px;
+}
+/* === animaciones de los botones  === */
+button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(120deg, rgba(255,255,255,0.4), rgba(255,255,255,0));
+  transform: skewX(-25deg);
+  transition: left 0.6s ease;
+}
+
+button:hover::before {
+  left: 125%;
+}
+
+/* === RESPLANDOR SUAVE AL PASAR EL MOUSE === */
+button:hover {
+  text-shadow: 0 0 6px rgba(255, 223, 100, 0.8);
+  filter: brightness(1.05);
+  transform: translateY(-2px);
+}
+
+/* === PEQUEÑA ANIMACIÓN AL CLIC === */
+button:active {
+  transform: scale(0.96);
+  transition: transform 0.1s;
+}
+
+/* === APARICIÓN SUAVE AL CARGAR === */
+@keyframes fadeInButtons {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+button {
+  animation: fadeInButtons 0.6s ease;
+}
+/* === BOTÓN "VER PERFIL" === */
+.btn-perfil {
+    position: absolute;
+    top: 70px;
+    right: 20px;
+    display: inline-block;
+    width: auto;
+    background-color: #000000;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+
+  .btn-cerrar:hover {
+    background-color: #2e2e2e;
+    transform: scale(1.05);
+  }
+  /* === SECCIÓN DE HISTORIAL === */
+.historial {
+  background-color: #f5f5f5;
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 20px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.1);
+}
+
+/* === BOTONES (volver / cerrar sesión) === */
+
+/* === BOTÓN VOLVER AL CATÁLOGO === */
+.catalogo-btn {
+  position: absolute;
+  top: 280px;     
+  right: 20px;    
+  display: inline-block;
+  width: auto;
+  background-color: #000000;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-volver:hover {
+  background-color: #2e2e2e;
+  transform: translateY(-2px);
+}
+
+/* === BOTÓN CERRAR SESIÓN === */
+.cerrar-sesion-btn {
+  position: absolute;
+  top: 70px;      
+  right: 20px;    
+  display: inline-block;
+  width: auto;
+  background-color: #000000;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-cerrar-sesion:hover {
+  background-color: #2e2e2e;
+  transform: translateY(-2px);
+}
+
+/* === BOTÓN ELIMINAR CUENTA === */
+.btn-eliminar {
+  position: absolute;
+  top: 120px;      
+  right: 20px;    
+  display: inline-block;
+  width: auto;
+  background-color: #c0392b;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-eliminar:hover {
+  background-color: #922b21;
+  transform: scale(1.03);
+}
+
+.password-field input {
+  width: 350px; /* 🔹 más corto, igual estilo */
+  padding: 12px 40px 12px 100px; /* espacio para el ojito */
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+
+
+/* 🔹 Botón del ojito */
+.password-field button {
+  position: absolute;
+  right: 15px;           /* ligeramente más separado del borde */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 🔹 Icono SVG */
+.password-field button svg {
+  width: 16px;
+  height: 16px;
+  fill: #555;
+}
+
+/* 🔹 Hover */
+.password-field button:hover svg {
+  fill: #000;
+}
+
+/* ====== MENÚ FLOTANTE DE TRES PUNTOS ====== */
+.menu-flotante {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  background-color: #1f2937;
+  color: white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  transition: background-color 0.3s, transform 0.2s;
+  z-index: 1000;
+}
+
+.menu-flotante:hover {
+  background-color: #374151;
+  transform: scale(1.08);
+}
+
+/* ====== MENÚ DESPLEGABLE DEL FLOTANTE ====== */
+.menu-flotante-opciones2 {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  background: none;
+  border-radius: 0;
+  display: none;
+  flex-direction: column;
+  box-shadow: none;
+  overflow: visible;
+  animation: fadeIn 0.3s ease;
+  min-width: 180px;
+  padding: 0;
+}
+
+/* Botones del menú flotante */
+.menu-flotante-opciones2 .btn-menu {
+  background-color: #1f2937;
+  color: #ffffff;
+  border: none;
+  padding: 10px 30px;
+  font-size: 1rem;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.menu-flotante-opciones2 .btn-menu:hover {
+  background-color: #374151 !important;
+  transform: scale(1.03);
+}
+
+/* Animación del menú */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+  /* Botón para cerrar sesión */
+  .btn-cerrar {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: inline-block;
+    width: auto;
+    background-color: #000000;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+
+  .btn-cerrar:hover {
+    background-color: #2e2e2e;
+    transform: scale(1.05);}
+    .crear-andminbtn{
+     position: absolute;
+    top: 70px;
+    right: 20px;
+    display: inline-block;
+    width: auto;
+    background-color: #000000;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+
+  .btn-cerrar:hover {
+    background-color: #2e2e2e;
+    transform: scale(1.05);}
+
+    /* SIDEBAR */
+.sidebar {
+  width: 70px;
+  height: 100vh;
+  background: #1e1e2f;
+  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  transition: width 0.3s;
+  z-index: 1000; /* 🔥 siempre encima pero controlado */
+}
+
+/* EXPANSIÓN */
+.sidebar:hover {
+  width: 250px;
+}
+/* RESET */
+body {
+  margin: 0;
+  padding: 0;
 }
 
 /* ========================= */

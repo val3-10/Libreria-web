@@ -159,7 +159,7 @@
       return null;
     }
 
-    function register(event) {
+    async function register(event) {
       event.preventDefault();
       
 
@@ -197,48 +197,48 @@
         return false;
       }
 
-      const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
+      try {
+        // Frontend → API: enviamos los datos al backend con POST (crear recurso).
+        // El backend (auth.js) valida y hace INSERT en la tabla Usuarios.
+        const response = await fetch('http://localhost:3000/api/auth/register-admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre,
+            tipo_documento,
+            documento,
+            correo,
+            telefono,
+            direccion,
+            fecha,
+            usuario,
+            password,
+            rol,
+          }),
+        });
 
-      if (usuarios.some(u => u.correo === correo)) {
-        alert("Este correo ya está registrado.");
-        return false;
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          alert(data.error || 'No se pudo crear la cuenta administrativa. Inténtalo de nuevo.');
+          return false;
+        }
+
+        alert(data.message || "Cuenta creada correctamente");
+
+        if (rol === "Admin") {
+          window.location.href = "admin.html";
+        } else if (rol === "Empleado") {
+          window.location.href = "empleado.html";
+        } else {
+          window.location.href = "cliente.html";
+        }
+      } catch (err) {
+        console.error(err);
+        alert("No se pudo contactar con el servidor. Verifica que el backend esté encendido.");
       }
 
-      if (usuarios.some(u => u.usuario === usuario)) {
-        alert("Ese nombre de usuario ya está en uso.");
-        return false;
-      }
-
-     const nuevoUsuario = {
-  nombre,
-  tipo_documento,
-  documento,
-  correo,
-  telefono,
-  direccion,
-  fecha,
-  usuario,
-  password,
-  rol 
-};
-usuarios.push(nuevoUsuario);
-localStorage.setItem("usuarios", JSON.stringify(usuarios));
-localStorage.setItem("usuarioActivo", JSON.stringify(nuevoUsuario));
-
-if (rol === "Admin") {
-    localStorage.setItem("rol", "admin");
-    alert("Cuenta creada correctamente como Administrador");
-    window.location.href = "admin.html";
-} else if (rol === "Empleado") {
-    localStorage.setItem("rol", "empleado");
-    alert("Cuenta creada correctamente como Empleado");
-    window.location.href = "cliente.html";
-} else {
-    localStorage.setItem("rol", "cliente");
-    alert("Cuenta creada correctamente como Cliente");
-    window.location.href = "cliente.html";
-}
-
+      return false;
     }
   </script>
 </body>
