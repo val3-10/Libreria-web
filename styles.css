@@ -1072,23 +1072,230 @@ button {
     background-color: #2e2e2e;
     transform: scale(1.05);}
 
-    /* SIDEBAR */
+    /* SIDEBAR — colapsado (solo iconos); se expande al hover / focus-within */
+:root {
+  --sidebar-collapsed: 72px;
+  --sidebar-expanded: 260px;
+}
+
 .sidebar {
-  width: 70px;
+  width: var(--sidebar-collapsed);
+  min-width: var(--sidebar-collapsed);
+  box-sizing: border-box;
   height: 100vh;
   background: #1e1e2f;
-  color: white;
+  color: #f3f4f6;
   position: fixed;
   top: 0;
   left: 0;
-  overflow: hidden;
-  transition: width 0.3s;
-  z-index: 1000; /* 🔥 siempre encima pero controlado */
+  padding: 16px 10px 24px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  z-index: 1000;
+  text-align: left;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  transition: width 0.3s ease, min-width 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* EXPANSIÓN */
-.sidebar:hover {
-  width: 250px;
+.sidebar:hover,
+.sidebar:focus-within {
+  width: var(--sidebar-expanded);
+  min-width: var(--sidebar-expanded);
+  box-shadow: 6px 0 28px rgba(0, 0, 0, 0.35);
+}
+
+.sidebar .logo {
+  margin: 0 0 18px;
+  padding: 0;
+  text-align: center;
+  font-size: 1.85rem;
+  color: #fff;
+  line-height: 1;
+}
+
+.sidebar .logo i {
+  display: inline-block;
+}
+
+.sidebar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar .menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 11px 8px;
+  margin-bottom: 4px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #e5e7eb;
+  font-size: 0.95rem;
+  transition: background 0.2s ease, gap 0.25s ease, justify-content 0.25s ease;
+}
+
+.sidebar:hover .menu-item,
+.sidebar:focus-within .menu-item {
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 11px 10px;
+}
+
+.sidebar .menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar .menu-item .icon {
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+  font-size: 1.05rem;
+}
+
+/* Texto oculto en rail colapsado (sin cortar a medias) */
+.sidebar .menu-item .text {
+  flex: 0 1 auto;
+  max-width: 0;
+  opacity: 0;
+  visibility: hidden;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1.35;
+  text-align: left;
+  transition: opacity 0.2s ease, max-width 0.3s ease, visibility 0.2s ease;
+}
+
+.sidebar:hover .menu-item .text,
+.sidebar:focus-within .menu-item .text {
+  flex: 1;
+  max-width: 220px;
+  min-width: 0;
+  opacity: 1;
+  visibility: visible;
+}
+
+.sidebar .buscador-wrapper {
+  margin-bottom: 12px;
+}
+
+.sidebar .btn-toggle-buscador {
+  justify-content: center;
+  gap: 0;
+  transition: justify-content 0.25s ease, gap 0.25s ease;
+}
+
+.sidebar:hover .btn-toggle-buscador,
+.sidebar:focus-within .btn-toggle-buscador {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+/* "Buscar": visible solo con sidebar expandido; anula hover del wrapper si está colapsado */
+.sidebar .btn-toggle-buscador .buscador-text {
+  display: inline;
+  max-width: 0;
+  opacity: 0;
+  visibility: hidden;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity 0.2s ease, max-width 0.3s ease, visibility 0.2s ease;
+}
+
+.sidebar:hover .btn-toggle-buscador .buscador-text,
+.sidebar:focus-within .btn-toggle-buscador .buscador-text {
+  max-width: 120px;
+  opacity: 1;
+  visibility: visible;
+}
+
+.sidebar:not(:hover):not(:focus-within) .buscador-wrapper:hover .buscador-text {
+  max-width: 0;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.layout {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  align-self: stretch;
+}
+
+.main-content {
+  margin-left: var(--sidebar-collapsed);
+  width: calc(100% - var(--sidebar-collapsed));
+  max-width: calc(100% - var(--sidebar-collapsed));
+  box-sizing: border-box;
+  padding: 12px 16px 24px;
+  text-align: left;
+}
+
+@media (max-width: 640px) {
+  .sidebar {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: auto;
+    min-height: 0;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+  }
+
+  .sidebar:hover,
+  .sidebar:focus-within {
+    width: 100%;
+    min-width: 0;
+    box-shadow: none;
+  }
+
+  .sidebar .menu-item,
+  .sidebar:hover .menu-item,
+  .sidebar:focus-within .menu-item {
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 11px 10px;
+  }
+
+  .sidebar .menu-item .text,
+  .sidebar:hover .menu-item .text,
+  .sidebar:focus-within .menu-item .text {
+    flex: 1;
+    max-width: none;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .sidebar .btn-toggle-buscador,
+  .sidebar:hover .btn-toggle-buscador,
+  .sidebar:focus-within .btn-toggle-buscador {
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .sidebar .btn-toggle-buscador .buscador-text,
+  .sidebar:hover .btn-toggle-buscador .buscador-text,
+  .sidebar:focus-within .btn-toggle-buscador .buscador-text {
+    max-width: none;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .sidebar:not(:hover):not(:focus-within) .buscador-wrapper:hover .buscador-text {
+    max-width: none;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    max-width: 100%;
+  }
 }
 /* RESET */
 body {
@@ -1218,21 +1425,6 @@ tr:nth-child(even) {
 /* Hover */
 .carta-libro:hover {
   transform: scale(1.1);
-}
-
-/* ========================= */
-/* SIDEBAR */
-/* ========================= */
-.sidebar {
-  width: 70px;
-  height: 100vh;
-  background: #1e1e2f;
-  position: fixed;
-}
-
-/* Expandir */
-.sidebar:hover {
-  width: 250px;
 }
 
 /* ========================= */
