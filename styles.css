@@ -1,44 +1,44 @@
-  /* ========================= */
-  /* ESTILOS GENERALES / ADMIN */
-  /* ========================= */
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fuente principal */
-    background: #1f2937; /* Fondo claro azul-gris */
-    margin: 0;
-    padding: 0;
-    color: rgb(0, 0, 0); /* Color de texto */
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Centrado horizontal */
-    justify-content: flex-start; /* Alineado al inicio - header siempre visible */
-    min-height: 100vh; /* Ocupa toda la altura de la pantalla */
-    text-align: center;
-  }
+/* ========================= */
+/* ESTILOS GENERALES / ADMIN */
+/* ========================= */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fuente principal */
+  background: #1f2937; /* Fondo oscuro */
+  margin: 0; /* Quita margen */
+  padding: 0; /* Quita padding */
+  color: rgb(0, 0, 0); /* Color del texto */
+  display: flex; /* Flexbox */
+  flex-direction: column; /* Elementos en columna */
+  align-items: center; /* Centrado horizontal */
+  justify-content: flex-start; /* Alineado arriba */
+  min-height: 100vh; /* Alto completo */
+  text-align: center; /* Texto centrado */
+}
 
+/* Botón para cerrar sesión */
+.btn-cerrar {
+  position: absolute; /* Posición libre */
+  top: 20px; /* Separación superior */
+  right: 20px; /* Separación derecha */
+  display: inline-block;
+  width: auto;
+  background-color: #000000; /* Fondo negro */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer; /* Mano */
+  transition: background 0.3s ease, transform 0.2s ease; /* Animación */
+}
 
- 
+/* Hover botón cerrar */
+.btn-cerrar:hover {
+  background-color: #2e2e2e; /* Color al pasar mouse */
+  transform: scale(1.05); /* Se agranda */
+}
 
-  /* Botón para cerrar sesión */
-  .btn-cerrar {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    display: inline-block;
-    width: auto;
-    background-color: #000000;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.3s ease, transform 0.2s ease;
-  }
-
-  .btn-cerrar:hover {
-    background-color: #2e2e2e;
-    transform: scale(1.05);
-  }
-  .btn-carrito {
-  position: fixed;
+/* Botón carrito */
+.btn-carrito {
+  position: fixed; /* Fijo en pantalla */
   top: 290px;        
   right: 20px;      
   display: inline-block;
@@ -49,19 +49,21 @@
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.3s ease, transform 0.2s ease;
-  padding: 8px 16px;
-  font-size: 1.2rem;
+  padding: 8px 16px; /* Espaciado interno */
+  font-size: 1.2rem; /* Tamaño texto */
 }
 
+/* Hover carrito */
 .btn-carrito:hover {
   background-color: #2e2e2e;
   transform: scale(1.05);
 }
 
+/* Botón para abrir buscador */
 .btn-toggle-buscador {
-  display: flex;
+  display: flex; /* Alinea icono + texto */
   align-items: center;
-  gap: 8px;
+  gap: 8px; /* Espacio entre elementos */
   width: 100%;
   background: #1f2937;
   color: #fff;
@@ -74,15 +76,18 @@
   transition: background 0.3s ease, transform 0.2s ease;
 }
 
+/* Hover buscador */
 .btn-toggle-buscador:hover {
   background: #2e2e2e;
   transform: scale(1.01);
 }
 
+/* Icono del botón buscador */
 .btn-toggle-buscador i {
   font-size: 1.05rem;
 }
 
+/* Texto oculto inicialmente */
 .btn-toggle-buscador .buscador-text {
   display: none;
   white-space: nowrap;
@@ -90,19 +95,23 @@
   text-overflow: ellipsis;
 }
 
+/* Mostrar texto al pasar el mouse */
 .buscador-wrapper:hover .buscador-text {
   display: inline;
 }
 
+/* Panel buscador oculto */
 .buscador-panel {
   display: none;
   width: 100%;
 }
 
+/* Mostrar panel */
 .buscador-panel.visible {
   display: block;
 }
 
+/* Input buscador */
 .buscador-panel input {
   width: 100%;
   padding: 10px;
@@ -112,12 +121,14 @@
   margin-bottom: 10px;
 }
 
+/* Botones dentro de cartas */
 .carta-botones {
   display: flex;
   gap: 8px;
   margin-top: 8px;
 }
 
+/* Botones de carta */
 .carta-botones button,
 .btn-fav {
   min-height: 44px;
@@ -129,51 +140,55 @@
   box-sizing: border-box;
 }
 
+/* Botón favorito */
 .btn-fav {
-  background: #ff4081;
+  background: #ff4081; /* Rosa */
   color: #fff;
   border: none;
   cursor: pointer;
   font-weight: bold;
-  transition: transform 0.2s ease, opacity 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Hover favorito */
 .btn-fav:hover {
   transform: translateY(-1px);
   opacity: 0.95;
 }
 
+/* Icono favorito */
 .btn-fav i {
   font-size: 1rem;
 }
 
 /* ========================= */
-  /* CONTENEDOR PRINCIPAL */
-  /* ========================= */
+/* CONTENEDOR PRINCIPAL */
+/* ========================= */
 .container {
   max-width: 900px;
   width: 100%;
-  margin: 0 auto; 
+  margin: 0 auto; /* Centrado */
 }
- 
-  /* SECCIONES */
+
+
+/* ========================= */
+/* SECCIONES */
+/* ========================= */
 
   .seccion {
   background: #e6ebf1;
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
+
   padding: 20px;
   margin: 20px auto; 
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgb(0, 0, 0);
+  border-radius: 16px; /* Bordes redondeados */
+  box-shadow: 0 4px 12px rgb(0, 0, 0); /* Sombra */
   text-align: left;
-
   width: 100%;
-  max-width: 800px; 
+  max-width: 800px;
 }
 
   /* CAMPOS DE FORMULARIOS */
@@ -1081,10 +1096,128 @@ body {
   padding: 0;
 }
 
-/* LAYOUT GENERAL */
 /* ========================= */
-.layout {
-  display: flex;
+/* CAMPOS DE FORMULARIOS */
+/* ========================= */
+input, select, button {
+  width: 100%; /* Ocupan todo */
+  padding: 10px;
+  margin-bottom: 15px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+/* Inputs */
+input, select {
+  background: rgba(255,255,255,0.8);
+  color: #333;
+}
+
+/* ========================= */
+/* CONTRASEÑA */
+/* ========================= */
+.password-container {
+  position: relative; /* Para ubicar el icono */
+}
+
+/* Ajuste input contraseña */
+.password-container input {
+  padding-right: 40px;
+  margin-bottom: 0;
+}
+
+/* Ícono ojito */
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+/* ========================= */
+/* TABLAS */
+/* ========================= */
+table {
+  width: 100%;
+  border-collapse: collapse; /* Une bordes */
+  margin-top: 15px;
+  background: rgba(255,255,255,0.9);
+}
+
+th, td {
+  padding: 12px;
+  text-align: center;
+  color: #333;
+}
+
+/* Encabezado */
+th {
+  background: #d4a017;
+  color: #fff;
+}
+
+/* Filas alternas */
+tr:nth-child(even) {
+  background: rgba(127,0,255,0.05);
+}
+
+/* ========================= */
+/* MODAL */
+/* ========================= */
+.modal {
+  display: none; /* Oculto */
+  position: fixed;
+  z-index: 2000;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+}
+
+/* Contenido */
+.modal-contenido {
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px;
+}
+
+/* ========================= */
+/* LOGIN */
+/* ========================= */
+.login-body {
+  background: url("img/BookNest.png") no-repeat center top;
+  background-size: cover;
+}
+
+/* Caja login */
+.login-box {
+  background: rgba(0, 0, 0, 0.7);
+  padding: 35px;
+  border-radius: 16px;
+  color: #fff;
+}
+
+/* ========================= */
+/* CATÁLOGO */
+/* ========================= */
+.catalogo-libros {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+/* Tarjeta libro */
+.carta-libro {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  padding: 10px;
+}
+
+/* Hover */
+.carta-libro:hover {
+  transform: scale(1.1);
 }
 
 /* ========================= */
@@ -1094,207 +1227,38 @@ body {
   width: 70px;
   height: 100vh;
   background: #1e1e2f;
-  color: white;
   position: fixed;
-  top: 0;
-  left: 0;
-  overflow: hidden;
-  transition: width 0.3s;
-  z-index: 1000;
 }
 
-/* EXPANDIR SIDEBAR */
+/* Expandir */
 .sidebar:hover {
   width: 250px;
 }
 
-/* LOGO */
-.logo {
-  text-align: center;
-  margin: 20px 0;
+/* ========================= */
+/* MENÚ FLOTANTE */
+/* ========================= */
+.menu-flotante {
+  position: fixed;
+  top: 15px;
+  right: 15px;
 }
 
-/* LISTA */
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-
-/* ITEM */
-.menu-item {
-  display: flex;
-  align-items: center;
-  padding: 10px 12px;
-  cursor: pointer;
-  position: relative;
-  transition: background 0.3s ease, transform 0.2s ease;
-  border-radius: 8px;
-  margin: 6px;
-  background: #1f2937;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-
-.menu-item:hover {
-  background: #2e2e4d;
-  transform: translateY(-1px);
-}
-
-.menu-item:active {
-  transform: translateY(0);
-}
-
-/* ICONO */
-.icon {
-  font-size: 20px;
-  min-width: 40px;
-  text-align: center;
-}
-
-/* TEXTO */
-.text {
-  opacity: 0;
-  white-space: nowrap;
-  transition: 0.3s;
-}
-
-/* MOSTRAR TEXTO */
-.sidebar:hover .text {
-  opacity: 1;
-}
-
-/* SUBMENÚ */
-.submenu {
-  position: absolute;
-  left: 100%;
-  top: 0;
-  background: #2a2a40;
-  width: 200px;
-  list-style: none;
-  padding: 0;
-  display: none;
-}
-
-/* MOSTRAR SUBMENU SOLO SI SIDEBAR ESTÁ ABIERTO */
-.sidebar:hover .menu-item:hover .submenu {
-  display: block;
-}
-
-/* ITEMS SUBMENU */
-.submenu li {
-  padding: 12px;
-  cursor: pointer;
-}
-
-.submenu li:hover {
-  background: #444466;
-}
-
-/* CONTENIDO */
-.main-content {
-  margin-left: 70px;
-  width: calc(100% - 70px);
-  min-height: 100vh;
-
-  display: flex;
-  justify-content: center;   
-  align-items: flex-start;   
-  padding: 20px;
-  transition: all 0.3s ease;
-  margin: 0 auto;
-}
-
-.container {
-  max-width: 900px;
-  width: 100%;
-  margin: 0 auto; 
-}
-
-/* CUANDO SIDEBAR SE EXPANDE */
-.sidebar:hover ~ .main-content {
-  margin-left: 250px;
-  width: calc(100% - 250px);
-}
-
-/* EVITAR BUGS DE SUPERPOSICIÓN */
-.main-content {
-  position: relative;
-  z-index: 1;
-  margin: 0 auto;
-}
-
-/* SECCIONES DE SAGAS */
-.seccion-saga {
-  margin-bottom: 30px;
-}
-
-.seccion-saga h3 {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 15px;
-}
-
-/* Contenedor para sagas */
-.sagas-container {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-  width: 100%;
-}
-
-/* Libros dentro de una saga - layout horizontal */
-.saga-libros {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  width: 100%;
-  align-items: flex-start;
-}
-
-/* ===== GALERÍA SUPERIOR ===== */
+/* ========================= */
+/* GALERÍA */
+/* ========================= */
 .galeria-destacados {
   display: flex;
   gap: 15px;
   overflow-x: auto;
-  margin-bottom: 20px;
-  padding: 10px;
 }
 
-/* ===== CARDS DE LA GALERÍA ===== */
+/* Card */
 .card-destacada {
-  min-width: 120px;
-  height: 180px;
-  overflow: hidden;
-  border-radius: 12px;
-  transition: all 0.4s ease;
-  cursor: pointer;
-  position: relative;
-  text-align: center;
+  min-width: 150px;
 }
 
-/* ===== IMAGEN ===== */
-.card-destacada img {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 10px;
-}
-
-/* ===== TEXTO ===== */
-.card-destacada p {
-  margin-top: 5px;
-  font-size: 14px;
-}
-
-/* ===== EFECTO: OPACIDAD A LAS DEMÁS ===== */
-.galeria-destacados:hover .card-destacada:not(:hover) {
-  opacity: 0.3;
-}
-
-/* ===== EFECTO: ZOOM + SOMBRA ===== */
+/* Hover */
 .card-destacada:hover {
   transform: scale(1.2);
-  z-index: 2;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
 }
