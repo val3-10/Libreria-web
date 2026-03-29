@@ -230,8 +230,8 @@ body {
   .toggle-password {
     position: absolute;
     right: 10px;
-    top: 50%;
-    transform: translateY(-60%);
+    top: 38%;
+    transform: translateY(-50%);
     cursor: pointer;
     font-size: 1.2rem;
     -webkit-user-select: none;
@@ -366,6 +366,18 @@ body {
     text-align: center;
     margin-top: 40px;
   }
+
+  .registro-box input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  color: #333;
+  box-sizing: border-box;
+}
 
   .register {
     background-image: url('img/fondoregister1.jpg');
@@ -514,7 +526,7 @@ body {
 
   .login-box input {
     width: 100%;
-    padding: 10px; /* ✅ UNIFORMADO */
+    padding: 10px; 
     margin-bottom: 15px;
     border: none;
     border-radius: 10px;
@@ -522,6 +534,7 @@ body {
     outline: none;
     background: rgba(255, 255, 255, 0.9);
     color: #000;
+    
   }
 
   .login-box button {
@@ -935,13 +948,15 @@ button {
 /* CONTRASEÑA CON OJITO — UNIFORMADA */
 /* ========================= */
 .password-field input {
-  width: 100%;     /* ✅ antes era 350px fijo */
-  padding: 10px;   /* ✅ antes era 12px */
-  padding-right: 40px; /* espacio para el ojito */
+  width: 100%;
+  padding: 10px;
+  padding-right: 40px;
   font-size: 1rem;
   border: 1px solid #ccc;
-  border-radius: 12px;
+  border-radius: 10px;
   box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.8);
+  color: #333;
 }
 
 /* 🔹 Botón del ojito */
@@ -1658,4 +1673,20 @@ body {
     flex-wrap: wrap;
     justify-content: center;
   }
+}
+
+/* Hace que todos los elementos del formulario se estiren al mismo ancho */
+.login-box form {
+  display: flex;
+  flex-direction: column; /* apila los campos uno debajo del otro */
+  align-items: stretch;   /* los estira para que todos tengan el mismo ancho */
+}
+
+/* Fuerza que el correo, el contenedor de contraseña y su input
+   midan exactamente lo mismo usando todo el ancho disponible */
+.login-box input,
+.password-container,
+.password-container input {
+  width: 100%;            /* ocupa todo el ancho del login-box */
+  box-sizing: border-box; /* el padding no aumenta el ancho, todo cabe dentro */
 }
