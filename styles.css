@@ -164,6 +164,7 @@
 
   .seccion {
   background: #e6ebf1;
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   padding: 20px;
   margin: 20px auto; 
@@ -213,14 +214,15 @@
     position: absolute;
     right: 10px;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translateY(-60%);
     cursor: pointer;
     font-size: 1.2rem;
+    -webkit-user-select: none;
     user-select: none;
     transition: transform 0.2s ease;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: cent er;
     width: 30px;
     height: 30px;
   }
