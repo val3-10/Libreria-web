@@ -345,7 +345,7 @@ tr:nth-child(even) {
 
 /* Card */
 .card-destacada {
-  min-width: 120px;
+  min-width: 150px;
 }
 
 /* Hover */
