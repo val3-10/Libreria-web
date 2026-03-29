@@ -7,19 +7,29 @@
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-straight/css/uicons-solid-straight.css">
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css">
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css">
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
 <body>
 
-  <div class="main-content"></div>
-  <!-- GALERÍA DESTACADA -->
-<div class="galeria-destacada">
-  <div class="contenedor-galeria" id="galeriaDestacada"></div>
-</div>
-<!-- iconos de los botones -->
-<header>
-  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-</header>
+  <!-- Carrusel destacados (superior): centro + peek lateral, estilo mockup -->
+  <section class="carrusel-hero-wrap" aria-label="Libros destacados">
+    <div class="carrusel-hero" id="carruselHero">
+      <h2 class="carrusel-hero-heading">Destacados</h2>
+      <div class="carrusel-hero-stage">
+        <button type="button" class="carrusel-arrow carrusel-arrow--side" id="carruselPrev" aria-label="Anterior">
+          <ion-icon name="chevron-back-outline"></ion-icon>
+        </button>
+        <div class="carrusel-hero-viewport">
+          <div class="carrusel-hero-track" id="carruselHeroTrack"></div>
+        </div>
+        <button type="button" class="carrusel-arrow carrusel-arrow--side" id="carruselNext" aria-label="Siguiente">
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </button>
+      </div>
+      <div class="carrusel-hero-dots" id="carruselHeroDots" role="tablist" aria-label="Seleccionar libro"></div>
+    </div>
+  </section>
 
 <div class="layout">
 
@@ -67,12 +77,11 @@
   <!-- CATÁLOGO -->
   <div id="seccionCatalogo" class="seccion">
     <h2>Catálogo de Libros</h2>
-    <div id="galeriaDestacados" class="galeria-destacados"></div>
     <div id="catalogoLibros" class="catalogo-libros"></div>
   </div>
 
-  <!-- SAGAS -->
-  <div id="seccionSagas" class="seccion seccion-hidden">
+  <!-- SAGAS (sin seccion-hidden + !important: impedía mostrar con style.display = 'block') -->
+  <div id="seccionSagas" class="seccion" style="display: none;">
     <h2>Sagas</h2>
     <div id="sagasContainer" class="sagas-container"></div>
   </div>
@@ -97,16 +106,52 @@
   const API_BASE = 'http://localhost:3000';
 
   let libros = [];
-  let vistaSagas = false;
+  let carruselHeroIndex = 0;
+  let carruselHeroItems = [];
+  let carruselAutoplayId = null;
+  const CARRUSEL_AUTO_MS = 4000;
+  const CARRUSEL_GAP_PX = 12;
+
+  function stopCarruselAutoplay() {
+    if (carruselAutoplayId != null) {
+      clearInterval(carruselAutoplayId);
+      carruselAutoplayId = null;
+    }
+  }
+
+  function startCarruselAutoplay() {
+    stopCarruselAutoplay();
+    if (carruselHeroItems.length <= 1) return;
+    carruselAutoplayId = setInterval(() => {
+      const n = carruselHeroItems.length;
+      if (n === 0) return;
+      goCarruselHero((carruselHeroIndex + 1) % n);
+    }, CARRUSEL_AUTO_MS);
+  }
+
+  /** Navegación manual: reinicia el temporizador de 4 s */
+  function carruselHeroNavigate(i) {
+    const n = carruselHeroItems.length;
+    if (n === 0) return;
+    stopCarruselAutoplay();
+    goCarruselHero(i);
+    startCarruselAutoplay();
+  }
 
   async function cargarLibrosDesdeApi() {
     const contenedor = document.getElementById('catalogoLibros');
-    const galeriaDest = document.getElementById('galeriaDestacados');
+    const track = document.getElementById('carruselHeroTrack');
     if (contenedor) contenedor.innerHTML = '<p>Cargando libros…</p>';
-    if (galeriaDest) galeriaDest.innerHTML = '';
+    if (track) {
+      track.innerHTML = '<div class="carrusel-hero-slide carrusel-hero-slide--loading"><p>Cargando destacados…</p></div>';
+      track.style.transform = 'translateX(0)';
+    }
 
     try {
-      const res = await fetch(`${API_BASE}/api/libros`);
+      const controller = new AbortController();
+      const to = setTimeout(() => controller.abort(), 20000);
+      const res = await fetch(`${API_BASE}/api/libros`, { signal: controller.signal });
+      clearTimeout(to);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.error || 'Error al cargar el catálogo');
@@ -120,24 +165,39 @@
         contenedor.innerHTML =
           '<p>No se pudo obtener el catálogo. Asegúrate de que la API esté en ejecución (npm run start en server).</p>';
       }
+      try {
+        renderCarruselHero();
+      } catch (err2) {
+        console.error(err2);
+      }
       return;
     }
 
     const seccionSagas = document.getElementById('seccionSagas');
-    if (seccionSagas && seccionSagas.style.display !== 'none') {
-      mostrarSagas();
-    } else {
-      mostrarGaleriaDestacados();
-      mostrarLibrosCatalogo();
+    try {
+      renderCarruselHero();
+      if (seccionSagas && seccionSagas.style.display !== 'none') {
+        mostrarSagas();
+      } else {
+        mostrarLibrosCatalogo();
+      }
+    } catch (err) {
+      console.error('Error al pintar catálogo o carrusel:', err);
+      mostrarMensaje('error', 'Error al mostrar los libros. Recarga la página.');
+      if (contenedor) {
+        contenedor.innerHTML = '<p>No se pudo mostrar el catálogo. Revisa la consola del navegador.</p>';
+      }
+      try {
+        renderCarruselHero();
+      } catch (err2) {
+        console.error(err2);
+      }
     }
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    cargarLibrosDesdeApi();
-  });
-
   function mostrarLibrosCatalogo() {
     const contenedor = document.getElementById("catalogoLibros");
+    if (!contenedor) return;
     contenedor.innerHTML = "";
 
     if (libros.length === 0) {
@@ -146,7 +206,9 @@
     }
 
     // Vista catálogo normal (sin agrupar por saga)
-    const librosOrdenados = [...libros].sort((a, b) => a.titulo.localeCompare(b.titulo));
+    const librosOrdenados = [...libros].sort((a, b) =>
+      String(a.titulo || '').localeCompare(String(b.titulo || '')),
+    );
 
     librosOrdenados.forEach((libro) => {
       const carta = document.createElement("div");
@@ -160,7 +222,7 @@
         <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
         <p>Stock: ${libro.stock}</p>
         <div class="carta-botones">
-          <button onclick="mostrarModalLogin()">
+          <button type="button" onclick="prepararCarritoInvitado('${encodeURIComponent(libro.titulo)}')">
             <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
           </button>
         </div>
@@ -172,6 +234,7 @@
 
   function mostrarSagas() {
     const contenedor = document.getElementById("sagasContainer");
+    if (!contenedor) return;
     contenedor.innerHTML = "";
 
     if (libros.length === 0) {
@@ -208,7 +271,7 @@
       const contenedorLibros = document.createElement("div");
       contenedorLibros.className = "saga-libros";
 
-      librosSaga.sort((a, b) => a.titulo.localeCompare(b.titulo)).forEach((libro) => {
+      librosSaga.sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || ''))).forEach((libro) => {
         const carta = document.createElement("div");
         carta.className = "carta-libro";
 
@@ -220,7 +283,7 @@
           <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
           <p>Stock: ${libro.stock}</p>
           <div class="carta-botones">
-            <button onclick="mostrarModalLogin()">
+            <button type="button" onclick="prepararCarritoInvitado('${encodeURIComponent(libro.titulo)}')">
               <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
             </button>
           </div>
@@ -245,7 +308,7 @@
       const contenedorLibros = document.createElement("div");
       contenedorLibros.className = "saga-libros";
 
-      librosSinSaga.sort((a, b) => a.titulo.localeCompare(b.titulo)).forEach((libro) => {
+      librosSinSaga.sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || ''))).forEach((libro) => {
         const carta = document.createElement("div");
         carta.className = "carta-libro";
 
@@ -257,7 +320,7 @@
           <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
           <p>Stock: ${libro.stock}</p>
           <div class="carta-botones">
-            <button onclick="mostrarModalLogin()">
+            <button type="button" onclick="prepararCarritoInvitado('${encodeURIComponent(libro.titulo)}')">
               <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
             </button>
           </div>
@@ -288,10 +351,13 @@
       return;
     }
 
-    const filtrados = [...libros].sort((a, b) => a.titulo.localeCompare(b.titulo)).filter(libro =>
-      libro.titulo.toLowerCase().includes(texto) ||
-      (libro.autor || '').toLowerCase().includes(texto)
-    );
+    const filtrados = [...libros]
+      .sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || '')))
+      .filter(
+        (libro) =>
+          String(libro.titulo || '').toLowerCase().includes(texto) ||
+          (libro.autor || '').toLowerCase().includes(texto),
+      );
 
     // Si estamos en sagas, mostrar filtrados en sagas
     if (seccionSagas.style.display !== 'none') {
@@ -304,6 +370,7 @@
 
   function mostrarLibrosFiltradosCatalogo(filtrados) {
     const contenedor = document.getElementById("catalogoLibros");
+    if (!contenedor) return;
     contenedor.innerHTML = "";
 
     if (filtrados.length === 0) {
@@ -323,7 +390,7 @@
         <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
         <p>Stock: ${libro.stock}</p>
         <div class="carta-botones">
-          <button onclick="mostrarModalLogin()">
+          <button type="button" onclick="prepararCarritoInvitado('${encodeURIComponent(libro.titulo)}')">
             <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
           </button>
         </div>
@@ -334,6 +401,7 @@
 
   function mostrarLibrosFiltradosSagas(filtrados) {
     const contenedor = document.getElementById("sagasContainer");
+    if (!contenedor) return;
     contenedor.innerHTML = "";
 
     if (filtrados.length === 0) {
@@ -370,7 +438,7 @@
       const contenedorLibros = document.createElement("div");
       contenedorLibros.className = "saga-libros";
 
-      librosSaga.sort((a, b) => a.titulo.localeCompare(b.titulo)).forEach((libro) => {
+      librosSaga.sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || ''))).forEach((libro) => {
         const carta = document.createElement("div");
         carta.className = "carta-libro";
 
@@ -382,7 +450,7 @@
           <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
           <p>Stock: ${libro.stock}</p>
           <div class="carta-botones">
-            <button onclick="mostrarModalLogin()">
+            <button type="button" onclick="prepararCarritoInvitado('${encodeURIComponent(libro.titulo)}')">
               <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
             </button>
           </div>
@@ -406,7 +474,7 @@
       const contenedorLibros = document.createElement("div");
       contenedorLibros.className = "saga-libros";
 
-      librosSinSaga.sort((a, b) => a.titulo.localeCompare(b.titulo)).forEach((libro) => {
+      librosSinSaga.sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || ''))).forEach((libro) => {
         const carta = document.createElement("div");
         carta.className = "carta-libro";
 
@@ -418,7 +486,7 @@
           <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
           <p>Stock: ${libro.stock}</p>
           <div class="carta-botones">
-            <button onclick="mostrarModalLogin()">
+            <button type="button" onclick="prepararCarritoInvitado('${encodeURIComponent(libro.titulo)}')">
               <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
             </button>
           </div>
@@ -457,13 +525,22 @@
     }
   }
 
+  function escapeHtml(text) {
+    if (text == null || text === '') return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function prepararCarritoInvitado(tituloCodificado) {
+    const titulo = decodeURIComponent(tituloCodificado);
+    localStorage.setItem('libroPendiente', titulo);
+    mostrarModalLogin();
+  }
+
   function mostrarModalLogin() {
     document.getElementById('modalLogin').style.display = 'flex';
   }
-
-  function agregarDesdeGaleriaIndex(titulo) {
-  mostrarModalLogin();
-}
 
   function cerrarModalLogin() {
     document.getElementById('modalLogin').style.display = 'none';
@@ -481,34 +558,162 @@
     setTimeout(() => toast.remove(), 3000);
   }
 
- function mostrarGaleriaDestacados() {
-  const contenedor = document.getElementById("galeriaDestacados");
-  if (!contenedor) return;
+  function goCarruselHero(i) {
+    if (carruselHeroItems.length === 0) return;
+    carruselHeroIndex = Math.max(0, Math.min(i, carruselHeroItems.length - 1));
+    updateCarruselHeroTransform();
+    updateCarruselDots();
+  }
 
-  contenedor.innerHTML = "";
+  function layoutCarruselHero() {
+    const viewport = document.querySelector('.carrusel-hero-viewport');
+    const track = document.getElementById('carruselHeroTrack');
+    if (!viewport || !track) return;
+    const slides = track.querySelectorAll(
+      '.carrusel-hero-slide:not(.carrusel-hero-slide--empty):not(.carrusel-hero-slide--loading)',
+    );
+    if (slides.length === 0) return;
+    const vw = viewport.getBoundingClientRect().width;
+    const pct = window.matchMedia('(max-width: 640px)').matches ? 0.9 : 0.62;
+    const slideW = Math.min(vw * pct, 720);
+    slides.forEach((s) => {
+      s.style.flex = `0 0 ${slideW}px`;
+    });
+    track.style.gap = `${CARRUSEL_GAP_PX}px`;
+  }
 
-  const destacados = libros.slice(0, 5);
+  function updateCarruselHeroTransform() {
+    const viewport = document.querySelector('.carrusel-hero-viewport');
+    const track = document.getElementById('carruselHeroTrack');
+    if (!track || !viewport || carruselHeroItems.length === 0) return;
+    const first = track.querySelector(
+      '.carrusel-hero-slide:not(.carrusel-hero-slide--empty):not(.carrusel-hero-slide--loading)',
+    );
+    if (!first) {
+      track.style.transform = 'translateX(0)';
+      return;
+    }
+    const slideW = first.getBoundingClientRect().width;
+    const gap = CARRUSEL_GAP_PX;
+    const vw = viewport.getBoundingClientRect().width;
+    const step = slideW + gap;
+    const offset = vw / 2 - slideW / 2 - carruselHeroIndex * step;
+    track.style.transform = `translateX(${offset}px)`;
+  }
 
-  destacados.forEach(libro => {
-    const card = document.createElement("div");
-    card.className = "card-destacada";
+  function reflowCarruselHero() {
+    layoutCarruselHero();
+    updateCarruselHeroTransform();
+  }
 
-    card.innerHTML = `
-      <img src="${libro.caratula || 'img/BookNest.png'}">
-      <p>${libro.titulo}</p>
-    `;
+  function updateCarruselDots() {
+    document.querySelectorAll('#carruselHeroDots .carrusel-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === carruselHeroIndex);
+    });
+  }
 
-    card.onclick = () => {
-      // Guardamos lo que quería comprar
-      localStorage.setItem("libroPendiente", libro.titulo);
+  function renderCarruselHero() {
+    stopCarruselAutoplay();
+    const track = document.getElementById('carruselHeroTrack');
+    const dots = document.getElementById('carruselHeroDots');
+    const prev = document.getElementById('carruselPrev');
+    const next = document.getElementById('carruselNext');
+    if (!track || !dots) return;
 
-     
-      mostrarModalLogin();
-    };
+    const maxSlides = 12;
+    carruselHeroItems = libros.slice(0, Math.min(libros.length, maxSlides));
+    carruselHeroIndex = 0;
+    track.innerHTML = '';
+    dots.innerHTML = '';
+    track.style.width = '';
 
-    contenedor.appendChild(card);
+    if (carruselHeroItems.length === 0) {
+      track.innerHTML =
+        '<div class="carrusel-hero-slide carrusel-hero-slide--empty"><p>No hay libros para mostrar en el carrusel.</p></div>';
+      track.style.gap = '0';
+      track.style.transform = 'translateX(0)';
+      if (prev) prev.disabled = true;
+      if (next) next.disabled = true;
+      return;
+    }
+
+    const n = carruselHeroItems.length;
+
+    carruselHeroItems.forEach((libro, i) => {
+      const slide = document.createElement('div');
+      slide.className = 'carrusel-hero-slide carrusel-hero-slide--book';
+      slide.dataset.index = String(i);
+      const precio = libro.precio != null ? Number(libro.precio).toLocaleString('es-CO') : '0';
+      const sinStock = libro.stock <= 0;
+      slide.innerHTML = `
+        <div class="carrusel-hero-cover">
+          <img src="${libro.caratula || 'img/BookNest.png'}" alt="${escapeHtml(libro.titulo)}">
+        </div>
+        <div class="carrusel-hero-meta">
+          <h3>${escapeHtml(libro.titulo)}</h3>
+          <p class="carrusel-hero-autor">${escapeHtml(libro.autor || 'Autor desconocido')}</p>
+          <p class="carrusel-hero-precio">$${precio}</p>
+          <p class="carrusel-hero-stock">${sinStock ? 'Sin stock' : `Stock: ${libro.stock}`}</p>
+          <div class="carrusel-hero-acciones carrusel-hero-acciones--solo-carrito">
+            <button type="button" class="btn-carrusel-carrito" ${sinStock ? 'disabled' : ''}
+              onclick="prepararCarritoInvitado('${encodeURIComponent(libro.titulo)}')">
+              <i class="fi fi-rr-shopping-cart"></i> Agregar al carrito
+            </button>
+          </div>
+        </div>
+      `;
+      track.appendChild(slide);
+
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'carrusel-dot' + (i === 0 ? ' active' : '');
+      dot.setAttribute('aria-label', `Libro ${i + 1} de ${n}`);
+      dot.addEventListener('click', () => carruselHeroNavigate(i));
+      dots.appendChild(dot);
+    });
+
+    if (prev) prev.disabled = n <= 1;
+    if (next) next.disabled = n <= 1;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        reflowCarruselHero();
+        startCarruselAutoplay();
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const prev = document.getElementById('carruselPrev');
+    const next = document.getElementById('carruselNext');
+    if (prev) {
+      prev.addEventListener('click', () => {
+        const n = carruselHeroItems.length;
+        if (n === 0) return;
+        carruselHeroNavigate((carruselHeroIndex - 1 + n) % n);
+      });
+    }
+    if (next) {
+      next.addEventListener('click', () => {
+        const n = carruselHeroItems.length;
+        if (n === 0) return;
+        carruselHeroNavigate((carruselHeroIndex + 1) % n);
+      });
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.target.matches('input, textarea')) return;
+      const n = carruselHeroItems.length;
+      if (n === 0) return;
+      if (e.key === 'ArrowLeft') carruselHeroNavigate((carruselHeroIndex - 1 + n) % n);
+      if (e.key === 'ArrowRight') carruselHeroNavigate((carruselHeroIndex + 1) % n);
+    });
+    window.addEventListener('pagehide', stopCarruselAutoplay);
+    let carruselResizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(carruselResizeTimer);
+      carruselResizeTimer = setTimeout(() => reflowCarruselHero(), 120);
+    });
+    cargarLibrosDesdeApi();
   });
-}
 
 </script>
 </body>
