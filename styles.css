@@ -114,7 +114,7 @@ body {
 /* Input buscador */
 .buscador-panel input {
   width: 100%;
-  padding: 10px;
+  padding: 10px; /* ✅ UNIFORMADO */
   border-radius: 8px;
   border: 1px solid #b1b5c3;
   outline: none;
@@ -191,15 +191,17 @@ body {
   max-width: 800px;
 }
 
-  /* CAMPOS DE FORMULARIOS */
+  /* ========================= */
+  /* CAMPOS DE FORMULARIOS — UNIFORMADOS */
+  /* Todos los inputs y selects tienen el mismo tamaño */
+  /* ========================= */
   input, select, button {
-    width: 100%;
-    padding: 10px;
+    width: 100%;       /* ✅ Mismo ancho para todos */
+    padding: 10px;     /* ✅ Mismo alto para todos */
     margin-bottom: 15px;
     border: none;
     border-radius: 10px;
     font-size: 1rem;
-    
   }
 
   input, select {
@@ -222,7 +224,7 @@ body {
     width: 100%;
     padding-right: 45px; /* Espacio para el ícono */
     margin-bottom: 0; /* Evitar doble margen */
-    box-sizing: border-box; /* ✅ Incluir padding dentro del ancho */
+    box-sizing: border-box;
   }
 
   .toggle-password {
@@ -237,7 +239,7 @@ body {
     transition: transform 0.2s ease;
     display: flex;
     align-items: center;
-    justify-content: cent er;
+    justify-content: center;
     width: 30px;
     height: 30px;
   }
@@ -408,10 +410,12 @@ body {
     margin-bottom: 10px;
   }
 
-  /* Inputs del modal */
+  /* ========================= */
+  /* Inputs del modal — UNIFORMADOS */
+  /* ========================= */
   .modal-contenido input {
-    width: 80%;
-    padding: 8px;
+    width: 100%;    /* ✅ antes era 80% */
+    padding: 10px;  /* ✅ antes era 8px */
     margin: 10px 0;
     border: 2px solid #d4a017;
     border-radius: 8px;
@@ -480,8 +484,6 @@ body {
   padding: 0;
   }
 
- 
-
   /* Caja del login */
   .login-box {
     background: rgba(0, 0, 0, 0.7);
@@ -512,7 +514,7 @@ body {
 
   .login-box input {
     width: 100%;
-    padding: 10px;
+    padding: 10px; /* ✅ UNIFORMADO */
     margin-bottom: 15px;
     border: none;
     border-radius: 10px;
@@ -728,7 +730,7 @@ body {
 
   .forgot-box input {
     width: 100%;
-    padding: 10px;
+    padding: 10px; /* ✅ UNIFORMADO */
     margin-bottom: 12px;
     border-radius: 10px;
     border: 1px solid #ddd;
@@ -863,8 +865,6 @@ button {
   box-shadow: 0 0 6px rgba(0,0,0,0.1);
 }
 
-/* === BOTONES (volver / cerrar sesión) === */
-
 /* === BOTÓN VOLVER AL CATÁLOGO === */
 .catalogo-btn {
   position: absolute;
@@ -931,21 +931,23 @@ button {
   transform: scale(1.03);
 }
 
+/* ========================= */
+/* CONTRASEÑA CON OJITO — UNIFORMADA */
+/* ========================= */
 .password-field input {
-  width: 350px; /* 🔹 más corto, igual estilo */
-  padding: 12px 40px 12px 100px; /* espacio para el ojito */
-  font-size: 16px;
+  width: 100%;     /* ✅ antes era 350px fijo */
+  padding: 10px;   /* ✅ antes era 12px */
+  padding-right: 40px; /* espacio para el ojito */
+  font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 12px;
   box-sizing: border-box;
 }
 
-
-
 /* 🔹 Botón del ojito */
 .password-field button {
   position: absolute;
-  right: 15px;           /* ligeramente más separado del borde */
+  right: 15px;
   background: none;
   border: none;
   cursor: pointer;
@@ -1036,7 +1038,7 @@ button {
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
 }
-  /* Botón para cerrar sesión */
+
   .btn-cerrar {
     position: absolute;
     top: 20px;
@@ -1054,6 +1056,7 @@ button {
   .btn-cerrar:hover {
     background-color: #2e2e2e;
     transform: scale(1.05);}
+
     .crear-andminbtn{
      position: absolute;
     top: 70px;
@@ -1068,11 +1071,7 @@ button {
     transition: background 0.3s ease, transform 0.2s ease;
   }
 
-  .btn-cerrar:hover {
-    background-color: #2e2e2e;
-    transform: scale(1.05);}
-
-    /* SIDEBAR — colapsado (solo iconos); se expande al hover / focus-within */
+/* SIDEBAR */
 :root {
   --sidebar-collapsed: 72px;
   --sidebar-expanded: 260px;
@@ -1155,7 +1154,6 @@ button {
   font-size: 1.05rem;
 }
 
-/* Texto oculto en rail colapsado (sin cortar a medias) */
 .sidebar .menu-item .text {
   flex: 0 1 auto;
   max-width: 0;
@@ -1193,7 +1191,6 @@ button {
   gap: 8px;
 }
 
-/* "Buscar": visible solo con sidebar expandido; anula hover del wrapper si está colapsado */
 .sidebar .btn-toggle-buscador .buscador-text {
   display: inline;
   max-width: 0;
@@ -1297,143 +1294,11 @@ button {
     max-width: 100%;
   }
 }
+
 /* RESET */
 body {
   margin: 0;
   padding: 0;
-}
-
-/* ========================= */
-/* CAMPOS DE FORMULARIOS */
-/* ========================= */
-input, select, button {
-  width: 100%; /* Ocupan todo */
-  padding: 10px;
-  margin-bottom: 15px;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-}
-
-/* Inputs */
-input, select {
-  background: rgba(255,255,255,0.8);
-  color: #333;
-}
-
-/* ========================= */
-/* CONTRASEÑA */
-/* ========================= */
-.password-container {
-  position: relative; /* Para ubicar el icono */
-}
-
-/* Ajuste input contraseña */
-.password-container input {
-  padding-right: 40px;
-  margin-bottom: 0;
-}
-
-/* Ícono ojito */
-.toggle-password {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-}
-
-/* ========================= */
-/* TABLAS */
-/* ========================= */
-table {
-  width: 100%;
-  border-collapse: collapse; /* Une bordes */
-  margin-top: 15px;
-  background: rgba(255,255,255,0.9);
-}
-
-th, td {
-  padding: 12px;
-  text-align: center;
-  color: #333;
-}
-
-/* Encabezado */
-th {
-  background: #d4a017;
-  color: #fff;
-}
-
-/* Filas alternas */
-tr:nth-child(even) {
-  background: rgba(127,0,255,0.05);
-}
-
-/* ========================= */
-/* MODAL */
-/* ========================= */
-.modal {
-  display: none; /* Oculto */
-  position: fixed;
-  z-index: 2000;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.4);
-}
-
-/* Contenido */
-.modal-contenido {
-  background: #fff;
-  border-radius: 12px;
-  padding: 25px;
-}
-
-/* ========================= */
-/* LOGIN */
-/* ========================= */
-.login-body {
-  background: url("img/BookNest.png") no-repeat center top;
-  background-size: cover;
-}
-
-/* Caja login */
-.login-box {
-  background: rgba(0, 0, 0, 0.7);
-  padding: 35px;
-  border-radius: 16px;
-  color: #fff;
-}
-
-/* ========================= */
-/* CATÁLOGO */
-/* ========================= */
-.catalogo-libros {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
-  gap: 20px;
-}
-
-/* Tarjeta libro */
-.carta-libro {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  padding: 10px;
-}
-
-/* Hover */
-.carta-libro:hover {
-  transform: scale(1.1);
-}
-
-/* ========================= */
-/* MENÚ FLOTANTE */
-/* ========================= */
-.menu-flotante {
-  position: fixed;
-  top: 15px;
-  right: 15px;
 }
 
 /* ========================= */
@@ -1445,18 +1310,16 @@ tr:nth-child(even) {
   overflow-x: auto;
 }
 
-/* Card */
 .card-destacada {
   min-width: 150px;
 }
 
-/* Hover */
 .card-destacada:hover {
   transform: scale(1.2);
 }
 
 /* ========================= */
-/* CARRUSEL HERO — alineado a paleta oscura (#1f2937 / sidebar) */
+/* CARRUSEL HERO */
 /* ========================= */
 .carrusel-hero-wrap {
   width: 100%;
@@ -1481,7 +1344,6 @@ tr:nth-child(even) {
   text-align: center;
 }
 
-/* Contenedor flechas + viewport — altura alineada index / cliente */
 .carrusel-hero-stage {
   position: relative;
   display: block;
@@ -1505,7 +1367,6 @@ tr:nth-child(even) {
   will-change: transform;
 }
 
-/* Tarjeta libro: altura fija para que index y cliente coincidan */
 .carrusel-hero-slide--book {
   display: flex;
   flex-direction: row;
@@ -1672,7 +1533,6 @@ tr:nth-child(even) {
   transform: scale(1.05);
 }
 
-/* Flechas circulares a los lados (sobre el peek) */
 .carrusel-arrow--side {
   position: absolute;
   top: 50%;
