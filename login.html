@@ -5,26 +5,39 @@
   <title>Login - Booknest</title>
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body class="login-body">
 
+  <!-- Contenedor principal del formulario de inicio de sesión -->
   <div class="login-box">
     <h2>Iniciar Sesión</h2>
 
-    <form onsubmit="return login()">
+    <!-- Formulario de login.
+         onsubmit llama a la función login() y evita que la página se recargue -->
+    <form onsubmit="login(event)">
+
+      <!-- Campo para ingresar el correo -->
       <label for="email">Correo:</label>
       <input type="email" id="email" placeholder="usuario@booknest.com" required>
 
+      <!-- Campo para ingresar la contraseña -->
       <label for="password">Contraseña:</label>
+
+      <!-- Contenedor para la contraseña y el icono del ojo -->
       <div class="password-container">
+
+        <!-- Input de contraseña -->
         <input type="password" id="password" required>
+
+        <!-- Botón visual (icono) para mostrar u ocultar la contraseña -->
         <span class="toggle-password" onclick="togglePassword('password')">
 
-          <!--  SVG ojo abierto (como el de la captura de Freepik) -->
+          <!-- Icono de ojo abierto (contraseña oculta) -->
           <svg class="icon-eye" width="22" height="22" viewBox="0 0 24 24" fill="#333">
             <path d="M12 4.5C7 4.5 2.73 8.11 1 12c1.73 3.89 6 7.5 11 7.5s9.27-3.61 11-7.5c-1.73-3.89-6-7.5-11-7.5zm0 12a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/>
           </svg>
 
-          <!--  SVG ojo tachado (como el de la captura de Freepik) -->
+          <!-- Icono de ojo tachado (contraseña visible) -->
           <svg class="icon-eye-slash" width="22" height="22" viewBox="0 0 24 24" fill="#333" style="display:none">
             <path d="M12 5C7 5 2.73 8.11 1 12a11.94 11.94 0 0 0 2.12 3.06L2 16.18 3.41 17.6l18.02-18.02L22 1.18 20.59 2.6l-2.12 2.12C16.9 3.84 14.53 3 12 3 7 3 2.73 6.11 1 10c1.73 3.89 6 7 11 7 2.53 0 4.9-.84 6.47-2.27l2.12 2.12L22 15.82l-2.12-2.12A11.94 11.94 0 0 0 23 10c-1.73-3.89-6-7-11-7z"/>
           </svg>
@@ -32,66 +45,213 @@
         </span>
       </div>
 
+      <!-- Botón para enviar el formulario -->
       <button type="submit">Entrar</button>
     </form>
 
+    <!-- Enlace para recuperar contraseña -->
     <a href="forgot-password.html">¿Olvidaste tu contraseña?</a>
+
+    <!-- Enlace para crear cuenta -->
     <p>¿No tienes cuenta? <a href="register.html">Crear cuenta</a></p>
     <p><a href="index.html">Volver al catálogo</a></p>
   </div>
 
   <script>
-    const adminUser = { email: "admin@booknest.com", password: "1234" };
 
+    /*
+     * =============================================================================
+     * FLUJO FRONTEND → BACKEND (API) → BASE DE DATOS
+     * =============================================================================
+     *
+     * 1. FRONTEND (esta página): El usuario escribe correo y contraseña y pulsa
+     *    "Entrar". El JavaScript recoge los datos y los envía al BACKEND mediante
+     *    una petición HTTP (fetch) a la URL del servidor (ej: http://localhost:3000/api/auth/login).
+     *
+     * 2. API / BACKEND (servidor Node.js en server/): Es el intermediario. Recibe
+     *    la petición, valida los datos y se conecta a la BASE DE DATOS para
+     *    comprobar si el usuario existe y la contraseña es correcta. Luego
+     *    devuelve una respuesta (éxito o error) en formato JSON.
+     *
+     * 3. BASE DE DATOS (SQL Server): Guarda usuarios, libros, etc. El backend
+     *    ejecuta consultas SQL (SELECT, INSERT...) contra la BD; el frontend
+     *    NUNCA se conecta directamente a la BD por seguridad.
+     *
+     * ¿Qué es una API? (Application Programming Interface)
+     * Es un "contrato" entre el frontend y el backend: el backend expone URLs
+     * (endpoints) como /api/auth/login. El frontend llama a esa URL enviando
+     * datos (por ejemplo en JSON) y recibe una respuesta. La API es la capa
+     * que permite que la web (navegador) hable con el servidor y la base de datos.
+     *
+     * ¿Por qué usamos POST para el login?
+     * - POST sirve para ENVIAR datos al servidor (correo y contraseña en el body).
+     * - No ponemos la contraseña en la URL (como haría GET) porque la URL puede
+     *   quedar en historial y logs; POST envía los datos en el cuerpo de la
+     *   petición, más seguro para datos sensibles.
+     * - GET se usa para "pedir" información (ej: listar libros); POST para
+     *   "enviar" o "crear" (login, registro, etc.).
+     */
+
+    // Función para mostrar u ocultar la contraseña
     function togglePassword(inputId) {
+
+      // Obtener el input de contraseña por su ID
       const input = document.getElementById(inputId);
-      const container = input.nextElementSibling;
+
+      // Obtener el contenedor donde está el input
+      const container = input.parentNode;
+
+      // Obtener el icono de ojo abierto
       const eye = container.querySelector('.icon-eye');
+
+      // Obtener el icono de ojo tachado
       const eyeSlash = container.querySelector('.icon-eye-slash');
 
-      if (input.type === "password") {
-        input.type = "text";
-        eye.style.display = "none";
-        eyeSlash.style.display = "inline";
+      // Si el input está como tipo password (oculto)
+      if (input.type === 'password') {
+
+        // Cambiar a texto para mostrar la contraseña
+        input.type = 'text';
+
+        // Ocultar el icono de ojo abierto
+        eye.style.display = 'none';
+
+        // Mostrar el icono de ojo tachado
+        eyeSlash.style.display = 'inline';
+
       } else {
-        input.type = "password";
-        eye.style.display = "inline";
-        eyeSlash.style.display = "none";
+
+        // Volver a ocultar la contraseña
+        input.type = 'password';
+
+        // Mostrar el icono de ojo abierto
+        eye.style.display = 'inline';
+
+        // Ocultar el icono de ojo tachado
+        eyeSlash.style.display = 'none';
       }
     }
 
-    function login() {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
 
-      if (!email.endsWith("@booknest.com")) {
-        alert("Solo se permiten correos con el dominio @booknest.com");
+    // Función principal para iniciar sesión
+    async function login(event) {
+
+      // Evita que el formulario recargue la página
+      if (event && event.preventDefault) {
+        event.preventDefault();
+      }
+
+      // Obtener el valor del correo ingresado
+      const email = document.getElementById('email').value.trim();
+
+      // Obtener el valor de la contraseña
+      const password = document.getElementById('password').value;
+
+      // Validar que el correo tenga el dominio @booknest.com
+      if (!email.endsWith('@booknest.com')) {
+        alert('Solo se permiten correos con el dominio @booknest.com');
         return false;
       }
 
-      const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-
-      if (email === adminUser.email && password === adminUser.password) {
-        localStorage.setItem("rol", "admin");
-        alert("Bienvenido, administrador.");
-        window.location.href = "admin.html";
+      // Validar que la contraseña no esté vacía
+      if (!password) {
+        alert('Ingresa tu contraseña');
         return false;
       }
 
-      const usuario = usuarios.find(u => u.correo === email && u.password === password);
+      try {
 
-      if (usuario) {
-        localStorage.setItem("usuarioActivo", JSON.stringify(usuario));
-        localStorage.setItem(`historial_${usuario.usuario}`, JSON.stringify(usuario.historial || []));
-        localStorage.setItem(`carrito_${usuario.usuario}`, JSON.stringify(usuario.carrito || []));
-        localStorage.setItem("rol", "cliente");
+        // Llamada al backend: fetch hace una petición HTTP a la API del servidor.
+        // La API está en /api/auth/login (definida en server/src/routes/auth.js).
+        const response = await fetch('http://localhost:3000/api/auth/login', {
+
+          // POST: enviamos datos (correo, password) en el cuerpo de la petición.
+          // El backend los recibe en req.body y luego consulta la base de datos.
+          method: 'POST',
+
+          // Indica que el cuerpo de la petición es JSON (el backend lo interpreta así).
+          headers: {
+            'Content-Type': 'application/json',
+          },
+
+          // Los datos que envía el frontend al backend; el backend los usa para
+          // buscar el usuario en la BD (tabla Usuarios).
+          body: JSON.stringify({ correo: email, password }),
+        });
+
+        // Si la respuesta no es correcta
+        if (!response.ok) {
+
+          // Intentar obtener el mensaje de error del servidor
+          const errorData = await response.json().catch(() => ({}));
+
+          alert(errorData.error || 'Error al iniciar sesión. Verifica tus datos.');
+          return false;
+        }
+
+        // Convertir la respuesta a JSON
+        const data = await response.json();
+
+        // Obtener el usuario desde la respuesta
+        const usuario = data.user;
+
+        // Validar que el usuario exista
+        if (!usuario) {
+          alert('No se pudo obtener la información del usuario.');
+          return false;
+        }
+
+        // Guardar el usuario en el localStorage del navegador
+        localStorage.setItem('usuarioActivo', JSON.stringify({
+          ...usuario,
+
+          // Inicializar historial de compras
+          historial: [],
+
+          // Inicializar carrito
+          carrito: [],
+        }));
+
+        // Guardar el rol del usuario
+        localStorage.setItem('rol', (usuario.rol || 'cliente').toLowerCase());
+
+        // Mensaje de bienvenida
         alert(`Bienvenido ${usuario.nombre}`);
-        window.location.href = "cliente.html";
-      } else {
-        alert("Correo o contraseña incorrectos. Verifica tus datos.");
+
+        // Obtener el rol del usuario
+        const rol = (usuario.rol || 'cliente').toLowerCase();
+
+        // Redirigir según el tipo de usuario
+        if (rol === 'admin' || rol === 'administrador') {
+
+          // Página de administrador
+          window.location.href = 'admin.html';
+
+        } else if (rol === 'empleado') {
+
+          // Página de empleado
+          window.location.href = 'empleado.html';
+
+        } else {
+
+          // Página de cliente
+          window.location.href = 'cliente.html';
+        }
+
+      } catch (err) {
+
+        // Mostrar error en consola
+        console.error(err);
+
+        // Mensaje si el servidor no responde
+        alert('No se pudo contactar con el servidor. Asegúrate de que el backend esté encendido.');
       }
+
+      // Evita que el formulario recargue la página
       return false;
     }
+
   </script>
+
 </body>
 </html>

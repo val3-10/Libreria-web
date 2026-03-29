@@ -149,7 +149,7 @@
       return null;
     }
 
-    function register() {
+    async function register() {
       const nombre = document.getElementById("nombre").value.trim();
       const tipo_documento = document.getElementById("tipo_documento").value.trim();
       const documento = document.getElementById("documento").value.trim();
@@ -167,15 +167,39 @@
       if (password !== confirmar) { alert("Contraseñas no coinciden"); return false; }
       if (!terminos) { alert("Debes aceptar los términos"); return false; }
 
-      const usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-      if (usuarios.some(u => u.correo === correo)) { alert("Correo ya registrado"); return false; }
-      if (usuarios.some(u => u.usuario === usuario)) { alert("Usuario ya en uso"); return false; }
+      try {
+        // Frontend → API: enviamos los datos del formulario al backend (POST).
+        // El backend (server/src/routes/auth.js) recibe el body, valida y hace INSERT en la BD.
+        // Ver login.html para más detalles del flujo Frontend → API → Base de datos.
+        const response = await fetch('http://localhost:3000/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre,
+            tipo_documento,
+            documento,
+            correo,
+            telefono,
+            direccion,
+            fecha,
+            usuario,
+            password,
+          }),
+        });
 
-      usuarios.push({ nombre, tipo_documento, documento, correo, telefono, direccion, fecha, usuario, password, historial: [], carrito: [] });
-      localStorage.setItem("usuarios", JSON.stringify(usuarios));
+        const data = await response.json().catch(() => ({}));
 
-      alert("Cuenta creada exitosamente");
-      window.location.href = "login.html";
+        if (!response.ok) {
+          alert(data.error || 'No se pudo crear la cuenta. Inténtalo de nuevo.');
+          return false;
+        }
+
+        alert(data.message || "Cuenta creada exitosamente");
+        window.location.href = "login.html";
+      } catch (err) {
+        console.error(err);
+        alert("No se pudo contactar con el servidor. Verifica que el backend esté encendido.");
+      }
       return false;
     }
   </script>
