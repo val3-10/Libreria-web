@@ -164,7 +164,9 @@
   if (!usuarioActivo || localStorage.getItem("rol") !== "cliente") {
     window.location.href = "index.html";
   }
-  let libros = JSON.parse(localStorage.getItem("libros")) || [];
+
+  const API_BASE = 'http://localhost:3000';
+  let libros = [];
   let carrito = usuarioActivo ? (JSON.parse(localStorage.getItem(`carrito_${usuarioActivo.usuario}`)) || []) : [];
   let historialCliente = usuarioActivo ? (JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || []) : [];
   let transacciones = JSON.parse(localStorage.getItem("transacciones")) || [];
@@ -176,17 +178,49 @@
   let compraPendiente = null;
   let vistaSagas = false;
 
-  document.addEventListener("DOMContentLoaded", () => {
-   
-const libroPendiente = localStorage.getItem("libroPendiente");
+  async function cargarLibrosDesdeApi() {
+    const contenedor = document.getElementById('catalogoLibros');
+    const galeriaDest = document.getElementById('galeriaDestacados');
+    if (contenedor) contenedor.innerHTML = '<p>Cargando libros…</p>';
+    if (galeriaDest) galeriaDest.innerHTML = '';
 
-if (libroPendiente) {
-  agregarCarritoPorTitulo(encodeURIComponent(libroPendiente));
-  localStorage.removeItem("libroPendiente");
-}
+    try {
+      const res = await fetch(`${API_BASE}/api/libros`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al cargar el catálogo');
+      }
+      libros = Array.isArray(data.books) ? data.books : [];
+    } catch (e) {
+      console.error(e);
+      libros = [];
+      mostrarMensaje('error', 'No se pudieron cargar los libros. Verifica el servidor y la base de datos.');
+      if (contenedor) {
+        contenedor.innerHTML =
+          '<p>No se pudo obtener el catálogo. Asegúrate de que la API esté en ejecución (npm run start en server).</p>';
+      }
+      return;
+    }
 
-     mostrarGaleriaDestacados();
-    mostrarLibrosCliente();
+    const seccionSagas = document.getElementById('seccionSagas');
+    const seccionFavoritos = document.getElementById('favoritosSeccion');
+    if (seccionSagas && seccionSagas.style.display !== 'none') {
+      mostrarSagas();
+    } else if (seccionFavoritos && seccionFavoritos.style.display !== 'none') {
+      mostrarFavoritos();
+    } else {
+      mostrarGaleriaDestacados();
+      mostrarLibrosCliente();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const libroPendiente = localStorage.getItem("libroPendiente");
+    await cargarLibrosDesdeApi();
+    if (libroPendiente) {
+      agregarCarritoPorTitulo(encodeURIComponent(libroPendiente));
+      localStorage.removeItem("libroPendiente");
+    }
     mostrarCarrito();
     actualizarContadorCarrito();
   });
@@ -210,7 +244,6 @@ if (libroPendiente) {
   }
 
   function guardarDatos() {
-    localStorage.setItem("libros", JSON.stringify(libros));
     localStorage.setItem("transacciones", JSON.stringify(transacciones));
     if (usuarioActivo) {
       localStorage.setItem(`carrito_${usuarioActivo.usuario}`, JSON.stringify(carrito));
@@ -763,7 +796,7 @@ function buscarLibros() {
 
   const filtrados = obtenerLibrosOrdenados().filter(libro =>
     libro.titulo.toLowerCase().includes(texto) ||
-    libro.autor.toLowerCase().includes(texto)
+    (libro.autor || '').toLowerCase().includes(texto)
   );
 
   // Si estamos en sagas, mostrar filtrados en sagas
@@ -936,24 +969,6 @@ function mostrarGaleriaDestacados() {
     contenedor.appendChild(card);
   });
 }
-
-  contenedor.innerHTML = "";
-
-  // Tomar solo los primeros 5 libros como destacados
-  const destacados = libros.slice(0, 5);
-
-  destacados.forEach(libro => {
-    const card = document.createElement("div");
-    card.className = "card-destacada";
-
-    card.innerHTML = `
-      <img src="${libro.caratula || 'img/BookNest.png'}">
-      <p>${libro.titulo}</p>
-    `;
-
-    contenedor.appendChild(card);
-  });
-
 
 </script>
 </div>
