@@ -196,8 +196,8 @@ body {
   /* Todos los inputs y selects tienen el mismo tamaño */
   /* ========================= */
   input, select, button {
-    width: 100%;       /* ✅ Mismo ancho para todos */
-    padding: 10px;     /* ✅ Mismo alto para todos */
+    width: 100%;       
+    padding: 10px;    
     margin-bottom: 15px;
     border: none;
     border-radius: 10px;
@@ -426,8 +426,8 @@ body {
   /* Inputs del modal — UNIFORMADOS */
   /* ========================= */
   .modal-contenido input {
-    width: 100%;    /* ✅ antes era 80% */
-    padding: 10px;  /* ✅ antes era 8px */
+    width: 100%;   
+    padding: 10px;  
     margin: 10px 0;
     border: 2px solid #d4a017;
     border-radius: 8px;
@@ -1689,4 +1689,23 @@ body {
 .password-container input {
   width: 100%;            /* ocupa todo el ancho del login-box */
   box-sizing: border-box; /* el padding no aumenta el ancho, todo cabe dentro */
+}
+/* Términos y condiciones — checkbox al lado del texto */
+.registro-box label:has(#terminos) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+}
+
+.registro-box #terminos {
+  width: auto; /* evita que el checkbox se estire al 100% */
+  margin-bottom: 0;
+}
+/* Centra el checkbox con el texto */
+.registro-box label:has(#terminos) {
+  justify-content: center;
+}
+.registro-box label:has(#terminos) {
+  margin-bottom: 10px; /* ← separa del botón */
 }
