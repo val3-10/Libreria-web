@@ -39,8 +39,9 @@
       padding: 6px;
       word-wrap: break-word;
       overflow-wrap: break-word;
-      max-width: none;
-    }
+      max-width: 120px; 
+      white-space: normal; 
+}
     
     #tablaLibrosAdmin img {
       max-width: 40px;
@@ -56,6 +57,16 @@
     .seccion {
       overflow: visible;
     }
+    #libros input, #libros select {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      font-size: 1rem;
+      border-radius: 10px;
+      border: none;
+      margin-bottom: 15px;
+    }
+
   </style>
 </head>
 
@@ -112,6 +123,7 @@
     <input type="text" id="titulo" placeholder="Título">
     <input type="text" id="autor" placeholder="Autor">
     <input type="text" id="saga" placeholder="Saga/Serie (opcional)">
+    <label for="estado">Estado:</label>
     <select id="estado">
       <option value="disponible">Disponible</option>
       <option value="venta">En venta</option>
@@ -318,7 +330,7 @@
       return;
     }
     libros.forEach((libro, i) => {
-      const carStatus = libro.caratula ? '✓ Sí' : '✗ No';
+      const carStatus = libro.caratula ? `<img src="${libro.caratula}" style="width:50px; height:70px; object-fit:cover; border-radius:4px;">` : 'Sin imagen';
       tbody.innerHTML += `
         <tr>
           <td>${libro.titulo}</td>
