@@ -1,6 +1,7 @@
 /* ========================= */
 /* ESTILOS GENERALES / ADMIN */
 /* ========================= */
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fuente principal */
   background: #1f2937; /* Fondo oscuro */
@@ -1708,4 +1709,59 @@ body {
 }
 .registro-box label:has(#terminos) {
   margin-bottom: 10px; /* ← separa del botón */
+}
+
+/* ========================= */
+/* SECCIÓN DE SAGAS */
+/* ========================= */
+
+/* Contenedor de sagas */
+.sagas-container {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+}
+
+/* Cada sección de saga */
+.seccion-saga {
+  width: 100%;
+}
+
+/* Título de saga */
+.seccion-saga h3 {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #000000;
+  margin: 8px 0 4px;
+  text-align: center;
+}
+
+/* Libros dentro de saga */
+.saga-libros {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 20px;
+  width: 100%;
+  justify-items: center;
+}
+
+/* Responsive  */
+@media (max-width: 1200px) {
+  .saga-libros {
+    grid-template-columns: repeat(3, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .saga-libros {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .saga-libros {
+    grid-template-columns: 1fr;
+  }
 }

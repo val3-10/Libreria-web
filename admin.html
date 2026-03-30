@@ -2,6 +2,8 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="img/BookNesticon.png">
+<link rel="shortcut icon" href="img/BookNest.png" type="image/x-icon">
   <title>Booknest - Administrador</title>
   <link rel="stylesheet" href="styles.css">
 
@@ -10,6 +12,33 @@
  <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-straight/css/uicons-regular-straight.css">
  
   <style>
+
+    /* ========================= */
+/* ENCABEZADO */
+/* ========================= */
+header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: url("img/BookNest.png") no-repeat center fixed;
+  background-size: cover;
+  padding: 90px 0;
+  margin-bottom: 1px;
+  border-bottom: 3px solid rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+/* Título "Booknest" */
+header h1 {
+  font-size: 3rem;
+  font-weight: bold;
+  font-style: italic;
+  color: #d4a017;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+  margin: 0;
+}
     /* Imagen de vista previa de la carátula. Se oculta inicialmente */
     #previewCaratula {
       max-width: 100px;
