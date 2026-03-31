@@ -1765,3 +1765,64 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Portal de pago — marcas de tarjeta e indicación de vencimiento */
+#checkout .checkout-card-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+#checkout .checkout-card-input-wrap {
+  flex: 1;
+  min-width: 160px;
+}
+
+#checkout .checkout-brands-wrap {
+  flex-shrink: 0;
+  width: 56px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#checkout .checkout-brand-icon {
+  display: none;
+  width: 52px;
+  height: 34px;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+#checkout .checkout-brand-icon.is-on {
+  display: block;
+}
+
+#checkout #tipoTarjeta {
+  width: 100%;
+  flex-basis: 100%;
+  min-height: 1.25em;
+}
+
+#checkout .checkout-exp-wrap {
+  margin-top: 4px;
+}
+
+#checkout .checkout-exp-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-height: 1.2em;
+}
+
+#checkout .checkout-exp-hint.is-ok {
+  color: #1b5e20;
+}
+
+#checkout .checkout-exp-hint.is-error {
+  color: #b71c1c;
+}
