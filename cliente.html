@@ -796,7 +796,7 @@
 
 
   // Agrega el libro al carrito por título (funciona con libros ordenados o filtrados)
-  function agregarCarritoPorTitulo(tituloCodificado) {
+  async function agregarCarritoPorTitulo(tituloCodificado) {
 
   const titulo = decodeURIComponent(tituloCodificado);
 
@@ -822,6 +822,30 @@
       precio: libro.precio,
       cantidad: 1
     });
+  }
+
+  try {
+    if (!usuarioActivo || !usuarioActivo.id) {
+      throw new Error('No hay usuario activo para guardar el carrito en base de datos.');
+    }
+
+    const res = await fetch(`${API_BASE}/api/carrito/agregar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        usuarioId: usuarioActivo.id,
+        libroId: libro.id,
+        cantidad: 1,
+      }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.error || 'Error al guardar el carrito en base de datos.');
+    }
+  } catch (err) {
+    console.error(err);
+    mostrarMensaje('error', 'Se agregó localmente, pero falló el guardado en base de datos.');
   }
 
   guardarDatos();

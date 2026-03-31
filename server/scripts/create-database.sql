@@ -84,6 +84,23 @@ BEGIN
 END
 GO
 
+-- Carrito de compras por usuario
+IF OBJECT_ID('dbo.Carrito', 'U') IS NULL
+BEGIN
+  CREATE TABLE dbo.Carrito (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    UsuarioId INT NOT NULL,
+    LibroId INT NOT NULL,
+    Cantidad INT NOT NULL DEFAULT 1,
+    FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    FechaActualizacion DATETIME2 NULL,
+    CONSTRAINT FK_Carrito_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id),
+    CONSTRAINT FK_Carrito_Libro FOREIGN KEY (LibroId) REFERENCES dbo.Libros(Id),
+    CONSTRAINT UQ_Carrito_Usuario_Libro UNIQUE (UsuarioId, LibroId)
+  );
+END
+GO
+
 -- Proveedores
 IF OBJECT_ID('dbo.Proveedores', 'U') IS NULL
 BEGIN
