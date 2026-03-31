@@ -160,10 +160,10 @@
     <div class="modal-contenido">
       <h3>Portal de Pago</h3>
       <form>
-        <input type="text" id="tarjeta" placeholder="Número de tarjeta" maxlength="16" oninput="detectarTipoTarjeta(this)">
+        <input type="text" id="tarjeta" inputmode="numeric" autocomplete="cc-number" placeholder="Número de tarjeta (16 dígitos)" maxlength="16" oninput="detectarTipoTarjeta(this)">
         <small id="tipoTarjeta" style="display:block; margin-top:5px; font-weight:bold;"></small>
 
-        <input type="text" id="expiracion" placeholder="MM/AA" maxlength="5" oninput="formatoExpiracion(this)"><br>
+        <input type="text" id="expiracion" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA" maxlength="5" oninput="formatoExpiracion(this)"><br>
         <input type="text" id="cvv" placeholder="CVV" maxlength="3" oninput="soloNumeros(this)"><br>
         <input type="text" id="titular" placeholder="Nombre del titular"><br>
 
@@ -505,20 +505,64 @@
     }
   }
 
+  /** Solo dígitos, máx. 16 (Visa / MasterCard en este flujo). */
   function detectarTipoTarjeta(input) {
-    const valor = input.value.replace(/\D/g, "");
-    const tipoSpan = document.getElementById("tipoTarjeta");
-    let tipo = "";
+    const valor = input.value.replace(/\D/g, '').slice(0, 16);
+    input.value = valor;
+    const tipoSpan = document.getElementById('tipoTarjeta');
+    if (!tipoSpan) return;
+    const tipo = tipoTarjetaDesdeDigitos(valor);
+    tipoSpan.textContent = tipo ? `Tarjeta: ${tipo}` : valor.length ? 'Solo Visa o MasterCard (16 dígitos)' : '';
+  }
 
-    if (/^4/.test(valor)) tipo = "Visa";
-    else if (/^5[1-5]/.test(valor)) tipo = "MasterCard";
-    else if (/^3[47]/.test(valor)) tipo = "American Express";
-    else if (/^6(?:011|5)/.test(valor)) tipo = "Discover";
-    else if (/^35(2[89]|[3-8][0-9])/.test(valor)) tipo = "JCB";
-    else if (/^3(?:0[0-5]|[68])/.test(valor)) tipo = "Diners Club";
-    else tipo = "";
+  /** Visa (4…) o MasterCard (51–55 o BIN 2221–2720). */
+  function tipoTarjetaDesdeDigitos(d) {
+    if (!d || d.length < 4) return '';
+    if (/^4/.test(d)) return 'Visa';
+    if (/^5[1-5]/.test(d)) return 'MasterCard';
+    const p4 = parseInt(d.slice(0, 4), 10);
+    if (d.length >= 4 && !Number.isNaN(p4) && p4 >= 2221 && p4 <= 2720) return 'MasterCard';
+    return '';
+  }
 
-    tipoSpan.textContent = tipo ? `💳 ${tipo}` : "";
+  function esVisaOMastercard16(d) {
+    if (!/^\d{16}$/.test(d)) return false;
+    return tipoTarjetaDesdeDigitos(d) !== '';
+  }
+
+  /** Algoritmo de Luhn. */
+  function validarLuhn(digitos) {
+    const s = String(digitos).replace(/\D/g, '');
+    if (!s) return false;
+    let sum = 0;
+    let doble = false;
+    for (let i = s.length - 1; i >= 0; i--) {
+      let n = parseInt(s.charAt(i), 10);
+      if (Number.isNaN(n)) return false;
+      if (doble) {
+        n *= 2;
+        if (n > 9) n -= 9;
+      }
+      sum += n;
+      doble = !doble;
+    }
+    return sum % 10 === 0;
+  }
+
+  /** MM/AA: mes válido y no vencida (válida hasta fin de mes). */
+  function validarVencimientoMmAa(mmYy) {
+    const m = /^(\d{2})\/(\d{2})$/.exec(String(mmYy).trim());
+    if (!m) return false;
+    const mes = parseInt(m[1], 10);
+    const aa = parseInt(m[2], 10);
+    if (mes < 1 || mes > 12) return false;
+    const anio = 2000 + aa;
+    const ahora = new Date();
+    const y = ahora.getFullYear();
+    const mo = ahora.getMonth() + 1;
+    if (anio > y) return true;
+    if (anio === y && mes >= mo) return true;
+    return false;
   }
 
   function estaEnFavoritos(titulo) {
@@ -816,11 +860,13 @@
 
   if (existente) {
     existente.cantidad++;
+    if (existente.libroId == null) existente.libroId = libro.id;
   } else {
     carrito.push({
       titulo: libro.titulo,
       precio: libro.precio,
-      cantidad: 1
+      cantidad: 1,
+      libroId: libro.id,
     });
   }
 
@@ -856,26 +902,48 @@
 
   function mostrarCarrito() {
     const tbody = document.querySelector("#tablaCarrito tbody");
-    tbody.innerHTML = "";
+    if (!tbody) return;
+    tbody.replaceChildren();
     if (carrito.length === 0) {
-      tbody.innerHTML = "<tr><td colspan='5'>El carrito está vacío</td></tr>";
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 5;
+      td.textContent = 'El carrito está vacío';
+      tr.appendChild(td);
+      tbody.appendChild(tr);
     } else {
       carrito.forEach((item, i) => {
-        const total = item.precio * item.cantidad;
-        tbody.innerHTML += `
-          <tr>
-            <td>${item.titulo}</td>
-            <td>${item.cantidad}</td>
-            <td>$${item.precio.toFixed(2)}</td>
-            <td>$${total.toFixed(2)}</td>
-            <td><button onclick="eliminarDelCarrito(${i})">Eliminar</button></td>
-          </tr>`;
+        const precio = Number(item.precio) || 0;
+        const cantidad = Number(item.cantidad) || 0;
+        const total = precio * cantidad;
+        const tr = document.createElement('tr');
+        const tdLibro = document.createElement('td');
+        tdLibro.textContent = item.titulo ?? '';
+        const tdCant = document.createElement('td');
+        tdCant.textContent = String(cantidad);
+        const tdPrecio = document.createElement('td');
+        tdPrecio.textContent = '$' + precio.toFixed(2);
+        const tdTotal = document.createElement('td');
+        tdTotal.textContent = '$' + total.toFixed(2);
+        const tdAcc = document.createElement('td');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = 'Eliminar';
+        btn.addEventListener('click', () => eliminarDelCarrito(i));
+        tdAcc.appendChild(btn);
+        tr.append(tdLibro, tdCant, tdPrecio, tdTotal, tdAcc);
+        tbody.appendChild(tr);
       });
     }
     actualizarContadorCarrito();
   }
 
-  function eliminarDelCarrito(i) { carrito.splice(i, 1); guardarDatos(); mostrarCarrito(); }
+  function eliminarDelCarrito(i) {
+    if (i < 0 || i >= carrito.length) return;
+    carrito.splice(i, 1);
+    guardarDatos();
+    mostrarCarrito();
+  }
 
   function pagarCarrito() {
     if (carrito.length === 0) { mostrarMensaje('error', 'El carrito está vacío'); return; }
@@ -900,102 +968,181 @@
   function soloNumeros(input) { input.value = input.value.replace(/\D/g, ''); }
   function formatoExpiracion(input) { let v = input.value.replace(/\D/g, ''); if(v.length>2) v=v.slice(0,2)+'/'+v.slice(2,4); input.value=v; }
 
-  function finishPurchase() {
-    // Validar que el usuario esté activo
+  function construirItemsVenta() {
+    if (compraPendiente && compraPendiente.carrito) {
+      return carrito.map((item) => {
+        const libroId =
+          item.libroId != null
+            ? item.libroId
+            : (libros.find((l) => l.titulo === item.titulo) || {}).id;
+        const cantidad = Number(item.cantidad) || 0;
+        if (!libroId || cantidad <= 0) {
+          throw new Error(`No se pudo identificar el libro en el carrito: ${item.titulo || ''}`);
+        }
+        return { libroId, cantidad };
+      });
+    }
+    if (compraPendiente && compraPendiente.libro) {
+      const { libro, cantidad } = compraPendiente;
+      const q = Number(cantidad) || 0;
+      if (!libro || !libro.id || q <= 0) {
+        throw new Error('Compra inválida: falta el libro o la cantidad.');
+      }
+      return [{ libroId: libro.id, cantidad: q }];
+    }
+    return null;
+  }
+
+  function aplicarStockUpdates(updates) {
+    if (!Array.isArray(updates)) return;
+    updates.forEach((u) => {
+      const L = libros.find((l) => l.id === u.libroId);
+      if (L) L.stock = u.stock;
+    });
+  }
+
+  async function finishPurchase() {
     if (!usuarioActivo) {
-      alert("Debes estar logueado para realizar una compra");
+      alert('Debes estar logueado para realizar una compra');
+      return false;
+    }
+    if (!usuarioActivo.id) {
+      alert('Sesión sin id de usuario. Cierra sesión y vuelve a entrar.');
       return false;
     }
 
-    const tarjeta = document.getElementById('tarjeta').value.trim();
+    const tarjetaRaw = document.getElementById('tarjeta').value.replace(/\D/g, '');
     const expiracion = document.getElementById('expiracion').value.trim();
     const cvv = document.getElementById('cvv').value.trim();
     const titular = document.getElementById('titular').value.trim();
-    
-    if(!/^\d{16}$/.test(tarjeta) || !/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiracion) || !/^\d{3}$/.test(cvv) || titular.length===0){
-      alert("Datos de tarjeta inválidos."); 
+
+    if (!esVisaOMastercard16(tarjetaRaw)) {
+      mostrarMensaje('error', 'El número debe ser Visa o MasterCard de 16 dígitos.');
+      return false;
+    }
+    if (!validarLuhn(tarjetaRaw)) {
+      mostrarMensaje('error', 'El número de tarjeta no es válido (comprueba el dígito de control).');
+      return false;
+    }
+    if (!validarVencimientoMmAa(expiracion)) {
+      mostrarMensaje('error', 'Fecha de vencimiento inválida o la tarjeta está vencida. Usa MM/AA.');
+      return false;
+    }
+    if (!/^\d{3}$/.test(cvv)) {
+      mostrarMensaje('error', 'El CVV debe tener 3 dígitos.');
+      return false;
+    }
+    if (titular.length < 2) {
+      mostrarMensaje('error', 'Indica el nombre del titular.');
+      return false;
+    }
+
+    let itemsPayload;
+    try {
+      itemsPayload = construirItemsVenta();
+    } catch (e) {
+      console.error(e);
+      mostrarMensaje('error', e.message || 'No se pudo preparar la venta.');
+      return false;
+    }
+    if (!itemsPayload || itemsPayload.length === 0) {
+      alert('No hay compra pendiente');
       return false;
     }
 
     const nombreCliente = usuarioActivo.nombre;
     const correoCliente = usuarioActivo.correo;
     const fecha = new Date().toLocaleString();
-    let detalleFactura = [];
 
-    // Procesar los libros comprados
-    if(compraPendiente && compraPendiente.carrito){
-      detalleFactura = carrito.map(item => ({titulo:item.titulo, cantidad:item.cantidad, precio:item.precio}));
-      carrito.forEach(item => {
-        const libro = libros.find(l => l.titulo === item.titulo);
-        if(libro) libro.stock -= item.cantidad;
+    let data;
+    try {
+      const res = await fetch(`${API_BASE}/api/ventas/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          usuarioId: usuarioActivo.id,
+          clienteNombre: nombreCliente,
+          clienteCorreo: correoCliente,
+          items: itemsPayload,
+        }),
       });
-      carrito = [];
-
-    } else if(compraPendiente && compraPendiente.libro){
-      const {libro, cantidad} = compraPendiente;
-      libro.stock -= cantidad;
-      detalleFactura = [{titulo:libro.titulo, cantidad, precio:libro.precio}];
-    } else {
-      alert("No hay compra pendiente");
+      data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'No se pudo registrar la venta en el servidor.');
+      }
+    } catch (e) {
+      console.error(e);
+      mostrarMensaje('error', e.message || 'Error de conexión al registrar la venta.');
       return false;
     }
 
-    // Guardar stock actualizado
+    aplicarStockUpdates(data.stockUpdates);
+
+    const detalleApi = Array.isArray(data.detalle) ? data.detalle : [];
+    const detalleFactura = detalleApi.map((d) => ({
+      titulo: d.titulo,
+      cantidad: d.cantidad,
+      precio: d.precio,
+    }));
+    const totalFactura =
+      typeof data.total === 'number'
+        ? data.total
+        : detalleFactura.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
+
+    if (compraPendiente && compraPendiente.carrito) {
+      carrito = [];
+    } else if (compraPendiente && compraPendiente.libro) {
+      compraPendiente = null;
+    }
+
     guardarDatos();
 
-    const totalFactura = detalleFactura.reduce((sum,item) => sum + item.precio*item.cantidad, 0);
-    const tipoTarjeta = document.getElementById("tipoTarjeta").textContent.replace("💳 ","") || "—";
-    const ultimos4 = tarjeta.slice(-4);
+    const tipoTarjeta = tipoTarjetaDesdeDigitos(tarjetaRaw) || '—';
+    const ultimos4 = tarjetaRaw.slice(-4);
 
-    // Crear nueva factura
     const nuevaFactura = {
-      id: Date.now(),
+      id: data.ventaId != null ? data.ventaId : Date.now(),
       cliente: nombreCliente,
       correo: correoCliente,
       fecha,
       detalle: detalleFactura,
       total: totalFactura,
       tarjetaTipo: tipoTarjeta,
-      tarjetaUltimos4: ultimos4
+      tarjetaUltimos4: ultimos4,
     };
 
-    // Guardar en facturas del usuario
     const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`)) || [];
     facturas.push(nuevaFactura);
     localStorage.setItem(`facturas_${usuarioActivo.usuario}`, JSON.stringify(facturas));
 
-    // Guardar en transacciones global (admin panel)
     transacciones.push({
       fecha,
       usuario: nombreCliente,
       correo: correoCliente,
-      tipo: "venta",
-      libro: detalleFactura.map(d => d.titulo).join(", "), 
+      tipo: 'venta',
+      libro: detalleFactura.map((d) => d.titulo).join(', '),
       total: totalFactura,
-      detalle: detalleFactura
+      detalle: detalleFactura,
     });
-    localStorage.setItem("transacciones", JSON.stringify(transacciones));
+    localStorage.setItem('transacciones', JSON.stringify(transacciones));
 
-    // Guardar en historial del usuario
-    detalleFactura.forEach(item => {
-      historialCliente.push({ fecha, libro: item.titulo, tipo: "Compra", estado: "Completada" });
+    detalleFactura.forEach((item) => {
+      historialCliente.push({ fecha, libro: item.titulo, tipo: 'Compra', estado: 'Completada' });
     });
     localStorage.setItem(`historial_${usuarioActivo.usuario}`, JSON.stringify(historialCliente));
 
-    // Guardar también en facturas globales (para admin)
-    let facturasGlobales = JSON.parse(localStorage.getItem("facturas")) || [];
+    let facturasGlobales = JSON.parse(localStorage.getItem('facturas')) || [];
     facturasGlobales.push(nuevaFactura);
-    localStorage.setItem("facturas", JSON.stringify(facturasGlobales));
+    localStorage.setItem('facturas', JSON.stringify(facturasGlobales));
 
-    // Limpiar UI y mostrar estado actualizado
     actualizarVistaActual();
-    mostrarCarrito(); 
-    cerrarCheckout(); 
+    mostrarCarrito();
+    cerrarCheckout();
     mostrarFacturasGuardadas();
     actualizarContadorCarrito();
-    mostrarMensaje('success','Compra realizada y factura generada correctamente');
+    mostrarMensaje('success', 'Compra registrada en base de datos y factura generada.');
     compraPendiente = null;
-    
+
     return false;
   }
 
