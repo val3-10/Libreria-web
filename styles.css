@@ -1782,11 +1782,14 @@ body {
 
 #checkout .checkout-brands-wrap {
   flex-shrink: 0;
-  width: 56px;
-  height: 36px;
+  min-width: 56px;
+  min-height: 36px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
+  gap: 4px;
+  max-width: 120px;
 }
 
 #checkout .checkout-brand-icon {
@@ -1817,6 +1820,7 @@ body {
   font-size: 0.85rem;
   font-weight: 600;
   min-height: 1.2em;
+  color: #333;
 }
 
 #checkout .checkout-exp-hint.is-ok {
@@ -1825,4 +1829,12 @@ body {
 
 #checkout .checkout-exp-hint.is-error {
   color: #b71c1c;
+}
+
+/* Botón Eliminar en tabla del carrito — evita que quede tapado o sin cursor */
+#tablaCarrito .btn-eliminar-carrito {
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
 }
