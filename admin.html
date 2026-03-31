@@ -190,7 +190,6 @@ header h1 {
           <th>Cliente</th>
           <th>Detalle</th>
           <th>Total</th>
-          <th>Acciones</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -220,7 +219,7 @@ header h1 {
       <h4 style="text-align:right; margin-top:10px;">Total: $<span id="ventaTotal">0.00</span></h4>
       <div style="display:flex; justify-content:space-between; margin-top:15px;">
         <button onclick="cerrarModalVenta()">Cerrar</button>
-        <button onclick="eliminarTransaccion(document.getElementById('ventaCliente').getAttribute('data-index'))">Eliminar Venta</button>
+       
       </div>
     </div>
   </div>
@@ -388,7 +387,7 @@ function mostrarTransacciones() {
           <td>${t.usuario || 'Cliente desconocido'}</td>
           <td><button onclick="verDetalleVenta(${index})">Ver Detalle</button></td>
           <td>$${t.total || 0}</td>
-          <td><button onclick="eliminarTransaccion(${index})">Eliminar</button></td>
+          
         </tr>`;
     }
   });
@@ -498,14 +497,7 @@ function mostrarTransacciones() {
     });
   }
 
-  function eliminarTransaccion(index) {
-    if (!confirm('¿Deseas eliminar este registro?')) return;
-    transacciones.splice(index, 1);
-    localStorage.setItem("transacciones", JSON.stringify(transacciones));
-    mostrarTransacciones();
-    cerrarModalVenta();
-    mostrarMensaje('success', 'Venta eliminada correctamente');
-  }
+
 
   // Campo oculto para saber si se está editando
   const hiddenIndex = document.createElement("input");

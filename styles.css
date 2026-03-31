@@ -391,79 +391,184 @@ body {
   padding: 0;
   }
 
-  /* ========================= */
-  /* PORTAL DE PAGO (MODAL) */
-  /* ========================= */
-  .modal {
-    display: none;
-    position: fixed;
-    z-index: 2000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.4);
+/* ============================================ */
+/* PORTAL DE PAGO - ORGANIZADO (misma estética) */
+/* ============================================ */
+
+/* Mejorar el contenedor del modal */
+#checkout .modal-contenido {
+  width: 420px !important;
+  max-width: 90%;
+  padding: 25px;
+  background: linear-gradient(135deg, #e6ebf1, #c3cedb) !important;
+}
+
+/* Título con el mismo estilo */
+#checkout .modal-contenido h3 {
+  color: #d4a017;
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+  text-align: center;
+}
+
+/* ===== UNIFORMAR TODOS LOS INPUTS ===== */
+#checkout .modal-contenido input {
+  width: 100% !important;
+  padding: 12px !important;
+  margin: 10px 0 !important;
+  border: 2px solid #d4a017 !important;
+  border-radius: 8px !important;
+  text-align: left !important;
+  font-size: 1rem !important;
+  background: rgba(255,255,255,0.9) !important;
+  box-sizing: border-box !important;
+}
+
+#checkout .modal-contenido input:focus {
+  outline: none;
+  border-color: #b47c00 !important;
+  background: white !important;
+}
+
+/* ===== FILA DE TARJETA ===== */
+#checkout .checkout-card-row {
+  display: flex !important;
+  gap: 12px;
+  align-items: center;
+  margin: 10px 0;
+}
+
+#checkout .checkout-card-input-wrap {
+  flex: 3;
+}
+
+#checkout .checkout-card-input-wrap input {
+  margin: 0 !important;
+}
+
+#checkout .checkout-brands-wrap {
+  flex: 1;
+  display: flex !important;
+  gap: 5px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Iconos de marcas */
+#checkout .checkout-brand-icon {
+  width: 45px !important;
+  height: 28px !important;
+  display: none !important;
+  border-radius: 4px;
+}
+
+#checkout .checkout-brand-icon.is-on {
+  display: block !important;
+}
+
+/* Tipo de tarjeta */
+#checkout #tipoTarjeta {
+  display: block !important;
+  width: 100%;
+  margin: 5px 0 10px 0 !important;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #333;
+  text-align: left;
+  padding: 5px;
+}
+
+/* ===== FECHA EXPIRACIÓN ===== */
+#checkout .checkout-exp-wrap {
+  margin: 5px 0;
+}
+
+#checkout .checkout-exp-wrap input {
+  margin-bottom: 5px !important;
+}
+
+/* Mensaje de vencimiento */
+#checkout .checkout-exp-hint {
+  display: block;
+  font-size: 0.7rem;
+  margin-top: -5px;
+  margin-bottom: 10px;
+  padding: 4px;
+}
+
+#checkout .checkout-exp-hint.is-ok {
+  color: #1b5e20;
+}
+
+#checkout .checkout-exp-hint.is-error {
+  color: #b71c1c;
+}
+
+/* ===== CVV Y TITULAR ===== */
+#checkout input#cvv,
+#checkout input#titular {
+  margin: 10px 0 !important;
+}
+
+/* Eliminar los <br> */
+#checkout br {
+  display: none;
+}
+
+/* ===== BOTONES - MISMO COLOR ===== */
+#checkout .modal-botones {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 15px !important;
+  margin-top: 20px !important;
+}
+
+#checkout .modal-botones button {
+  width: auto !important;
+  min-width: 120px !important;
+  padding: 10px 20px !important;
+  background: #1f2937 !important;
+  border-radius: 8px !important;
+  color: white !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  border: none !important;
+}
+
+#checkout .modal-botones button:hover {
+  background: #d4a017 !important;
+  transform: translateY(-2px);
+}
+
+#checkout .modal-botones button:active {
+  transform: scale(0.98);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  #checkout .modal-contenido {
+    width: 95% !important;
+    padding: 20px;
+  }
+  
+  #checkout .checkout-card-row {
+    flex-direction: column;
+  }
+  
+  #checkout .checkout-brands-wrap {
     justify-content: center;
-    align-items: center;
   }
-
-  .modal-contenido {
-    background: linear-gradient(135deg, #e6ebf1, #c3cedb);
-    border-radius: 16px;
-    padding: 25px;
-    width: 320px;
-    text-align: center;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
-    color: #333;
-    animation: aparecer 0.3s ease;
+  
+  #checkout .modal-botones {
+    flex-direction: column;
   }
-
-  .modal-contenido h3 {
-    color: #d4a017;
-    margin-bottom: 10px;
+  
+  #checkout .modal-botones button {
+    width: 100% !important;
   }
-
-  /* ========================= */
-  /* Inputs del modal — UNIFORMADOS */
-  /* ========================= */
-  .modal-contenido input {
-    width: 100%;   
-    padding: 10px;  
-    margin: 10px 0;
-    border: 2px solid #d4a017;
-    border-radius: 8px;
-    text-align: center;
-    font-size: 1rem;
-  }
-
-  /* Botones dentro del modal */
-  .modal-botones {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
-  }
-
-  .modal-botones button {
-    background: #000000;
-    border-radius: 10px;
-    color: white;
-    padding: 8px 14px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: background 0.3s ease;
-  }
-
-  .modal-botones button:hover {
-    background: #d4a017;
-  }
-
-  /* Animación */
-  @keyframes aparecer {
-    from { transform: scale(0.9); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-  }
-
+}
   /* ========================= */
   /* NOTIFICACIONES (TOAST) */
   /* ========================= */
