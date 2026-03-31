@@ -53,4 +53,43 @@ router.post('/agregar', async (req, res) => {
   }
 });
 
+// POST /api/carrito/eliminar  — quita una línea (UsuarioId + LibroId) de dbo.Carrito
+router.post('/eliminar', async (req, res) => {
+  try {
+    const { usuarioId, libroId } = req.body || {};
+
+    const userId = Number(usuarioId);
+    const bookId = Number(libroId);
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({ error: 'usuarioId es obligatorio y debe ser válido.' });
+    }
+
+    if (!Number.isInteger(bookId) || bookId <= 0) {
+      return res.status(400).json({ error: 'libroId es obligatorio y debe ser válido.' });
+    }
+
+    const pool = await db.getPool();
+    const request = pool.request();
+
+    request.input('UsuarioId', sql.Int, userId);
+    request.input('LibroId', sql.Int, bookId);
+
+    const result = await request.query(
+      'DELETE FROM dbo.Carrito WHERE UsuarioId = @UsuarioId AND LibroId = @LibroId',
+    );
+
+    const affected = result.rowsAffected && result.rowsAffected[0];
+    return res.json({
+      message: affected
+        ? 'Ítem eliminado del carrito en base de datos.'
+        : 'No había fila en base de datos (carrito local sincronizado).',
+      deleted: !!affected,
+    });
+  } catch (err) {
+    console.error('Error en POST /api/carrito/eliminar:', err);
+    return res.status(500).json({ error: 'No se pudo eliminar el ítem del carrito en base de datos.' });
+  }
+});
+
 module.exports = router;
