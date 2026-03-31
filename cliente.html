@@ -1263,14 +1263,6 @@
       mostrarMensaje('error', 'Revisa la fecha MM/AA: inválida o la tarjeta está vencida.');
       return false;
     }
-    if (!cvvValidoParaTarjeta(tarjetaRaw, cvv)) {
-      const t = tipoTarjetaDesdeDigitos(tarjetaRaw);
-      mostrarMensaje(
-        'error',
-        t === 'American Express' ? 'El CVV de American Express tiene 4 dígitos.' : 'El CVV debe tener 3 dígitos.',
-      );
-      return false;
-    }
     if (titular.length < 2) {
       mostrarMensaje('error', 'Indica el nombre del titular.');
       return false;
