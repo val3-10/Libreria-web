@@ -36,6 +36,104 @@ Estructura relevante:
 | `server/scripts/create-database.sql` | Esquema inicial (tablas `Usuarios`, `Libros`, etc.) |
 | `server/scripts/insert.sql` | Ejemplo de datos de prueba para `Libros` |
 
+## Modelo entidad-relación (base de datos Booknest)
+
+Definido en `server/scripts/create-database.sql` (SQL Server).
+
+| Entidad | Descripción |
+|--------|-------------|
+| **Usuarios** | Clientes y empleados (correo y usuario únicos, rol, credenciales). |
+| **Libros** | Catálogo (título, autor, stock, precio, carátula). |
+| **Ventas** | Cabecera de venta; puede ir sin usuario (invitado) con `ClienteNombre` / `ClienteCorreo`; el detalle va en `Detalle` (texto, no tabla hija). |
+| **Prestamos** | Préstamo de un libro a un usuario (fechas, estado, cantidad). |
+| **Carrito** | Líneas de carrito por usuario; restricción única `(UsuarioId, LibroId)`. |
+| **Proveedores** | Catálogo de proveedores sin claves foráneas hacia otras tablas en el script actual. |
+
+**Relaciones:**
+
+- **Usuarios (1) — (0..N) Ventas**: `Ventas.UsuarioId` → `Usuarios.Id` (nullable: venta sin cuenta).
+- **Usuarios (1) — (0..N) Prestamos**: `Prestamos.UsuarioId` → `Usuarios.Id` (nullable en DDL).
+- **Libros (1) — (0..N) Prestamos**: `Prestamos.LibroId` → `Libros.Id` (nullable en DDL).
+- **Usuarios (1) — (1..N) Carrito**: `Carrito.UsuarioId` NOT NULL.
+- **Libros (1) — (1..N) Carrito**: `Carrito.LibroId` NOT NULL; única por usuario + libro.
+
+```mermaid
+erDiagram
+  Usuarios ||--o{ Ventas : "realiza (opcional)"
+  Usuarios ||--o{ Prestamos : "tiene"
+  Usuarios ||--o{ Carrito : "posee"
+  Libros ||--o{ Prestamos : "en préstamo"
+  Libros ||--o{ Carrito : "en carrito"
+
+  Usuarios {
+    int Id PK
+    nvarchar Nombre
+    nvarchar TipoDocumento
+    nvarchar Documento
+    nvarchar Correo UK
+    nvarchar Telefono
+    nvarchar Direccion
+    date FechaNacimiento
+    nvarchar Usuario UK
+    nvarchar PasswordHash
+    nvarchar Rol
+    bit Activo
+    datetime2 FechaCreacion
+    datetime2 FechaActualizacion
+  }
+
+  Libros {
+    int Id PK
+    nvarchar Titulo
+    nvarchar Autor
+    nvarchar Estado
+    int Stock
+    decimal Precio
+    nvarchar CaratulaUrl
+    datetime2 FechaCreacion
+    datetime2 FechaActualizacion
+  }
+
+  Ventas {
+    int Id PK
+    int UsuarioId FK
+    nvarchar ClienteNombre
+    nvarchar ClienteCorreo
+    datetime2 Fecha
+    decimal Total
+    nvarchar Detalle
+  }
+
+  Prestamos {
+    int Id PK
+    int UsuarioId FK
+    int LibroId FK
+    int Cantidad
+    datetime2 FechaInicio
+    datetime2 FechaDevolucion
+    nvarchar Estado
+    datetime2 FechaCreacion
+  }
+
+  Carrito {
+    int Id PK
+    int UsuarioId FK
+    int LibroId FK
+    int Cantidad
+    datetime2 FechaCreacion
+    datetime2 FechaActualizacion
+  }
+
+  Proveedores {
+    int Id PK
+    nvarchar Nombre
+    nvarchar Contacto
+    datetime2 FechaCreacion
+  }
+```
+
+**Notas:** `Proveedores` no tiene relaciones en el diagrama de cardinalidad porque el esquema no define FKs desde/hacia esa tabla. Las líneas de venta no están normalizadas: no existe tabla de detalle; el desglose puede almacenarse en `Ventas.Detalle` (`NVARCHAR(MAX)`).
+
 Variables de entorno del servidor: archivo `server/.env` (servidor, usuario, contraseña, base `Booknest`, puerto, opciones de cifrado). Ver comentarios en `database.js`.
 
 ## Carpetas y archivos del servidor: para qué sirven
