@@ -206,7 +206,6 @@
           <input type="text" id="expiracion" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA" maxlength="5" oninput="formatoExpiracion(this)" onblur="actualizarMensajeVencimiento()">
           <small id="vencimientoMensaje" class="checkout-exp-hint" role="status" aria-live="polite"></small>
         </div>
-        <input type="text" id="cvv" placeholder="CVV (3 o 4 dígitos)" maxlength="4" oninput="soloNumeros(this)"><br>
         <input type="text" id="titular" placeholder="Nombre del titular"><br>
 
         <div class="modal-botones">
@@ -637,7 +636,7 @@
     }
   }
 
-  /** Dígitos; longitud máxima según BIN; icono y CVV (3 o 4 en Amex). */
+  /** Dígitos; longitud máxima según BIN; icono de franquicia. */
   function detectarTipoTarjeta(input) {
     let valor = input.value.replace(/\D/g, '');
     const max = maxDigitosPAN(valor);
@@ -659,23 +658,11 @@
         tipoSpan.textContent = '';
       }
     }
-    const cvvEl = document.getElementById('cvv');
-    if (cvvEl) {
-      const maxCvv = tipo === 'American Express' ? 4 : 3;
-      cvvEl.maxLength = maxCvv;
-      cvvEl.value = cvvEl.value.replace(/\D/g, '').slice(0, maxCvv);
-    }
   }
 
   function esTarjetaAceptada(d) {
     const tipo = tipoTarjetaDesdeDigitos(d);
     return longitudValidaParaFranquicia(d, tipo);
-  }
-
-  function cvvValidoParaTarjeta(digitosTarjeta, cvv) {
-    const t = tipoTarjetaDesdeDigitos(digitosTarjeta);
-    if (t === 'American Express') return /^\d{4}$/.test(cvv);
-    return /^\d{3}$/.test(cvv);
   }
 
   function actualizarMensajeVencimiento() {
@@ -1176,11 +1163,6 @@
       tarjetaEl.maxLength = 19;
     }
     document.getElementById('expiracion').value = '';
-    const cvvEl = document.getElementById('cvv');
-    if (cvvEl) {
-      cvvEl.value = '';
-      cvvEl.maxLength = 4;
-    }
     document.getElementById('titular').value = '';
     document.getElementById('tipoTarjeta').textContent = '';
     const vm = document.getElementById('vencimientoMensaje');
@@ -1190,8 +1172,6 @@
     }
     actualizarIconosMarcaTarjeta('');
   }
-
-  function soloNumeros(input) { input.value = input.value.replace(/\D/g, ''); }
 
   function formatoExpiracion(input) {
     let v = input.value.replace(/\D/g, '');
@@ -1228,8 +1208,9 @@
   function aplicarStockUpdates(updates) {
     if (!Array.isArray(updates)) return;
     updates.forEach((u) => {
-      const L = libros.find((l) => l.id === u.libroId);
-      if (L) L.stock = u.stock;
+      const id = u.libroId != null ? Number(u.libroId) : NaN;
+      const L = libros.find((l) => Number(l.id) === id);
+      if (L && u.stock != null) L.stock = Number(u.stock);
     });
   }
 
@@ -1245,7 +1226,6 @@
 
     const tarjetaRaw = document.getElementById('tarjeta').value.replace(/\D/g, '');
     const expiracion = document.getElementById('expiracion').value.trim();
-    const cvv = document.getElementById('cvv').value.trim();
     const titular = document.getElementById('titular').value.trim();
 
     if (!esTarjetaAceptada(tarjetaRaw)) {
@@ -1308,6 +1288,11 @@
     }
 
     aplicarStockUpdates(data.stockUpdates);
+    try {
+      renderCarruselHero();
+    } catch (e) {
+      console.error(e);
+    }
 
     const detalleApi = Array.isArray(data.detalle) ? data.detalle : [];
     const detalleFactura = detalleApi.map((d) => ({
