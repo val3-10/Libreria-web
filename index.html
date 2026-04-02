@@ -9,13 +9,6 @@
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-straight/css/uicons-solid-straight.css">
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css">
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css">
-  <style>
-    .index-form-libro { max-width: 440px; text-align: left; margin: 0 auto; }
-    .index-form-libro label { display: block; margin-top: 14px; font-weight: 600; color: #111; }
-    .index-form-libro input { width: 100%; box-sizing: border-box; margin-top: 6px; padding: 10px 12px; border-radius: 8px; border: 1px solid #9ca3af; font-size: 1rem; }
-    .index-form-libro button[type="submit"] { margin-top: 20px; width: 100%; padding: 12px; border-radius: 8px; border: none; background: #d4a017; color: #111; font-weight: 700; cursor: pointer; }
-    .index-form-libro button[type="submit"]:hover { filter: brightness(1.05); }
-  </style>
   <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
@@ -73,10 +66,6 @@
         <span class="icon"><i class="fi fi-rr-books"></i></span>
         <span class="text">Sagas</span>
       </li>
-      <li class="menu-item" onclick="mostrarSeccion('anadirLibro')">
-        <span class="icon"><i class="fi fi-rr-plus-small"></i></span>
-        <span class="text">Añadir libro</span>
-      </li>
       <li class="menu-item" onclick="irALogin()">
         <span class="icon"><i class="fi fi-rr-sign-in-alt"></i></span>
         <span class="text">Iniciar Sesión</span>
@@ -97,34 +86,6 @@
   <div id="seccionSagas" class="seccion" style="display: none;">
     <h2>Sagas</h2>
     <div id="sagasContainer" class="sagas-container"></div>
-  </div>
-
-  <div id="seccionAnadirLibro" class="seccion" style="display: none;">
-    <h2>Añadir libro al catálogo</h2>
-    <p style="text-align: left; max-width: 480px; margin-bottom: 16px;">
-      El libro se guarda en la base de datos (SQL Server) y aparecerá en el catálogo para todos los visitantes.
-    </p>
-    <form id="formLibroIndex" class="index-form-libro" onsubmit="enviarLibroABaseDatos(event)">
-      <label for="idxTitulo">Título <span aria-hidden="true">*</span></label>
-      <input type="text" id="idxTitulo" required maxlength="300" placeholder="Ej. Cien años de soledad">
-
-      <label for="idxAutor">Autor</label>
-      <input type="text" id="idxAutor" maxlength="200" placeholder="Opcional">
-
-      <label for="idxStock">Stock</label>
-      <input type="number" id="idxStock" min="0" value="0" required>
-
-      <label for="idxPrecio">Precio</label>
-      <input type="number" id="idxPrecio" min="0" step="0.01" value="0" required>
-
-      <label for="idxCaratula">Carátula (opcional)</label>
-      <input type="text" id="idxCaratula" maxlength="500" placeholder="Ej. milibro.jpg (se guarda en caratulas/)">
-      <small style="display:block; margin-top:-6px; margin-bottom:10px; font-size:0.85rem;">
-        Solo nombre de archivo → <code>caratulas/nombre</code>. Rutas con <code>/</code> o URLs se dejan igual.
-      </small>
-
-      <button type="submit">Guardar en base de datos</button>
-    </form>
   </div>
 
   </div>
@@ -552,11 +513,9 @@
   function mostrarSeccion(tipo) {
     const seccionCatalogo = document.getElementById('seccionCatalogo');
     const seccionSagas = document.getElementById('seccionSagas');
-    const seccionAnadirLibro = document.getElementById('seccionAnadirLibro');
 
     if (seccionCatalogo) seccionCatalogo.style.display = 'none';
     if (seccionSagas) seccionSagas.style.display = 'none';
-    if (seccionAnadirLibro) seccionAnadirLibro.style.display = 'none';
 
     if (tipo === 'catalogo') {
       if (seccionCatalogo) seccionCatalogo.style.display = 'block';
@@ -564,51 +523,6 @@
     } else if (tipo === 'sagas') {
       if (seccionSagas) seccionSagas.style.display = 'block';
       mostrarSagas();
-    } else if (tipo === 'anadirLibro') {
-      if (seccionAnadirLibro) seccionAnadirLibro.style.display = 'block';
-    }
-  }
-
-  async function enviarLibroABaseDatos(event) {
-    event.preventDefault();
-    const titulo = document.getElementById('idxTitulo').value.trim();
-    const autor = document.getElementById('idxAutor').value.trim();
-    const stock = parseInt(document.getElementById('idxStock').value, 10);
-    const precio = parseFloat(document.getElementById('idxPrecio').value);
-    const caratula = document.getElementById('idxCaratula').value.trim();
-
-    if (!titulo) {
-      mostrarMensaje('error', 'El título es obligatorio.');
-      return;
-    }
-
-    const stockOk = Number.isInteger(stock) && stock >= 0 ? stock : 0;
-    const precioOk = Number.isFinite(precio) && precio >= 0 ? precio : 0;
-
-    try {
-      const res = await fetch(`${API_BASE}/api/libros`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          titulo,
-          autor: autor || null,
-          stock: stockOk,
-          precio: precioOk,
-          caratula: caratula || null,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'No se pudo guardar el libro');
-
-      document.getElementById('formLibroIndex').reset();
-      document.getElementById('idxStock').value = '0';
-      document.getElementById('idxPrecio').value = '0';
-      mostrarMensaje('success', 'Libro guardado en la base de datos.');
-      await cargarLibrosDesdeApi();
-      mostrarSeccion('catalogo');
-    } catch (e) {
-      console.error(e);
-      mostrarMensaje('error', e.message || 'No hay conexión con la API.');
     }
   }
 
