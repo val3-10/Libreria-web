@@ -2,102 +2,200 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
- <link rel="icon" type="image/png" href="img/BookNesticon.png">
-<link rel="shortcut icon" href="img/BookNesticon.png" type="image/x-icon">
-  <title>Perfil del Usuario - Booknest</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="img/BookNesticon.png">
+  <link rel="shortcut icon" href="img/BookNesticon.png" type="image/x-icon">
+  <title>Perfil — Booknest</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-straight/css/uicons-solid-straight.css">
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css">
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css">
+  <style>
+    .usuario-perfil-card {
+      background: rgba(230, 235, 241, 0.95);
+      border-radius: 12px;
+      padding: 20px 22px;
+      margin-bottom: 24px;
+      text-align: left;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      max-width: 520px;
+    }
+    .usuario-perfil-card p {
+      margin: 8px 0;
+      color: #1f2937;
+    }
+    .usuario-form-block {
+      max-width: 420px;
+      text-align: left;
+      margin-bottom: 28px;
+    }
+    .usuario-form-block label {
+      display: block;
+      font-weight: 600;
+      margin: 12px 0 6px;
+      color: #e5e7eb;
+    }
+    .usuario-form-block input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #374151;
+      background: rgba(255, 255, 255, 0.95);
+      font-size: 1rem;
+    }
+    .usuario-form-block button {
+      margin-top: 16px;
+      width: auto;
+      min-width: 160px;
+      padding: 10px 18px;
+      background: #d4a017;
+      color: #111;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .usuario-form-block button:hover {
+      filter: brightness(1.05);
+    }
+    #tablaHistorial,
+    #tablaFacturasCliente {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    #tablaHistorial th,
+    #tablaHistorial td,
+    #tablaFacturasCliente th,
+    #tablaFacturasCliente td {
+      padding: 8px 10px;
+      border: 1px solid #374151;
+      text-align: left;
+    }
+    #tablaHistorial thead,
+    #tablaFacturasCliente thead {
+      background: #1e1e2f;
+      color: #f3f4f6;
+    }
+    .usuario-btn-secundario {
+      margin-top: 12px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid #6b7280;
+      background: #374151;
+      color: #f9fafb;
+      cursor: pointer;
+    }
+    #modalFactura.modal-usuario {
+      z-index: 10050;
+    }
+  </style>
 </head>
 <body>
 
 <div class="layout">
 
-  <!-- SIDEBAR -->
   <div class="sidebar">
-
-    <h2 class="logo">
-      <i class="fi fi-ss-book-open-cover"></i>
-    </h2>
-
+    <h2 class="logo"><i class="fi fi-ss-book-open-cover"></i></h2>
     <ul>
-
+      <li class="menu-item" onclick="mostrarSeccion('cuenta')">
+        <span class="icon"><i class="fi fi-rr-user"></i></span>
+        <span class="text">Mi cuenta</span>
+      </li>
       <li class="menu-item" onclick="mostrarSeccion('historial')">
         <span class="icon"><i class="fi fi-rr-time-past"></i></span>
         <span class="text">Historial</span>
       </li>
-
       <li class="menu-item" onclick="mostrarSeccion('facturas')">
         <span class="icon"><i class="fi fi-rr-receipt"></i></span>
         <span class="text">Facturas</span>
       </li>
-
       <li class="menu-item" onclick="volverAlCatalogo()">
         <span class="icon"><i class="fi fi-rr-arrow-left"></i></span>
-        <span class="text">Volver al Catálogo</span>
+        <span class="text">Volver al catálogo</span>
       </li>
-
       <li class="menu-item" onclick="logout()">
         <span class="icon"><i class="fi fi-rr-exit"></i></span>
-        <span class="text">Cerrar Sesión</span>
+        <span class="text">Cerrar sesión</span>
       </li>
-
       <li class="menu-item" onclick="eliminarCuenta()" style="color: #ff6b6b;">
         <span class="icon"><i class="fi fi-rr-trash"></i></span>
-        <span class="text">Eliminar Cuenta</span>
+        <span class="text">Dar de baja cuenta</span>
       </li>
-
     </ul>
   </div>
 
-  <!-- CONTENIDO -->
   <div class="main-content">
 
-  <!-- HISTORIAL -->
-  <div id="seccion-historial" class="seccion">
-    <h2>Mi historial</h2>
-    <table id="tablaHistorial">
-      <thead>
-        <tr>
-          <th>Título</th>
-          <th>Acción</th>
-          <th>Fecha</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <button onclick="borrarHistorial()" style="margin-top:10px;">Borrar historial</button>
+    <div id="seccion-cuenta" class="seccion">
+      <h2>Mi cuenta</h2>
+      <div class="usuario-perfil-card">
+        <p><strong>Nombre:</strong> <span id="perfilNombre">—</span></p>
+        <p><strong>Correo:</strong> <span id="perfilCorreo">—</span></p>
+        <p><strong>Usuario:</strong> <span id="perfilUsuario">—</span></p>
+      </div>
+
+      <h3>Cambiar contraseña</h3>
+      <div class="usuario-form-block">
+        <form id="formCambiarClave" onsubmit="cambiarContrasena(event)">
+          <label for="pwdActual">Contraseña actual</label>
+          <input type="password" id="pwdActual" required autocomplete="current-password">
+
+          <label for="pwdNueva">Contraseña nueva</label>
+          <input type="password" id="pwdNueva" required autocomplete="new-password" minlength="4">
+
+          <label for="pwdNueva2">Repetir contraseña nueva</label>
+          <input type="password" id="pwdNueva2" required autocomplete="new-password" minlength="4">
+
+          <button type="submit">Guardar nueva contraseña</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="seccion-historial" class="seccion" style="display: none;">
+      <h2>Mi historial</h2>
+      <table id="tablaHistorial">
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Acción</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <button type="button" class="usuario-btn-secundario" onclick="borrarHistorial()">Borrar historial local</button>
+    </div>
+
+    <div id="seccion-facturas" class="seccion" style="display: none;">
+      <h2>Mis facturas</h2>
+      <table id="tablaFacturasCliente">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Fecha</th>
+            <th>Total</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
   </div>
+</div>
 
-  <!-- FACTURAS -->
-  <div id="seccion-facturas" class="seccion" style="display:none;">
-    <h2>Mis Facturas</h2>
-    <table id="tablaFacturasCliente">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Fecha</th>
-          <th>Total</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-
-<!-- MODAL FACTURA -->
-<div id="modalFactura" class="modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
-  <div class="modal-contenido" style="width:600px; max-height:700px; overflow-y:auto; background:white; padding:20px; border-radius:8px; margin:auto; box-sizing:border-box;">
-    <h3>Factura de Compra</h3>
+<div id="modalFactura" class="modal modal-usuario" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modalFacturaTitulo">
+  <div class="modal-contenido" style="width: 600px; max-height: 85vh; overflow-y: auto; background: white; padding: 20px; border-radius: 8px; margin: auto; box-sizing: border-box;">
+    <h3 id="modalFacturaTitulo">Factura de compra</h3>
     <p><strong>Cliente:</strong> <span id="facturaCliente" data-id=""></span></p>
     <p><strong>Correo:</strong> <span id="facturaCorreo"></span></p>
     <p><strong>Fecha:</strong> <span id="facturaFecha"></span></p>
     <p><strong>Tipo de tarjeta:</strong> <span id="facturaTipo"></span></p>
     <p><strong>Últimos 4 dígitos:</strong> <span id="facturaUltimos4"></span></p>
 
-    <table border="1" width="100%" style="border-collapse:collapse; margin-top:10px;">
+    <table border="1" width="100%" style="border-collapse: collapse; margin-top: 10px;">
       <thead>
         <tr>
           <th>Libro</th>
@@ -109,142 +207,239 @@
       <tbody id="facturaTabla"></tbody>
     </table>
 
-    <h4 style="text-align:right; margin-top:10px;">Total: $<span id="facturaTotal">0.00</span></h4>
-    <div style="display:flex; justify-content:space-between; margin-top:15px;">
-      <button onclick="cerrarModalFactura()">Cerrar</button>
-      <button onclick="eliminarFactura()">Eliminar factura</button>
+    <h4 style="text-align: right; margin-top: 10px;">Total: $<span id="facturaTotal">0.00</span></h4>
+    <div style="display: flex; justify-content: space-between; margin-top: 15px; flex-wrap: wrap; gap: 10px;">
+      <button type="button" onclick="cerrarModalFactura()">Cerrar</button>
+      <button type="button" onclick="eliminarFactura()">Eliminar factura (solo local)</button>
     </div>
   </div>
 </div>
 
+<script src="config.js"></script>
 <script>
-const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
-if (!usuarioActivo || localStorage.getItem("rol") !== "cliente") {
-  window.location.href = "index.html";
-}
+  const API_BASE = window.API_BASE;
 
-// =================== HISTORIAL ===================
-function mostrarHistorial() {
-  const tbody = document.querySelector("#tablaHistorial tbody");
-  if (!usuarioActivo) return;
-  const historial = JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || [];
-  tbody.innerHTML = historial.length === 0 
-    ? `<tr><td colspan="3">Aún no tienes compras registradas.</td></tr>` 
-    : historial.map(item => `<tr><td>${item.libro || item.titulo}</td><td>${item.tipo || item.accion}</td><td>${item.fecha}</td></tr>`).join('');
-}
-
-function borrarHistorial() {
-  if(!usuarioActivo) return;
-  if(!confirm("¿Estás seguro de que quieres borrar tu historial?")) return;
-  localStorage.removeItem(`historial_${usuarioActivo.usuario}`);
-  mostrarHistorial();
-  alert("Historial borrado correctamente");
-}
-
-
-// =================== FACTURAS ===================
-function mostrarFacturas() {
-  const tbody = document.querySelector('#tablaFacturasCliente tbody');
-  const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`))||[];
-  tbody.innerHTML = facturas.length===0 
-    ? "<tr><td colspan='4'>No tienes facturas disponibles.</td></tr>" 
-    : facturas.map((f,i)=>`<tr>
-      <td>${f.id}</td>
-      <td>${f.fecha}</td>
-      <td>$${f.total.toLocaleString('es-CO', )}</td>
-      <td><button onclick="verFactura(${i})">Ver</button></td>
-    </tr>`).join('');
-}
-
-function verFactura(indice){
-  const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`))||[];
-  if(!facturas[indice]) return;
-  const f = facturas[indice];
-
-  document.getElementById('facturaCliente').textContent = f.cliente;
-  document.getElementById('facturaCorreo').textContent = f.correo;
-  document.getElementById('facturaFecha').textContent = f.fecha;
-  document.getElementById('facturaTipo').textContent = f.tarjetaTipo;
-  document.getElementById('facturaUltimos4').textContent = f.tarjetaUltimos4;
-
-  const tbody = document.getElementById('facturaTabla');
-  tbody.innerHTML = f.detalle.map(d=>`<tr>
-    <td>${d.titulo}</td>
-    <td>${d.cantidad}</td>
-   <td>$${d.precio.toLocaleString('es-CO', )}</td>
-  <td>$${(d.cantidad*d.precio).toLocaleString('es-CO', )}</td>
-</tr>`).join('');
-
- document.getElementById('facturaTotal').textContent = f.total.toLocaleString('es-CO',);
-  document.getElementById('modalFactura').style.display='flex';
-  document.getElementById('facturaCliente').setAttribute('data-id', indice);
-}
-
-function cerrarModalFactura() { document.getElementById('modalFactura').style.display='none'; }
-
-function eliminarFactura(){
-  const indice = parseInt(document.getElementById("facturaCliente").getAttribute('data-id'));
-  const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`)) || [];
-  if(indice<0||!facturas[indice]) return;
-  if(!confirm("¿Deseas eliminar esta factura?")) return;
-  facturas.splice(indice,1);
-  localStorage.setItem(`facturas_${usuarioActivo.usuario}`, JSON.stringify(facturas));
-  cerrarModalFactura();
-  mostrarFacturas();
-  alert("Factura eliminada correctamente");
-}
-
-// =================== MENÚ ===================
-function mostrarSeccion(seccion) {
-  const secciones = document.querySelectorAll('.seccion');
-  secciones.forEach(s => s.style.display = 'none');
-  document.getElementById(`seccion-${seccion}`).style.display = 'block';
-
-  if (seccion === 'historial') {
-    mostrarHistorial();
-  } else if (seccion === 'facturas') {
-    mostrarFacturas();
+  const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo'));
+  if (!usuarioActivo || localStorage.getItem('rol') !== 'cliente') {
+    window.location.href = 'index.html';
   }
-}
 
-const menuFlotante = document.getElementById('botonMenu');
-const menuOpciones = document.getElementById('menuOpciones');
-if (menuFlotante && menuOpciones) {
-  menuFlotante.addEventListener('click', e=>{ e.stopPropagation(); menuOpciones.style.display = menuOpciones.style.display==='flex'?'none':'flex'; });
-  menuOpciones.addEventListener('click', e=>e.stopPropagation());
-  window.addEventListener('click', ()=>{ menuOpciones.style.display='none'; });
-}
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
 
-// =================== BOTONES ===================
-function volverAlCatalogo(){ window.location.href='cliente.html'; }
-function logout(){ localStorage.removeItem("rol"); localStorage.removeItem("usuarioActivo"); window.location.href='index.html'; }
+  function mostrarMensaje(tipo, mensaje) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${tipo}`;
+    toast.textContent = mensaje;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3200);
+  }
 
-function eliminarCuenta(){
-  if(!usuarioActivo) return;
-  if(!confirm("¿Estas seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.")) return;
-  const usuarios = JSON.parse(localStorage.getItem("usuarios"))||[];
-  const index = usuarios.findIndex(u=>u.correo===usuarioActivo.correo);
-  if(index!==-1) usuarios.splice(index,1);
-  localStorage.setItem("usuarios", JSON.stringify(usuarios));
-  localStorage.removeItem("usuarioActivo");
-  localStorage.removeItem(`historial_${usuarioActivo.usuario}`);
-  localStorage.removeItem(`carrito_${usuarioActivo.usuario}`);
-  localStorage.removeItem(`facturas_${usuarioActivo.usuario}`);
-  alert("Tu cuenta ha sido eliminada correctamente.");
-  window.location.href="login.html";
-}
+  function pintarDatosPerfil() {
+    document.getElementById('perfilNombre').textContent = usuarioActivo.nombre || '—';
+    document.getElementById('perfilCorreo').textContent = usuarioActivo.correo || '—';
+    document.getElementById('perfilUsuario').textContent = usuarioActivo.usuario || '—';
+  }
 
-// =================== INICIO ===================
-document.addEventListener("DOMContentLoaded", ()=>{
-  mostrarSeccion('historial');
-  document.getElementById('modalFactura').style.display='none';
-});
+  async function cambiarContrasena(event) {
+    event.preventDefault();
+    const passwordActual = document.getElementById('pwdActual').value;
+    const passwordNueva = document.getElementById('pwdNueva').value;
+    const passwordNueva2 = document.getElementById('pwdNueva2').value;
 
+    if (passwordNueva !== passwordNueva2) {
+      mostrarMensaje('error', 'Las contraseñas nuevas no coinciden.');
+      return;
+    }
+    if (passwordNueva.length < 4) {
+      mostrarMensaje('error', 'La contraseña nueva debe tener al menos 4 caracteres.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          correo: usuarioActivo.correo,
+          passwordActual,
+          passwordNueva,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo actualizar la contraseña');
+      document.getElementById('formCambiarClave').reset();
+      mostrarMensaje('success', 'Contraseña actualizada correctamente.');
+    } catch (e) {
+      console.error(e);
+      mostrarMensaje('error', e.message || 'Error de conexión con el servidor.');
+    }
+  }
+
+  function mostrarHistorial() {
+    const tbody = document.querySelector('#tablaHistorial tbody');
+    const historial = JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || [];
+    tbody.innerHTML =
+      historial.length === 0
+        ? '<tr><td colspan="3">Aún no tienes movimientos en el historial local.</td></tr>'
+        : historial
+            .map(
+              (item) =>
+                `<tr><td>${escapeHtml(item.libro || item.titulo || '—')}</td><td>${escapeHtml(item.tipo || item.accion || '—')}</td><td>${escapeHtml(item.fecha || '—')}</td></tr>`,
+            )
+            .join('');
+  }
+
+  function borrarHistorial() {
+    if (!confirm('¿Borrar el historial guardado en este navegador?')) return;
+    localStorage.removeItem(`historial_${usuarioActivo.usuario}`);
+    mostrarHistorial();
+    mostrarMensaje('success', 'Historial local borrado.');
+  }
+
+  function fmtMoney(n) {
+    const x = Number(n);
+    if (!Number.isFinite(x)) return '0';
+    return x.toLocaleString('es-CO');
+  }
+
+  function mostrarFacturas() {
+    const tbody = document.querySelector('#tablaFacturasCliente tbody');
+    const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`)) || [];
+    tbody.innerHTML =
+      facturas.length === 0
+        ? "<tr><td colspan='4'>No tienes facturas guardadas en este dispositivo.</td></tr>"
+        : facturas
+            .map(
+              (f, i) => `<tr>
+      <td>${escapeHtml(String(f.id))}</td>
+      <td>${escapeHtml(f.fecha)}</td>
+      <td>$${fmtMoney(f.total)}</td>
+      <td><button type="button" onclick="verFactura(${i})">Ver</button></td>
+    </tr>`,
+            )
+            .join('');
+  }
+
+  function verFactura(indice) {
+    const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`)) || [];
+    if (!facturas[indice]) return;
+    const f = facturas[indice];
+
+    document.getElementById('facturaCliente').textContent = f.cliente || '—';
+    document.getElementById('facturaCorreo').textContent = f.correo || '—';
+    document.getElementById('facturaFecha').textContent = f.fecha || '—';
+    document.getElementById('facturaTipo').textContent = f.tarjetaTipo || '—';
+    document.getElementById('facturaUltimos4').textContent = f.tarjetaUltimos4 || '—';
+
+    const tbody = document.getElementById('facturaTabla');
+    const detalle = Array.isArray(f.detalle) ? f.detalle : [];
+    tbody.innerHTML =
+      detalle.length === 0
+        ? '<tr><td colspan="4">Sin líneas de detalle</td></tr>'
+        : detalle
+            .map((d) => {
+              const cant = Number(d.cantidad) || 0;
+              const precio = Number(d.precio) || 0;
+              return `<tr>
+    <td>${escapeHtml(d.titulo)}</td>
+    <td>${cant}</td>
+    <td>$${fmtMoney(precio)}</td>
+    <td>$${fmtMoney(cant * precio)}</td>
+  </tr>`;
+            })
+            .join('');
+
+    document.getElementById('facturaTotal').textContent = fmtMoney(f.total);
+    document.getElementById('modalFactura').style.display = 'flex';
+    document.getElementById('facturaCliente').setAttribute('data-id', String(indice));
+  }
+
+  function cerrarModalFactura() {
+    document.getElementById('modalFactura').style.display = 'none';
+  }
+
+  function eliminarFactura() {
+    const indice = parseInt(document.getElementById('facturaCliente').getAttribute('data-id'), 10);
+    const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`)) || [];
+    if (indice < 0 || Number.isNaN(indice) || !facturas[indice]) return;
+    if (!confirm('¿Eliminar esta factura solo de este navegador?')) return;
+    facturas.splice(indice, 1);
+    localStorage.setItem(`facturas_${usuarioActivo.usuario}`, JSON.stringify(facturas));
+    cerrarModalFactura();
+    mostrarFacturas();
+    mostrarMensaje('success', 'Factura eliminada del almacenamiento local.');
+  }
+
+  function mostrarSeccion(seccion) {
+    document.querySelectorAll('.main-content .seccion').forEach((s) => {
+      s.style.display = 'none';
+    });
+    const el = document.getElementById(`seccion-${seccion}`);
+    if (el) el.style.display = 'block';
+
+    if (seccion === 'historial') mostrarHistorial();
+    else if (seccion === 'facturas') mostrarFacturas();
+    else if (seccion === 'cuenta') pintarDatosPerfil();
+  }
+
+  function volverAlCatalogo() {
+    window.location.href = 'cliente.html';
+  }
+
+  function logout() {
+    localStorage.removeItem('rol');
+    localStorage.removeItem('usuarioActivo');
+    window.location.href = 'index.html';
+  }
+
+  async function eliminarCuenta() {
+    if (!confirm('¿Dar de baja tu cuenta en el servidor? No podrás iniciar sesión de nuevo con estos datos.')) return;
+    const password = prompt('Confirma tu contraseña actual:');
+    if (password == null || password === '') {
+      mostrarMensaje('error', 'Se necesita la contraseña para continuar.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/deactivate-account`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          correo: usuarioActivo.correo,
+          password,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo dar de baja la cuenta');
+
+      localStorage.removeItem('usuarioActivo');
+      localStorage.removeItem('rol');
+      localStorage.removeItem(`historial_${usuarioActivo.usuario}`);
+      localStorage.removeItem(`carrito_${usuarioActivo.usuario}`);
+      localStorage.removeItem(`facturas_${usuarioActivo.usuario}`);
+      localStorage.removeItem(`favoritos_${usuarioActivo.usuario}`);
+
+      alert('Tu cuenta ha sido desactivada. Serás redirigido al inicio de sesión.');
+      window.location.href = 'login.html';
+    } catch (e) {
+      console.error(e);
+      mostrarMensaje('error', e.message || 'Error al contactar el servidor.');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    pintarDatosPerfil();
+    mostrarSeccion('cuenta');
+    document.getElementById('modalFactura').style.display = 'none';
+  });
 </script>
-
-  </div>
-
-</div>
 
 </body>
 </html>

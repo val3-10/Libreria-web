@@ -283,5 +283,58 @@ router.post('/change-password', async (req, res) => {
   }
 });
 
+// POST /api/auth/deactivate-account
+// Desactiva la cuenta (Activo = 0). Requiere correo y contraseña.
+router.post('/deactivate-account', async (req, res) => {
+  try {
+    const { correo, password } = req.body || {};
+
+    if (!correo || !password) {
+      return res.status(400).json({ error: 'Correo y contraseña son obligatorios para dar de baja la cuenta.' });
+    }
+
+    if (!correo.endsWith('@booknest.com')) {
+      return res.status(400).json({ error: 'Solo se permiten correos con el dominio @booknest.com.' });
+    }
+
+    const pool = await db.getPool();
+    const reqSelect = pool.request();
+    reqSelect.input('Correo', sql.NVarChar, correo);
+    reqSelect.input('PasswordHash', sql.NVarChar, password);
+
+    const selectResult = await reqSelect.query(
+      'SELECT TOP 1 Id, Rol FROM Usuarios ' +
+        'WHERE Correo = @Correo AND PasswordHash = @PasswordHash AND Activo = 1',
+    );
+
+    const user = selectResult.recordset && selectResult.recordset[0];
+    if (!user) {
+      return res.status(401).json({ error: 'Correo o contraseña incorrectos.' });
+    }
+
+    const rol = String(user.Rol || '').toLowerCase();
+    if (rol === 'admin' || rol === 'administrador') {
+      return res.status(403).json({ error: 'Las cuentas de administrador no se pueden dar de baja desde aquí.' });
+    }
+
+    try {
+      await pool.request().input('UsuarioId', sql.Int, user.Id).query('DELETE FROM dbo.Carrito WHERE UsuarioId = @UsuarioId');
+    } catch (e) {
+      if (!e || !e.message || !e.message.includes('Invalid object name')) throw e;
+    }
+
+    const reqUpd = pool.request();
+    reqUpd.input('Id', sql.Int, user.Id);
+    await reqUpd.query(
+      'UPDATE Usuarios SET Activo = 0, FechaActualizacion = SYSUTCDATETIME() WHERE Id = @Id',
+    );
+
+    return res.json({ message: 'Cuenta desactivada correctamente.' });
+  } catch (err) {
+    console.error('Error en /api/auth/deactivate-account:', err);
+    return res.status(500).json({ error: 'Error interno al desactivar la cuenta.' });
+  }
+});
+
 module.exports = router;
 

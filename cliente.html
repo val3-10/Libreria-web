@@ -534,10 +534,21 @@
     }
 
     (async () => {
+      const libroPendienteId = localStorage.getItem('libroPendienteId');
       const libroPendiente = localStorage.getItem('libroPendiente');
       await cargarLibrosDesdeApi();
-      if (libroPendiente) {
-        agregarCarritoPorTitulo(encodeURIComponent(libroPendiente));
+      if (libroPendienteId) {
+        const lid = parseInt(libroPendienteId, 10);
+        localStorage.removeItem('libroPendienteId');
+        localStorage.removeItem('libroPendiente');
+        if (Number.isInteger(lid) && lid > 0) {
+          const libro = libros.find((l) => Number(l.id) === lid);
+          if (libro) {
+            await agregarCarritoPorTitulo(encodeURIComponent(libro.titulo));
+          }
+        }
+      } else if (libroPendiente) {
+        await agregarCarritoPorTitulo(encodeURIComponent(libroPendiente));
         localStorage.removeItem('libroPendiente');
       }
       mostrarCarrito();

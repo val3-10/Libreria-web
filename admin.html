@@ -157,6 +157,10 @@ header h1 {
       <option value="disponible">Disponible</option>
       <option value="venta">En venta</option>
     </select>
+    <label for="proveedorLibroId">Proveedor</label>
+    <select id="proveedorLibroId">
+      <option value="">— Sin proveedor —</option>
+    </select>
     <input type="number" id="stock" placeholder="Stock" min="0">
     <input type="number" id="precio" placeholder="Precio (en $)" min="0">
     <label for="caratula">Carátula del libro:</label>
@@ -169,6 +173,7 @@ header h1 {
           <th>Título</th>
           <th>Autor</th>
           <th>Saga</th>
+          <th>Proveedor</th>
           <th>Estado</th>
           <th>Stock</th>
           <th>Precio</th>
@@ -227,6 +232,7 @@ header h1 {
   <!-- NUEVA SECCIÓN: PROVEEDORES -->
   <div id="proveedores" class="seccion" style="display:none;">
     <h2>Proveedores</h2>
+    <input type="hidden" id="proveedorEditId" value="">
     <input type="text" id="nombreProveedor" placeholder="Nombre del proveedor">
     <input type="text" id="contactoProveedor" placeholder="Contacto (correo o teléfono)">
     <button onclick="agregarProveedor()">Agregar Proveedor</button>
@@ -243,16 +249,29 @@ header h1 {
   </div>
 </div>
 
+<script src="config.js"></script>
 <script>
-  let libros = JSON.parse(localStorage.getItem("libros")) || [];
+  const API_BASE = window.API_BASE;
+  let libros = [];
   let transacciones = JSON.parse(localStorage.getItem("transacciones")) || [];
-  let proveedores = JSON.parse(localStorage.getItem("proveedores")) || [];
+  let proveedores = [];
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
 
   document.addEventListener("DOMContentLoaded", () => {
-    mostrarLibrosAdmin();
-    mostrarTransacciones();
-    mostrarProveedores();
-    mostrarSeccion('libros');
+    void (async () => {
+      await cargarProveedoresDesdeApi();
+      await cargarLibrosDesdeApi();
+      mostrarTransacciones();
+      mostrarSeccion('libros');
+    })();
     
     // Agregar listener para preview de carátula
     const caratulaInput = document.getElementById("caratula");
@@ -298,15 +317,65 @@ header h1 {
     }
   }
 
-  function guardarLibroConCaratula(caratula) {
+  async function cargarLibrosDesdeApi() {
+    try {
+      const res = await fetch(`${API_BASE}/api/libros`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Error al cargar libros');
+      libros = Array.isArray(data.books) ? data.books : [];
+      mostrarLibrosAdmin();
+    } catch (e) {
+      console.error(e);
+      libros = [];
+      mostrarLibrosAdmin();
+      mostrarMensaje('error', e.message || 'No se pudieron cargar los libros desde la API.');
+    }
+  }
+
+  async function cargarProveedoresDesdeApi() {
+    try {
+      const res = await fetch(`${API_BASE}/api/proveedores`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Error al cargar proveedores');
+      proveedores = Array.isArray(data.proveedores) ? data.proveedores : [];
+      mostrarProveedores();
+      llenarSelectProveedoresLibro();
+    } catch (e) {
+      console.error(e);
+      proveedores = [];
+      mostrarProveedores();
+      mostrarMensaje('error', e.message || 'No se pudieron cargar los proveedores desde la API.');
+    }
+  }
+
+  function llenarSelectProveedoresLibro() {
+    const sel = document.getElementById('proveedorLibroId');
+    if (!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— Sin proveedor —</option>';
+    proveedores.forEach((p) => {
+      const o = document.createElement('option');
+      o.value = String(p.id);
+      o.textContent = p.nombre;
+      sel.appendChild(o);
+    });
+    if (prev && [...sel.options].some((opt) => opt.value === prev)) sel.value = prev;
+  }
+
+  async function guardarLibroConCaratula(caratula) {
     const titulo = document.getElementById("titulo").value.trim();
     const autor = document.getElementById("autor").value.trim();
     const saga = document.getElementById("saga").value.trim();
     const estado = document.getElementById("estado").value;
     const stockInput = document.getElementById("stock").value.trim();
     const precioInput = document.getElementById("precio").value.trim();
+    const proveedorSel = document.getElementById("proveedorLibroId");
+    let proveedorId = null;
+    if (proveedorSel && proveedorSel.value) {
+      const pid = Number(proveedorSel.value);
+      if (Number.isInteger(pid) && pid > 0) proveedorId = pid;
+    }
 
-    // Validación detallada
     if (!titulo) {
       mostrarMensaje('error', 'Por favor ingresa el título del libro');
       return;
@@ -324,51 +393,87 @@ header h1 {
       return;
     }
 
-    const stock = parseInt(stockInput);
+    const stock = parseInt(stockInput, 10);
     const precio = parseFloat(precioInput);
 
-    libros.push({ titulo, autor, saga: saga || "", estado, stock, precio, caratula });
-    localStorage.setItem("libros", JSON.stringify(libros));
-    mostrarLibrosAdmin();
-    mostrarMensaje('success', 'Libro agregado exitosamente');
+    let caratulaUrl = caratula || '';
+    if (caratulaUrl.length > 500) {
+      mostrarMensaje('error', 'La imagen en base64 es demasiado larga para la BD (máx. 500 caracteres en URL). Usa una ruta corta, ej. img/milibro.jpg');
+      return;
+    }
 
-    // Limpiar formulario
+    try {
+      const res = await fetch(`${API_BASE}/api/libros`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titulo,
+          autor,
+          estado,
+          stock,
+          precio,
+          caratula: caratulaUrl || null,
+          proveedorId,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo guardar el libro');
+      await cargarLibrosDesdeApi();
+      mostrarMensaje('success', 'Libro registrado en la base de datos');
+    } catch (e) {
+      console.error(e);
+      mostrarMensaje('error', e.message || 'Error al guardar el libro');
+      return;
+    }
+
     document.getElementById("titulo").value = "";
     document.getElementById("autor").value = "";
     document.getElementById("saga").value = "";
     document.getElementById("stock").value = "";
     document.getElementById("precio").value = "";
+    if (proveedorSel) proveedorSel.value = "";
     document.getElementById("caratula").value = "";
     document.getElementById("previewCaratula").style.display = "none";
   }
 
-  function eliminarLibro(i) {
+  async function eliminarLibro(id) {
     if (!confirm('¿Está seguro de eliminar este libro?')) return;
-    libros.splice(i, 1);
-    localStorage.setItem("libros", JSON.stringify(libros));
-    mostrarLibrosAdmin();
-    mostrarMensaje('info', 'Libro eliminado exitosamente');
+    try {
+      const res = await fetch(`${API_BASE}/api/libros/${id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo eliminar');
+      await cargarLibrosDesdeApi();
+      mostrarMensaje('info', 'Libro eliminado');
+    } catch (e) {
+      console.error(e);
+      mostrarMensaje('error', e.message || 'Error al eliminar');
+    }
   }
 
   function mostrarLibrosAdmin() {
     const tbody = document.querySelector("#tablaLibrosAdmin tbody");
     tbody.innerHTML = "";
     if (libros.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No hay libros registrados</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No hay libros en la base de datos</td></tr>';
       return;
     }
-    libros.forEach((libro, i) => {
-      const carStatus = libro.caratula ? `<img src="${libro.caratula}" style="width:50px; height:70px; object-fit:cover; border-radius:4px;">` : 'Sin imagen';
+    libros.forEach((libro) => {
+      const carSrc = libro.caratula ? escapeHtml(libro.caratula) : '';
+      const carStatus = carSrc
+        ? `<img src="${carSrc}" style="width:50px; height:70px; object-fit:cover; border-radius:4px;" alt="">`
+        : 'Sin imagen';
+      const prov = libro.proveedorNombre ? escapeHtml(libro.proveedorNombre) : '—';
       tbody.innerHTML += `
         <tr>
-          <td>${libro.titulo}</td>
-          <td>${libro.autor}</td>
-          <td>${libro.saga || '-'}</td>
-          <td>${libro.estado}</td>
+          <td>${escapeHtml(libro.titulo)}</td>
+          <td>${escapeHtml(libro.autor)}</td>
+          <td>${escapeHtml(libro.saga || '-')}</td>
+          <td>${prov}</td>
+          <td>${escapeHtml(libro.estado)}</td>
           <td>${libro.stock}</td>
-          <td>$${libro.precio.toLocaleString('es-CO')}</td>
+          <td>$${Number(libro.precio).toLocaleString('es-CO')}</td>
           <td>${carStatus}</td>
-          <td><button onclick="eliminarLibro(${i})">Eliminar</button></td>
+          <td><button type="button" onclick="eliminarLibro(${libro.id})">Eliminar</button></td>
         </tr>
       `;
     });
@@ -431,79 +536,94 @@ function mostrarTransacciones() {
     setTimeout(() => toast.remove(), 3000);
   }
 
-  /* === PROVEEDORES === */
-  function agregarProveedor() {
+  /* === PROVEEDORES (API / base de datos) === */
+  async function agregarProveedor() {
     const nombre = document.getElementById("nombreProveedor").value.trim();
     const contacto = document.getElementById("contactoProveedor").value.trim();
 
-    if (!nombre || !contacto) {
-      mostrarMensaje('error', 'Complete todos los campos de proveedor');
+    if (!nombre) {
+      mostrarMensaje('error', 'El nombre del proveedor es obligatorio');
       return;
     }
 
-    // Si hay un índice guardado, significa que estamos editando
-    if (document.getElementById("proveedorIndex").value !== "") {
-      const index = parseInt(document.getElementById("proveedorIndex").value);
-      proveedores[index] = { nombre, contacto };
-      mostrarMensaje('success', 'Proveedor modificado correctamente');
-      document.getElementById("proveedorIndex").value = "";
-      document.querySelector("button[onclick='agregarProveedor()']").textContent = "Agregar Proveedor";
-    } else {
-      proveedores.push({ nombre, contacto });
-      mostrarMensaje('success', 'Proveedor agregado correctamente');
+    const editId = document.getElementById("proveedorEditId").value.trim();
+    const btnAgregar = document.querySelector("button[onclick='agregarProveedor()']");
+
+    try {
+      if (editId) {
+        const res = await fetch(`${API_BASE}/api/proveedores/${editId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, contacto }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'No se pudo actualizar');
+        mostrarMensaje('success', 'Proveedor actualizado');
+      } else {
+        const res = await fetch(`${API_BASE}/api/proveedores`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, contacto }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'No se pudo crear');
+        mostrarMensaje('success', 'Proveedor creado en base de datos');
+      }
+      document.getElementById("proveedorEditId").value = "";
+      if (btnAgregar) btnAgregar.textContent = "Agregar Proveedor";
+      document.getElementById("nombreProveedor").value = "";
+      document.getElementById("contactoProveedor").value = "";
+      await cargarProveedoresDesdeApi();
+    } catch (e) {
+      console.error(e);
+      mostrarMensaje('error', e.message || 'Error con proveedores');
     }
-
-    localStorage.setItem("proveedores", JSON.stringify(proveedores));
-    mostrarProveedores();
-
-    document.getElementById("nombreProveedor").value = "";
-    document.getElementById("contactoProveedor").value = "";
   }
 
-  function eliminarProveedor(i) {
+  async function eliminarProveedor(id) {
     if (!confirm('¿Desea eliminar este proveedor?')) return;
-    proveedores.splice(i, 1);
-    localStorage.setItem("proveedores", JSON.stringify(proveedores));
-    mostrarProveedores();
-    mostrarMensaje('info', 'Proveedor eliminado');
+    try {
+      const res = await fetch(`${API_BASE}/api/proveedores/${id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo eliminar');
+      await cargarProveedoresDesdeApi();
+      mostrarMensaje('info', 'Proveedor eliminado');
+    } catch (e) {
+      console.error(e);
+      mostrarMensaje('error', e.message || 'Error al eliminar');
+    }
   }
 
-  function modificarProveedor(i) {
-    const proveedor = proveedores[i];
-    document.getElementById("nombreProveedor").value = proveedor.nombre;
-    document.getElementById("contactoProveedor").value = proveedor.contacto;
-    document.getElementById("proveedorIndex").value = i;
-    document.querySelector("button[onclick='agregarProveedor()']").textContent = "Guardar Cambios";
+  function modificarProveedor(id) {
+    const p = proveedores.find((x) => x.id === id);
+    if (!p) return;
+    document.getElementById("nombreProveedor").value = p.nombre;
+    document.getElementById("contactoProveedor").value = p.contacto || '';
+    document.getElementById("proveedorEditId").value = String(id);
+    const btn = document.querySelector("button[onclick='agregarProveedor()']");
+    if (btn) btn.textContent = "Guardar Cambios";
   }
 
   function mostrarProveedores() {
     const tbody = document.querySelector("#tablaProveedores tbody");
     tbody.innerHTML = "";
     if (proveedores.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay proveedores registrados</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No hay proveedores en la base de datos</td></tr>';
       return;
     }
-    proveedores.forEach((p, i) => {
+    proveedores.forEach((p) => {
       tbody.innerHTML += `
         <tr>
-          <td>${p.nombre}</td>
-          <td>${p.contacto}</td>
+          <td>${escapeHtml(p.nombre)}</td>
+          <td>${escapeHtml(p.contacto || '—')}</td>
           <td>
-            <button onclick="modificarProveedor(${i})">Modificar</button>
-            <button onclick="eliminarProveedor(${i})">Eliminar</button>
+            <button type="button" onclick="modificarProveedor(${p.id})">Modificar</button>
+            <button type="button" onclick="eliminarProveedor(${p.id})">Eliminar</button>
           </td>
         </tr>
       `;
     });
   }
-
-
-
-  // Campo oculto para saber si se está editando
-  const hiddenIndex = document.createElement("input");
-  hiddenIndex.type = "hidden";
-  hiddenIndex.id = "proveedorIndex";
-  document.body.appendChild(hiddenIndex);
   
   /* === VERIFICAR ADMIN === */
     // Verificar que el usuario actual es un admin

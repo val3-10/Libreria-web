@@ -33,6 +33,18 @@ BEGIN
 END
 GO
 
+-- Proveedores (antes de Libros por la FK)
+IF OBJECT_ID('dbo.Proveedores', 'U') IS NULL
+BEGIN
+  CREATE TABLE dbo.Proveedores (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre NVARCHAR(200) NOT NULL,
+    Contacto NVARCHAR(255) NULL,
+    FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+  );
+END
+GO
+
 -- Libros
 IF OBJECT_ID('dbo.Libros', 'U') IS NULL
 BEGIN
@@ -44,8 +56,10 @@ BEGIN
     Stock INT NOT NULL DEFAULT 0,
     Precio DECIMAL(18,2) NULL DEFAULT 0,
     CaratulaUrl NVARCHAR(500) NULL,
+    ProveedorId INT NULL,
     FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    FechaActualizacion DATETIME2 NULL
+    FechaActualizacion DATETIME2 NULL,
+    CONSTRAINT FK_Libros_Proveedor FOREIGN KEY (ProveedorId) REFERENCES dbo.Proveedores(Id)
   );
 END
 GO
@@ -97,18 +111,6 @@ BEGIN
     CONSTRAINT FK_Carrito_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id),
     CONSTRAINT FK_Carrito_Libro FOREIGN KEY (LibroId) REFERENCES dbo.Libros(Id),
     CONSTRAINT UQ_Carrito_Usuario_Libro UNIQUE (UsuarioId, LibroId)
-  );
-END
-GO
-
--- Proveedores
-IF OBJECT_ID('dbo.Proveedores', 'U') IS NULL
-BEGIN
-  CREATE TABLE dbo.Proveedores (
-    Id INT IDENTITY(1,1) PRIMARY KEY,
-    Nombre NVARCHAR(200) NOT NULL,
-    Contacto NVARCHAR(255) NULL,
-    FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
   );
 END
 GO

@@ -18,6 +18,7 @@ app.use(express.json());
 // Rutas
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/libros', require('./routes/libros'));
+app.use('/api/proveedores', require('./routes/proveedores'));
 app.use('/api/carrito', require('./routes/carrito'));
 app.use('/api/ventas', require('./routes/ventas'));
 
@@ -67,7 +68,8 @@ async function start() {
     console.log(`Servidor escuchando en http://localhost:${PORT}`);
     console.log('  GET /api/health   - Estado API y BD');
     console.log('  GET /api/ping-db  - Prueba de consulta SQL');
-    console.log('  GET /api/libros   - Catálogo de libros (BD)');
+    console.log('  GET /api/libros       - Catálogo de libros (BD)');
+    console.log('  GET /api/proveedores  - Proveedores (BD)');
     console.log('  POST /api/ventas/checkout - Registrar venta y stock');
   });
 }
