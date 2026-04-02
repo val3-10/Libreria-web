@@ -218,13 +218,14 @@
 
  
 
+<script src="config.js"></script>
 <script>
   const usuarioActivo = JSON.parse(localStorage.getItem("usuarioActivo"));
   if (!usuarioActivo || localStorage.getItem("rol") !== "cliente") {
     window.location.href = "index.html";
   }
 
-  const API_BASE = 'http://localhost:3000';
+  const API_BASE = window.API_BASE;
   let libros = [];
 
   function leerArrayLocalStorage(clave) {
@@ -1042,9 +1043,10 @@
     });
   }
 
+  let guardadoEnServidor = false;
   try {
     if (!usuarioActivo || !usuarioActivo.id) {
-      throw new Error('No hay usuario activo para guardar el carrito en base de datos.');
+      throw new Error('SIN_USUARIO_ID');
     }
 
     const res = await fetch(`${API_BASE}/api/carrito/agregar`, {
@@ -1061,15 +1063,37 @@
     if (!res.ok) {
       throw new Error(data.error || 'Error al guardar el carrito en base de datos.');
     }
+    guardadoEnServidor = true;
   } catch (err) {
     console.error(err);
-    mostrarMensaje('error', 'Se agregó localmente, pero falló el guardado en base de datos.');
+    let msg =
+      'Se agregó en este navegador, pero no se guardó en el servidor.';
+    if (err.message === 'SIN_USUARIO_ID') {
+      msg += ' Cierra sesión y vuelve a entrar (falta id de usuario).';
+    } else if (
+      location.protocol === 'https:' &&
+      String(API_BASE).toLowerCase().startsWith('http:')
+    ) {
+      msg +=
+        ' La página es HTTPS y la API está en HTTP (p. ej. localhost): el navegador lo bloquea. Edita config.js y pon la URL HTTPS de tu API publicada.';
+    } else if (
+      err.name === 'TypeError' ||
+      String(err.message || '').toLowerCase().includes('failed to fetch')
+    ) {
+      msg +=
+        ' No hay conexión con la API: ¿servidor en marcha y config.js con la URL correcta?';
+    } else if (err.message && err.message !== 'SIN_USUARIO_ID') {
+      msg += ' ' + err.message;
+    }
+    mostrarMensaje('error', msg);
   }
 
   guardarDatos();
   mostrarCarrito();
   actualizarContadorCarrito();
-  mostrarMensaje('success', 'Agregado al carrito');
+  if (guardadoEnServidor) {
+    mostrarMensaje('success', 'Agregado al carrito');
+  }
 }
 
   function mostrarCarrito() {

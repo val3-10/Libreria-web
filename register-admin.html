@@ -100,6 +100,7 @@
     <p>¿Ya tienes cuenta? <a href="login.html">Inicia sesión aquí</a></p>
   </div>
 
+  <script src="config.js"></script>
   <script>
     function togglePassword(id) {
       const input = document.getElementById(id);
@@ -202,7 +203,7 @@
       try {
         // Frontend → API: enviamos los datos al backend con POST (crear recurso).
         // El backend (auth.js) valida y hace INSERT en la tabla Usuarios.
-        const response = await fetch('http://localhost:3000/api/auth/register-admin', {
+        const response = await fetch(`${window.API_BASE}/api/auth/register-admin`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -59,6 +59,7 @@
     <p><a href="index.html">Volver al catálogo</a></p>
   </div>
 
+  <script src="config.js"></script>
   <script>
 
     /*
@@ -165,7 +166,7 @@
 
         // Llamada al backend: fetch hace una petición HTTP a la API del servidor.
         // La API está en /api/auth/login (definida en server/src/routes/auth.js).
-        const response = await fetch('http://localhost:3000/api/auth/login', {
+        const response = await fetch(`${window.API_BASE}/api/auth/login`, {
 
           // POST: enviamos datos (correo, password) en el cuerpo de la petición.
           // El backend los recibe en req.body y luego consulta la base de datos.
