@@ -216,20 +216,7 @@
     librosOrdenados.forEach((libro) => {
       const carta = document.createElement("div");
       carta.className = "carta-libro";
-
-      carta.innerHTML = `
-        <img src="${libro.caratula || 'img/BookNest.png'}">
-        <h3>${libro.titulo}</h3>
-        <p>Autor: ${libro.autor}</p>
-        <p>Estado: ${libro.estado}</p>
-        <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-        <p>Stock: ${libro.stock}</p>
-        <div class="carta-botones">
-          <button type="button" onclick="prepararCarritoInvitado(${libro.id}, ${JSON.stringify(libro.titulo)})">
-            <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
-          </button>
-        </div>
-      `;
+       carta.innerHTML = renderCartaInvitadoHTML(libro);
 
       contenedor.appendChild(carta);
     });
@@ -278,20 +265,7 @@
         const carta = document.createElement("div");
         carta.className = "carta-libro";
 
-        carta.innerHTML = `
-          <img src="${libro.caratula || 'img/BookNest.png'}">
-          <h3>${libro.titulo}</h3>
-          <p>Autor: ${libro.autor}</p>
-          <p>Estado: ${libro.estado}</p>
-          <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-          <p>Stock: ${libro.stock}</p>
-          <div class="carta-botones">
-            <button type="button" onclick="prepararCarritoInvitado(${libro.id}, ${JSON.stringify(libro.titulo)})">
-              <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
-            </button>
-          </div>
-        `;
-
+        carta.innerHTML = renderCartaInvitadoHTML(libro);
         contenedorLibros.appendChild(carta);
       });
 
@@ -315,19 +289,7 @@
         const carta = document.createElement("div");
         carta.className = "carta-libro";
 
-        carta.innerHTML = `
-          <img src="${libro.caratula || 'img/BookNest.png'}">
-          <h3>${libro.titulo}</h3>
-          <p>Autor: ${libro.autor}</p>
-          <p>Estado: ${libro.estado}</p>
-          <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-          <p>Stock: ${libro.stock}</p>
-          <div class="carta-botones">
-            <button type="button" onclick="prepararCarritoInvitado(${libro.id}, ${JSON.stringify(libro.titulo)})">
-              <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
-            </button>
-          </div>
-        `;
+       carta.innerHTML = renderCartaInvitadoHTML(libro);
 
         contenedorLibros.appendChild(carta);
       });
@@ -385,19 +347,7 @@
       const carta = document.createElement("div");
       carta.className = "carta-libro";
 
-      carta.innerHTML = `
-        <img src="${libro.caratula || 'img/BookNest.png'}">
-        <h3>${libro.titulo}</h3>
-        <p>Autor: ${libro.autor}</p>
-        <p>Estado: ${libro.estado}</p>
-        <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-        <p>Stock: ${libro.stock}</p>
-        <div class="carta-botones">
-          <button type="button" onclick="prepararCarritoInvitado(${libro.id}, ${JSON.stringify(libro.titulo)})">
-            <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
-          </button>
-        </div>
-      `;
+      carta.innerHTML = renderCartaInvitadoHTML(libro);
       contenedor.appendChild(carta);
     });
   }
@@ -445,19 +395,7 @@
         const carta = document.createElement("div");
         carta.className = "carta-libro";
 
-        carta.innerHTML = `
-          <img src="${libro.caratula || 'img/BookNest.png'}">
-          <h3>${libro.titulo}</h3>
-          <p>Autor: ${libro.autor}</p>
-          <p>Estado: ${libro.estado}</p>
-          <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-          <p>Stock: ${libro.stock}</p>
-          <div class="carta-botones">
-            <button type="button" onclick="prepararCarritoInvitado(${libro.id}, ${JSON.stringify(libro.titulo)})">
-              <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
-            </button>
-          </div>
-        `;
+       carta.innerHTML = renderCartaInvitadoHTML(libro);
         contenedorLibros.appendChild(carta);
       });
 

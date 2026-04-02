@@ -817,6 +817,29 @@
       mostrarFavoritos();
     }
   }
+  function renderCartaLibroHTML(libro) {
+  const sinStock = libro.stock <= 0;
+  return `
+    <img src="${libro.caratula || 'img/BookNest.png'}">
+    ${sinStock ? '<span class="badge-agotado">Agotado</span>' : ''}
+    <h3>${libro.titulo}</h3>
+    <p>Autor: ${libro.autor}</p>
+    <p>Estado: ${libro.estado || ''}</p>
+    <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
+    <p>Stock: ${sinStock ? '<strong style="color:red">0</strong>' : libro.stock}</p>
+    <div class="carta-botones">
+      <button class="btn-fav" title="${estaEnFavoritos(libro.titulo) ? 'Remover de favoritos' : 'Agregar a favoritos'}"
+        onclick="event.stopPropagation(); toggleFavorito('${encodeURIComponent(libro.titulo)}')">
+        <i class="${estaEnFavoritos(libro.titulo) ? 'fi fi-ss-heart' : 'fi fi-rr-heart'}"></i>
+      </button>
+      <button onclick="agregarCarritoPorTitulo('${encodeURIComponent(libro.titulo)}')"
+        ${sinStock ? 'disabled title="Sin stock disponible"' : ''}>
+        <i class="fi fi-rr-shopping-cart"></i>
+        ${sinStock ? 'No disponible' : 'Agregar al Carrito'}
+      </button>
+    </div>
+  `;
+}
 
   function mostrarFavoritos() {
     const contenedor = document.getElementById('listaFavoritos');
@@ -836,21 +859,7 @@
     favoritosLibros.forEach(libro => {
       const card = document.createElement('div');
       card.className = 'carta-libro';
-      card.innerHTML = `
-        <img src="${libro.caratula || 'img/BookNest.png'}"> 
-        <h3>${libro.titulo}</h3>
-        <p>Autor: ${libro.autor}</p>
-        <p>Precio: $${libro.precio.toFixed(2)}</p>
-        <p>Stock: ${libro.stock}</p>
-        <div class="carta-botones">
-          <button class="btn-fav" title="Remover de favoritos" onclick="event.stopPropagation(); toggleFavorito('${encodeURIComponent(libro.titulo)}')">
-            <i class="fi fi-ss-heart"></i>
-          </button>
-          <button onclick="agregarCarritoPorTitulo('${encodeURIComponent(libro.titulo)}')">
-            <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
-          </button>
-        </div>
-      `;
+     carta.innerHTML = renderCartaLibroHTML(libro);
       contenedor.appendChild(card);
     });
   }
@@ -877,22 +886,7 @@
       const carta = document.createElement("div");
       carta.className = "carta-libro";
 
-      carta.innerHTML = `
-        <img src="${libro.caratula || 'img/BookNest.png'}">
-        <h3>${libro.titulo}</h3>
-        <p>Autor: ${libro.autor}</p>
-        <p>Estado: ${libro.estado}</p>
-        <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-        <p>Stock: ${libro.stock}</p>
-        <div class="carta-botones">
-          <button class="btn-fav" title="${estaEnFavoritos(libro.titulo) ? 'Remover de favoritos' : 'Agregar a favoritos'}" onclick="event.stopPropagation(); toggleFavorito('${encodeURIComponent(libro.titulo)}')">
-            <i class="${estaEnFavoritos(libro.titulo) ? 'fi fi-ss-heart' : 'fi fi-rr-heart'}"></i>
-          </button>
-          <button onclick="agregarCarritoPorTitulo('${encodeURIComponent(libro.titulo)}')">
-            <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
-          </button>
-        </div>
-      `;
+      carta.innerHTML = renderCartaLibroHTML(libro);
 
       contenedor.appendChild(carta);
     });
@@ -1516,22 +1510,7 @@ function mostrarLibrosFiltradosCatalogo(filtrados) {
     const carta = document.createElement("div");
     carta.className = "carta-libro";
 
-    carta.innerHTML = `
-      <img src="${libro.caratula || 'img/BookNest.png'}">
-      <h3>${libro.titulo}</h3>
-      <p>Autor: ${libro.autor}</p>
-      <p>Estado: ${libro.estado}</p>
-      <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-      <p>Stock: ${libro.stock}</p>
-      <div class="carta-botones">
-        <button class="btn-fav" title="${estaEnFavoritos(libro.titulo) ? 'Remover de favoritos' : 'Agregar a favoritos'}" onclick="event.stopPropagation(); toggleFavorito('${encodeURIComponent(libro.titulo)}')">
-          <i class="${estaEnFavoritos(libro.titulo) ? 'fi fi-ss-heart' : 'fi fi-rr-heart'}"></i>
-        </button>
-        <button onclick="agregarCarritoPorTitulo('${encodeURIComponent(libro.titulo)}')">
-          <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
-        </button>
-      </div>
-    `;
+    carta.innerHTML = renderCartaLibroHTML(libro);
     contenedor.appendChild(carta);
   });
 }
@@ -1578,22 +1557,7 @@ function mostrarLibrosFiltradosSagas(filtrados) {
       const carta = document.createElement("div");
       carta.className = "carta-libro";
 
-      carta.innerHTML = `
-        <img src="${libro.caratula || 'img/BookNest.png'}">
-        <h3>${libro.titulo}</h3>
-        <p>Autor: ${libro.autor}</p>
-        <p>Estado: ${libro.estado}</p>
-        <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-        <p>Stock: ${libro.stock}</p>
-        <div class="carta-botones">
-          <button class="btn-fav" title="${estaEnFavoritos(libro.titulo) ? 'Remover de favoritos' : 'Agregar a favoritos'}" onclick="event.stopPropagation(); toggleFavorito('${encodeURIComponent(libro.titulo)}')">
-            <i class="${estaEnFavoritos(libro.titulo) ? 'fi fi-ss-heart' : 'fi fi-rr-heart'}"></i>
-          </button>
-          <button onclick="agregarCarritoPorTitulo('${encodeURIComponent(libro.titulo)}')">
-            <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
-          </button>
-        </div>
-      `;
+      carta.innerHTML = renderCartaLibroHTML(libro);
       contenedorLibros.appendChild(carta);
     });
 
@@ -1617,22 +1581,7 @@ function mostrarLibrosFiltradosSagas(filtrados) {
       const carta = document.createElement("div");
       carta.className = "carta-libro";
 
-      carta.innerHTML = `
-        <img src="${libro.caratula || 'img/BookNest.png'}">
-        <h3>${libro.titulo}</h3>
-        <p>Autor: ${libro.autor}</p>
-        <p>Estado: ${libro.estado}</p>
-        <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-        <p>Stock: ${libro.stock}</p>
-        <div class="carta-botones">
-          <button class="btn-fav" title="${estaEnFavoritos(libro.titulo) ? 'Remover de favoritos' : 'Agregar a favoritos'}" onclick="event.stopPropagation(); toggleFavorito('${encodeURIComponent(libro.titulo)}')">
-            <i class="${estaEnFavoritos(libro.titulo) ? 'fi fi-ss-heart' : 'fi fi-rr-heart'}"></i>
-          </button>
-          <button onclick="agregarCarritoPorTitulo('${encodeURIComponent(libro.titulo)}')">
-            <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
-          </button>
-        </div>
-      `;
+     carta.innerHTML = renderCartaLibroHTML(libro);
       contenedorLibros.appendChild(carta);
     });
 
