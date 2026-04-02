@@ -206,6 +206,7 @@
           <input type="text" id="expiracion" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA" maxlength="5" oninput="formatoExpiracion(this)" onblur="actualizarMensajeVencimiento()">
           <small id="vencimientoMensaje" class="checkout-exp-hint" role="status" aria-live="polite"></small>
         </div>
+        <input type="text" id="cvv" placeholder="CVV (3 o 4 dígitos)" maxlength="4" oninput="soloNumeros(this)"><br>
         <input type="text" id="titular" placeholder="Nombre del titular"><br>
 
         <div class="modal-botones">
@@ -637,7 +638,7 @@
     }
   }
 
-  /** Dígitos; longitud máxima según BIN; icono de franquicia. */
+  /** Dígitos; longitud máxima según BIN; icono y CVV (3 o 4 en Amex). */
   function detectarTipoTarjeta(input) {
     let valor = input.value.replace(/\D/g, '');
     const max = maxDigitosPAN(valor);
@@ -652,18 +653,30 @@
       if (tipo) {
         tipoSpan.textContent = `Franquicia: ${tipo}`;
       } else if (valor.length >= 4) {
-        tipoSpan.textContent = 'Franquicia no reconocida; se validará con el número completo (Luhn).';
+        tipoSpan.textContent = 'Franquicia no reconocida; comprueba longitud y CVV al pagar.';
       } else if (valor.length) {
         tipoSpan.textContent = 'Sigue escribiendo el número…';
       } else {
         tipoSpan.textContent = '';
       }
     }
+    const cvvEl = document.getElementById('cvv');
+    if (cvvEl) {
+      const maxCvv = tipo === 'American Express' ? 4 : 3;
+      cvvEl.maxLength = maxCvv;
+      cvvEl.value = cvvEl.value.replace(/\D/g, '').slice(0, maxCvv);
+    }
   }
 
   function esTarjetaAceptada(d) {
     const tipo = tipoTarjetaDesdeDigitos(d);
     return longitudValidaParaFranquicia(d, tipo);
+  }
+
+  function cvvValidoParaTarjeta(digitosTarjeta, cvv) {
+    const t = tipoTarjetaDesdeDigitos(digitosTarjeta);
+    if (t === 'American Express') return /^\d{4}$/.test(cvv);
+    return /^\d{3}$/.test(cvv);
   }
 
   function actualizarMensajeVencimiento() {
@@ -701,25 +714,6 @@
     }
     msg.textContent = 'Fecha de vencimiento válida.';
     msg.classList.add('is-ok');
-  }
-
-  /** Algoritmo de Luhn. */
-  function validarLuhn(digitos) {
-    const s = String(digitos).replace(/\D/g, '');
-    if (!s) return false;
-    let sum = 0;
-    let doble = false;
-    for (let i = s.length - 1; i >= 0; i--) {
-      let n = parseInt(s.charAt(i), 10);
-      if (Number.isNaN(n)) return false;
-      if (doble) {
-        n *= 2;
-        if (n > 9) n -= 9;
-      }
-      sum += n;
-      doble = !doble;
-    }
-    return sum % 10 === 0;
   }
 
   /** MM/AA: mes válido y no vencida (válida hasta fin de mes). */
@@ -1187,6 +1181,11 @@
       tarjetaEl.maxLength = 19;
     }
     document.getElementById('expiracion').value = '';
+    const cvvEl = document.getElementById('cvv');
+    if (cvvEl) {
+      cvvEl.value = '';
+      cvvEl.maxLength = 4;
+    }
     document.getElementById('titular').value = '';
     document.getElementById('tipoTarjeta').textContent = '';
     const vm = document.getElementById('vencimientoMensaje');
@@ -1195,6 +1194,10 @@
       vm.className = 'checkout-exp-hint';
     }
     actualizarIconosMarcaTarjeta('');
+  }
+
+  function soloNumeros(input) {
+    input.value = input.value.replace(/\D/g, '');
   }
 
   function formatoExpiracion(input) {
@@ -1250,6 +1253,7 @@
 
     const tarjetaRaw = document.getElementById('tarjeta').value.replace(/\D/g, '');
     const expiracion = document.getElementById('expiracion').value.trim();
+    const cvv = document.getElementById('cvv').value.trim();
     const titular = document.getElementById('titular').value.trim();
 
     if (!esTarjetaAceptada(tarjetaRaw)) {
@@ -1259,8 +1263,11 @@
       );
       return false;
     }
-    if (!validarLuhn(tarjetaRaw)) {
-      mostrarMensaje('error', 'El número de tarjeta no es válido (comprueba el dígito de control).');
+    if (!cvvValidoParaTarjeta(tarjetaRaw, cvv)) {
+      mostrarMensaje(
+        'error',
+        'CVV inválido: 3 dígitos (Visa, MC, etc.) o 4 si es American Express.',
+      );
       return false;
     }
     if (!validarVencimientoMmAa(expiracion)) {
