@@ -89,6 +89,7 @@
     <p>¿Ya tienes cuenta? <a href="login.html">Inicia sesión aquí</a></p>
   </div>
 
+  <script src="config.js"></script>
   <script>
     function togglePassword(id) {
       const input = document.getElementById(id);
@@ -173,7 +174,7 @@
         // Frontend → API: enviamos los datos del formulario al backend (POST).
         // El backend (server/src/routes/auth.js) recibe el body, valida y hace INSERT en la BD.
         // Ver login.html para más detalles del flujo Frontend → API → Base de datos.
-        const response = await fetch('http://localhost:3000/api/auth/register', {
+        const response = await fetch(`${window.API_BASE}/api/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

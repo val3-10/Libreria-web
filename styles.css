@@ -504,7 +504,8 @@ body {
   color: #b71c1c;
 }
 
-/* ===== TITULAR CHECKOUT ===== */
+/* ===== CVV Y TITULAR ===== */
+#checkout input#cvv,
 #checkout input#titular {
   margin: 10px 0 !important;
 }
