@@ -148,7 +148,11 @@ header h1 {
 
   <!-- SECCIÓN: REGISTRO DE LIBROS -->
   <div id="libros" class="seccion">
-    <h2>Registrar Libro</h2>
+    <h2>Registrar libro</h2>
+    <p style="text-align:left; max-width:560px; margin-bottom:14px; font-size:0.95rem;">
+      Los datos se guardan en <strong>SQL Server</strong> (tabla <code>Libros</code>) al pulsar <strong>Guardar en base de datos</strong>.
+      La tabla inferior se actualiza desde la API.
+    </p>
     <input type="text" id="titulo" placeholder="Título">
     <input type="text" id="autor" placeholder="Autor">
     <input type="text" id="saga" placeholder="Saga/Serie (opcional)">
@@ -163,10 +167,16 @@ header h1 {
     </select>
     <input type="number" id="stock" placeholder="Stock" min="0">
     <input type="number" id="precio" placeholder="Precio (en $)" min="0">
-    <label for="caratula">Carátula del libro:</label>
+    <label for="caratula">Carátula (archivo imagen, opcional)</label>
     <input type="file" id="caratula" accept="image/*" capture="environment">
     <img id="previewCaratula" alt="Vista previa">
-    <button onclick="agregarLibro()">Agregar Libro</button>
+    <label for="caratulaRuta">Nombre o ruta de carátula (opcional)</label>
+    <input type="text" id="caratulaRuta" maxlength="500" placeholder="Solo nombre: milibro.jpg → se guarda como caratulas/milibro.jpg">
+    <small style="display:block; text-align:left; margin:-8px 0 12px; max-width:560px; font-size:0.85rem;">
+      Puedes escribir solo el archivo (ej. <code>1984.jpg</code>): en base de datos quedará <code>caratulas/1984.jpg</code>.
+      Si incluyes carpeta (<code>caratulas/x.jpg</code>, <code>img/x.png</code>) o una URL <code>http(s)://…</code>, se respeta tal cual.
+    </small>
+    <button type="button" onclick="agregarLibro()">Guardar en base de datos</button>
     <table id="tablaLibrosAdmin">
       <thead>
         <tr>
@@ -304,12 +314,13 @@ header h1 {
 
   function agregarLibro() {
     const caratulaInput = document.getElementById("caratula");
-    let caratula = "";
-    if (caratulaInput.files.length > 0) {
+    if (caratulaInput && caratulaInput.files.length > 0) {
       const reader = new FileReader();
-      reader.onload = function(e) {
-        caratula = e.target.result;
-        guardarLibroConCaratula(caratula);
+      reader.onload = function (e) {
+        guardarLibroConCaratula(e.target.result || "");
+      };
+      reader.onerror = function () {
+        mostrarMensaje("error", "No se pudo leer la imagen. Prueba con la ruta de carátula en texto.");
       };
       reader.readAsDataURL(caratulaInput.files[0]);
     } else {
@@ -396,16 +407,25 @@ header h1 {
     const stock = parseInt(stockInput, 10);
     const precio = parseFloat(precioInput);
 
-    let caratulaUrl = caratula || '';
-    if (caratulaUrl.length > 500) {
-      mostrarMensaje('error', 'La imagen en base64 es demasiado larga para la BD (máx. 500 caracteres en URL). Usa una ruta corta, ej. img/milibro.jpg');
-      return;
+    const rutaManualEl = document.getElementById("caratulaRuta");
+    const rutaManual = (rutaManualEl && rutaManualEl.value.trim()) || "";
+    let caratulaUrl = "";
+    if (rutaManual) {
+      caratulaUrl = rutaManual.slice(0, 500);
+    } else if (caratula && String(caratula).length <= 500) {
+      caratulaUrl = String(caratula).slice(0, 500);
+    } else if (caratula && String(caratula).length > 500) {
+      caratulaUrl = "";
+      mostrarMensaje(
+        "info",
+        "La imagen supera 500 caracteres en la BD: se guarda el libro sin carátula. Indica solo el nombre del archivo en el campo de texto (ej. libro.jpg).",
+      );
     }
 
     try {
       const res = await fetch(`${API_BASE}/api/libros`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           titulo,
           autor,
@@ -417,12 +437,12 @@ header h1 {
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'No se pudo guardar el libro');
+      if (!res.ok) throw new Error(data.error || "No se pudo guardar el libro en la base de datos");
       await cargarLibrosDesdeApi();
-      mostrarMensaje('success', 'Libro registrado en la base de datos');
+      mostrarMensaje("success", "Libro insertado en SQL Server correctamente.");
     } catch (e) {
       console.error(e);
-      mostrarMensaje('error', e.message || 'Error al guardar el libro');
+      mostrarMensaje("error", e.message || "Error al guardar el libro");
       return;
     }
 
@@ -433,7 +453,12 @@ header h1 {
     document.getElementById("precio").value = "";
     if (proveedorSel) proveedorSel.value = "";
     document.getElementById("caratula").value = "";
-    document.getElementById("previewCaratula").style.display = "none";
+    if (rutaManualEl) rutaManualEl.value = "";
+    const prevImg = document.getElementById("previewCaratula");
+    if (prevImg) {
+      prevImg.removeAttribute("src");
+      prevImg.style.display = "none";
+    }
   }
 
   async function eliminarLibro(id) {

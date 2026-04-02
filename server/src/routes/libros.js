@@ -14,6 +14,16 @@ const SELECT_BASE =
   'FROM dbo.Libros L ' +
   'LEFT JOIN dbo.Proveedores P ON P.Id = L.ProveedorId ';
 
+/** Si el valor es solo un nombre de archivo (sin ruta ni URL), se guarda bajo caratulas/ */
+function normalizarCaratulaUrl(raw) {
+  let s = raw != null ? String(raw).trim() : '';
+  if (!s) return '';
+  if (/^https?:\/\//i.test(s)) return s.slice(0, 500);
+  s = s.replace(/\\/g, '/');
+  if (s.includes('/')) return s.slice(0, 500);
+  return ('caratulas/' + s).slice(0, 500);
+}
+
 function mapRow(row) {
   return {
     id: row.Id,
@@ -71,10 +81,7 @@ router.post('/', async (req, res) => {
     const precio = body.precio != null ? Number(body.precio) : 0;
     const precioOk = Number.isFinite(precio) && precio >= 0 ? precio : 0;
 
-    let caratulaUrl = body.caratula != null ? String(body.caratula).trim() : '';
-    if (caratulaUrl.length > 500) {
-      caratulaUrl = caratulaUrl.slice(0, 500);
-    }
+    let caratulaUrl = normalizarCaratulaUrl(body.caratula != null ? body.caratula : '');
 
     let proveedorId = null;
     if (body.proveedorId != null && body.proveedorId !== '') {
