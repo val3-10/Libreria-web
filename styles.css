@@ -395,12 +395,34 @@ body {
 /* PORTAL DE PAGO - ORGANIZADO (misma estética) */
 /* ============================================ */
 
+/* Por encima del sidebar (z-index 1000) y del resto del layout */
+#checkout.modal {
+  z-index: 10050;
+}
+
 /* Mejorar el contenedor del modal */
 #checkout .modal-contenido {
   width: 420px !important;
   max-width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
   padding: 25px;
   background: linear-gradient(135deg, #e6ebf1, #c3cedb) !important;
+}
+
+#checkout .checkout-field-label {
+  display: block;
+  text-align: left;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 10px 0 6px 0;
+}
+
+#checkout .checkout-cvv-wrap {
+  display: block !important;
+  width: 100%;
+  margin: 4px 0 8px 0;
 }
 
 /* Título con el mismo estilo */
@@ -505,9 +527,9 @@ body {
 }
 
 /* ===== CVV Y TITULAR ===== */
-#checkout input#cvv,
+#checkout .checkout-cvv-wrap input#cvv,
 #checkout input#titular {
-  margin: 10px 0 !important;
+  margin: 0 0 10px 0 !important;
 }
 
 /* Eliminar los <br> */

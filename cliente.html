@@ -155,10 +155,16 @@
     </div>
   </div>
 
-  <!-- PORTAL DE PAGO -->
-  <div id="checkout" class="modal">
+  </div>
+  <!-- /.main-content -->
+
+  </div>
+  <!-- /.layout -->
+
+  <!-- PORTAL DE PAGO (fuera del layout: z-index y sin recortes del contenido) -->
+  <div id="checkout" class="modal" aria-modal="true" role="dialog" aria-labelledby="checkoutTitulo">
     <div class="modal-contenido">
-      <h3>Portal de Pago</h3>
+      <h3 id="checkoutTitulo">Portal de Pago</h3>
       <form>
         <div class="checkout-card-row">
           <div class="checkout-card-input-wrap">
@@ -203,11 +209,16 @@
         </div>
 
         <div class="checkout-exp-wrap">
+          <label for="expiracion" class="checkout-field-label">Vencimiento (MM/AA)</label>
           <input type="text" id="expiracion" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/AA" maxlength="5" oninput="formatoExpiracion(this)" onblur="actualizarMensajeVencimiento()">
           <small id="vencimientoMensaje" class="checkout-exp-hint" role="status" aria-live="polite"></small>
         </div>
-        <input type="text" id="cvv" placeholder="CVV (3 o 4 dígitos)" maxlength="4" oninput="soloNumeros(this)"><br>
-        <input type="text" id="titular" placeholder="Nombre del titular"><br>
+        <div class="checkout-cvv-wrap">
+          <label for="cvv" class="checkout-field-label">CVV / CVC</label>
+          <input type="text" id="cvv" name="cc-csc" inputmode="numeric" autocomplete="cc-csc" placeholder="3 dígitos (4 en American Express)" maxlength="4" oninput="soloNumeros(this)">
+        </div>
+        <label for="titular" class="checkout-field-label">Titular de la tarjeta</label>
+        <input type="text" id="titular" autocomplete="cc-name" placeholder="Nombre como figura en la tarjeta"><br>
 
         <div class="modal-botones">
           <button type="button" onclick="finishPurchase()">Pagar</button>
@@ -1620,6 +1631,5 @@ function mostrarLibrosFiltradosSagas(filtrados) {
 }
 
 </script>
-</div>
 </body>
 </html>
