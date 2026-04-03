@@ -354,29 +354,53 @@ header h1 {
       .replace(/"/g, '&quot;');
   }
 
-  /** Vacío = válido. Si hay valor: solo .jpg (URL http(s) o ruta local). */
+  function ultimoSegmentoArchivoRuta(s) {
+    const p = String(s).split('?')[0].split('#')[0].replace(/\\/g, '/').replace(/\/+$/, '');
+    const parts = p.split('/').filter(Boolean);
+    return parts.length ? parts[parts.length - 1].trim() : p.trim();
+  }
+
+  /** Vacío = válido. Si hay valor: solo .jpg en el nombre de archivo (misma regla que el servidor). */
   function caratulaEsJpgValida(valor) {
     const s = (valor || '').trim();
     if (!s) return { ok: true };
-    if (/^https?:\/\//i.test(s)) {
-      try {
-        const p = new URL(s).pathname;
-        if (!/\.jpg$/i.test(p)) {
-          return { ok: false, msg: 'La URL de la carátula debe apuntar a un archivo .jpg.' };
-        }
-      } catch {
-        return { ok: false, msg: 'La URL de la carátula no es válida.' };
+    let base;
+    try {
+      if (/^https?:\/\//i.test(s)) {
+        base = ultimoSegmentoArchivoRuta(new URL(s).pathname);
+      } else {
+        base = ultimoSegmentoArchivoRuta(s);
       }
-      return { ok: true };
+    } catch {
+      return { ok: false, msg: 'La URL de la carátula no es válida.' };
     }
-    const pathPart = s.split('?')[0].split('#')[0];
-    if (!/\.jpg$/i.test(pathPart)) {
-      return { ok: false, msg: 'La carátula solo admite archivos .jpg (ej. portada.jpg).' };
+    if (!base) return { ok: false, msg: 'Indica un nombre de archivo .jpg válido.' };
+    const lower = base.toLowerCase();
+    if (lower.endsWith('.jpeg') || lower.endsWith('.jpe')) {
+      return { ok: false, msg: 'Solo se admite extensión .jpg (no .jpeg).' };
+    }
+    if (/\.(png|gif|webp|bmp|svg)$/i.test(base)) {
+      return { ok: false, msg: 'Solo se admite extensión .jpg.' };
+    }
+    if (!lower.endsWith('.jpg')) {
+      return { ok: false, msg: 'Solo se admite extensión .jpg (ej. portada.jpg).' };
     }
     return { ok: true };
   }
 
+  function validarCaratulaEnVivo() {
+    const el = document.getElementById('caratulaRuta');
+    if (!el || typeof el.setCustomValidity !== 'function') return;
+    const r = caratulaEsJpgValida(el.value);
+    el.setCustomValidity(r.ok ? '' : r.msg || 'Solo .jpg');
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
+    const carIn = document.getElementById('caratulaRuta');
+    if (carIn) {
+      carIn.addEventListener('input', validarCaratulaEnVivo);
+      carIn.addEventListener('blur', validarCaratulaEnVivo);
+    }
     void (async () => {
       await cargarCategoriasDesdeApi();
       await cargarProveedoresDesdeApi();
@@ -594,9 +618,12 @@ header h1 {
     const prev = sel.value;
     sel.innerHTML = '<option value="">— Sin categoría —</option>';
     categorias.forEach((c) => {
+      const id = c.id != null ? c.id : c.Id;
+      const nombre = c.nombre != null ? c.nombre : c.Nombre != null ? String(c.Nombre) : '';
+      if (id == null || nombre === '') return;
       const o = document.createElement('option');
-      o.value = String(c.id);
-      o.textContent = c.nombre;
+      o.value = String(Number(id));
+      o.textContent = nombre;
       sel.appendChild(o);
     });
     if (prev && [...sel.options].some((opt) => opt.value === prev)) sel.value = prev;
@@ -714,7 +741,10 @@ header h1 {
     document.getElementById("precio").value = "";
     if (proveedorSel) proveedorSel.value = "";
     if (categoriaSel) categoriaSel.value = "";
-    if (rutaManualEl) rutaManualEl.value = "";
+    if (rutaManualEl) {
+      rutaManualEl.value = "";
+      if (typeof rutaManualEl.setCustomValidity === 'function') rutaManualEl.setCustomValidity('');
+    }
   }
 
   async function eliminarLibro(id) {

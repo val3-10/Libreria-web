@@ -15,18 +15,30 @@ const SELECT_BASE =
   'LEFT JOIN dbo.Proveedores P ON P.Id = L.ProveedorId ' +
   'LEFT JOIN dbo.Categorias C ON C.Id = L.CategoriaId ';
 
-/** Comprueba que la ruta o el pathname de una URL termine en .jpg (sin .jpeg). */
+/** Último segmento de ruta (nombre de archivo), sin query ni hash. */
+function ultimoSegmentoArchivo(s) {
+  const p = String(s).split('?')[0].split('#')[0].replace(/\\/g, '/').replace(/\/+$/, '');
+  const parts = p.split('/').filter(Boolean);
+  return parts.length ? parts[parts.length - 1].trim() : p.trim();
+}
+
+/** Solo extensión .jpg (no .jpeg, .png, etc.): se mira el último segmento del path. */
 function terminaEnJpg(s) {
+  let base;
   try {
     if (/^https?:\/\//i.test(s)) {
-      const p = new URL(s).pathname;
-      return /\.jpg$/i.test(p);
+      base = ultimoSegmentoArchivo(new URL(s).pathname);
+    } else {
+      base = ultimoSegmentoArchivo(s);
     }
   } catch {
     return false;
   }
-  const p = String(s).split('?')[0].split('#')[0];
-  return /\.jpg$/i.test(p);
+  if (!base) return false;
+  const lower = base.toLowerCase();
+  if (lower.endsWith('.jpeg') || lower.endsWith('.jpe')) return false;
+  if (/\.(png|gif|webp|bmp|svg)$/i.test(base)) return false;
+  return lower.endsWith('.jpg');
 }
 
 /**
@@ -136,8 +148,8 @@ router.post('/', async (req, res) => {
 
     let categoriaId = null;
     if (body.categoriaId != null && body.categoriaId !== '') {
-      const cid = Number(body.categoriaId);
-      if (!Number.isInteger(cid) || cid <= 0) {
+      const cid = parseInt(String(body.categoriaId), 10);
+      if (!Number.isFinite(cid) || cid < 1) {
         return res.status(400).json({ error: 'categoriaId no válido.' });
       }
       categoriaId = cid;
