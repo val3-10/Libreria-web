@@ -199,6 +199,7 @@
   }
 
   function mostrarLibrosCatalogo() {
+    
     const contenedor = document.getElementById("catalogoLibros");
     if (!contenedor) return;
     contenedor.innerHTML = "";
@@ -222,6 +223,26 @@
     });
   }
 
+  function renderCartaInvitadoHTML(libro) {
+  const sinStock = libro.stock <= 0;
+  return `
+    <img src="${libro.caratula || 'img/BookNest.png'}">
+    ${sinStock ? '<span class="badge-agotado">Agotado</span>' : ''}
+    <h3>${libro.titulo}</h3>
+    <p>Autor: ${libro.autor}</p>
+    ${libro.genero ? `<p>Género: ${libro.genero}</p>` : ''}
+    <p>Estado: ${libro.estado}</p>
+    <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
+    <p>Stock: ${sinStock ? '<strong style="color:red">0</strong>' : libro.stock}</p>
+    <div class="carta-botones">
+      <button type="button" onclick="prepararCarritoInvitado(${libro.id}, ${JSON.stringify(libro.titulo)})"
+        ${sinStock ? 'disabled title="Sin stock disponible"' : ''}>
+        <i class="fi fi-rr-shopping-cart"></i>
+        ${sinStock ? 'No disponible' : 'Agregar al Carrito'}
+      </button>
+    </div>
+  `;
+}
   function mostrarSagas() {
     const contenedor = document.getElementById("sagasContainer");
     if (!contenedor) return;
@@ -419,19 +440,7 @@
         const carta = document.createElement("div");
         carta.className = "carta-libro";
 
-        carta.innerHTML = `
-          <img src="${libro.caratula || 'img/BookNest.png'}">
-          <h3>${libro.titulo}</h3>
-          <p>Autor: ${libro.autor}</p>
-          <p>Estado: ${libro.estado}</p>
-          <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-          <p>Stock: ${libro.stock}</p>
-          <div class="carta-botones">
-            <button type="button" onclick="prepararCarritoInvitado(${libro.id}, ${JSON.stringify(libro.titulo)})">
-              <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
-            </button>
-          </div>
-        `;
+        carta.innerHTML = renderCartaInvitadoHTML(libro);
         contenedorLibros.appendChild(carta);
       });
 
