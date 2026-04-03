@@ -36,6 +36,7 @@ Estructura relevante:
 | `server/scripts/create-database.sql` | Esquema inicial (tablas `Usuarios`, `Libros`, `Documento`, `Categorias`, etc.) |
 | `server/scripts/migrate-evolucion-booknest.sql` | Migración desde esquemas antiguos (ventas, categorías, `Estado` calculado desde `EstadoCatalogo` y `Stock`) |
 | `server/scripts/insert.sql` | Ejemplo de datos de prueba para `Libros` |
+| `server/scripts/insert-admin-usuario.sql` | Usuario admin de prueba (`admin@booknest.com` / `Abc123`) si no existe |
 
 ## Modelo entidad-relación (base de datos Booknest)
 
@@ -276,5 +277,7 @@ Cada módulo en `server/src/routes/` exporta un `Router` de Express:
 La ruta de **libros** (`libros.js`) expone **GET /** (listado y `?q=`), **POST /** (alta con `categoriaId` opcional) y **DELETE /:id**; mapea columnas SQL a JSON (`titulo`, `caratula`, `categoriaNombre`, etc.).
 
 Las rutas de **auth** (`auth.js`) cubren registro, login contra la tabla `Usuarios`, registro administrativo y cambio de contraseña, siempre vía SQL parametrizado.
+
+**Ventas** (`ventas.js`): **GET /** lista ventas con cliente (`JOIN` a `Usuarios`) y `detalle` parseado desde JSON; **POST /checkout** registra la venta y descuenta stock. El panel **Ventas** en `admin.html` usa solo la API (no `localStorage`).
 
 Si en el futuro quieres dar de alta libros desde la web, el patrón sería el mismo: nuevo `router.post(...)` en `libros.js` (o router dedicado), `INSERT` parametrizado y proteger el endpoint (por sesión o rol) según tu modelo de seguridad.

@@ -8,6 +8,52 @@ const db = require('../config/database');
 const { sql } = db;
 const router = express.Router();
 
+// GET /api/ventas — listado para administración (JOIN Usuarios)
+router.get('/', async (_req, res) => {
+  try {
+    const pool = await db.getPool();
+    const result = await pool.request().query(`
+      SELECT
+        v.Id,
+        v.UsuarioId,
+        v.Fecha,
+        v.Total,
+        v.Detalle,
+        u.Nombre AS ClienteNombre,
+        u.Correo AS ClienteCorreo
+      FROM dbo.Ventas v
+      INNER JOIN dbo.Usuarios u ON u.Id = v.UsuarioId
+      ORDER BY v.Fecha DESC, v.Id DESC
+    `);
+
+    const ventas = (result.recordset || []).map((row) => {
+      let detalle = [];
+      if (row.Detalle) {
+        try {
+          const parsed = JSON.parse(row.Detalle);
+          detalle = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          detalle = [];
+        }
+      }
+      return {
+        id: row.Id,
+        usuarioId: row.UsuarioId,
+        fecha: row.Fecha,
+        total: row.Total != null ? Number(row.Total) : 0,
+        clienteNombre: row.ClienteNombre || '',
+        clienteCorreo: row.ClienteCorreo || '',
+        detalle,
+      };
+    });
+
+    return res.json({ ventas });
+  } catch (err) {
+    console.error('Error en GET /api/ventas:', err);
+    return res.status(500).json({ error: err.message || 'No se pudieron obtener las ventas.' });
+  }
+});
+
 // POST /api/ventas/checkout
 // Body: { usuarioId, items: [{ libroId, cantidad }] } — nombre/correo del cliente salen de dbo.Usuarios
 router.post('/checkout', async (req, res) => {

@@ -222,7 +222,8 @@ header h1 {
 
   <!-- SECCIÓN: REGISTRO DE VENTAS -->
   <div id="ventas" class="seccion" style="display:none;">
-    <h2>Registro de Ventas</h2>
+    <h2>Registro de ventas</h2>
+    <p style="font-size:0.9rem; color:#555; margin-bottom:12px;">Listado desde la base de datos (<code>dbo.Ventas</code>). Se recarga al entrar en esta sección.</p>
     <table id="tablaVentas">
       <thead>
         <tr>
@@ -357,7 +358,8 @@ header h1 {
 <script>
   const API_BASE = window.API_BASE;
   let libros = [];
-  let transacciones = JSON.parse(localStorage.getItem("transacciones")) || [];
+  /** Ventas desde dbo.Ventas (GET /api/ventas) */
+  let ventasBd = [];
   let proveedores = [];
 
   function escapeHtml(s) {
@@ -373,7 +375,6 @@ header h1 {
     void (async () => {
       await cargarProveedoresDesdeApi();
       await cargarLibrosDesdeApi();
-      mostrarTransacciones();
       mostrarSeccion('libros');
     })();
   });
@@ -389,6 +390,51 @@ header h1 {
     const el = document.getElementById(id);
     if (el) el.style.display = "block";
     if (id === "reportes") void cargarReportes();
+    if (id === "ventas") void cargarVentasDesdeApi();
+  }
+
+  async function cargarVentasDesdeApi() {
+    const ventasBody = document.querySelector("#tablaVentas tbody");
+    if (ventasBody) ventasBody.innerHTML = '<tr><td colspan="4">Cargando ventas…</td></tr>';
+    try {
+      const res = await fetch(`${API_BASE}/api/ventas`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "No se pudieron cargar las ventas");
+      ventasBd = Array.isArray(data.ventas) ? data.ventas : [];
+      pintarTablaVentas();
+    } catch (e) {
+      console.error(e);
+      ventasBd = [];
+      if (ventasBody) {
+        ventasBody.innerHTML = `<tr><td colspan="4">${escapeHtml(e.message || "Error al cargar ventas")}</td></tr>`;
+      }
+      mostrarMensaje("error", e.message || "No se pudieron cargar las ventas desde la API.");
+    }
+  }
+
+  function pintarTablaVentas() {
+    const ventasBody = document.querySelector("#tablaVentas tbody");
+    if (!ventasBody) return;
+    ventasBody.innerHTML = "";
+    if (ventasBd.length === 0) {
+      ventasBody.innerHTML =
+        '<tr><td colspan="4" style="text-align:center;">No hay ventas registradas en la base de datos</td></tr>';
+      return;
+    }
+    ventasBd.forEach((v) => {
+      const fechaStr =
+        v.fecha != null
+          ? new Date(v.fecha).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })
+          : "—";
+      const nombre = v.clienteNombre || "—";
+      ventasBody.innerHTML += `
+        <tr>
+          <td>${escapeHtml(fechaStr)}</td>
+          <td>${escapeHtml(nombre)}</td>
+          <td><button type="button" onclick="verDetalleVenta(${Number(v.id)})">Ver detalle</button></td>
+          <td>$${Number(v.total).toLocaleString("es-CO")}</td>
+        </tr>`;
+    });
   }
 
   async function cargarReportes() {
@@ -669,48 +715,38 @@ header h1 {
     });
   }
 
-  /* === TRANSACCIONES === */
-function mostrarTransacciones() {
-  const ventasBody = document.querySelector("#tablaVentas tbody");
-  ventasBody.innerHTML = "";
+  function verDetalleVenta(ventaId) {
+    const t = ventasBd.find((x) => Number(x.id) === Number(ventaId));
+    if (!t) return;
 
-  transacciones.forEach((t, index) => {
-    if (t.tipo === "venta") {
-      ventasBody.innerHTML += `
-        <tr>
-          <td>${t.fecha}</td>
-          <td>${t.usuario || 'Cliente desconocido'}</td>
-          <td><button onclick="verDetalleVenta(${index})">Ver Detalle</button></td>
-          <td>$${t.total || 0}</td>
-          
+    document.getElementById("ventaCliente").textContent = t.clienteNombre || "—";
+    document.getElementById("ventaCorreo").textContent = t.clienteCorreo || "";
+    document.getElementById("ventaFecha").textContent =
+      t.fecha != null
+        ? new Date(t.fecha).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })
+        : "—";
+
+    const tbody = document.getElementById("ventaTabla");
+    const lineas = Array.isArray(t.detalle) ? t.detalle : [];
+    tbody.innerHTML =
+      lineas.length > 0
+        ? lineas
+            .map((d) => {
+              const precio = Number(d.precio) || 0;
+              const cant = Number(d.cantidad) || 0;
+              const sub = cant * precio;
+              return `<tr>
+          <td>${escapeHtml(d.titulo != null ? String(d.titulo) : "—")}</td>
+          <td>${cant}</td>
+          <td>$${precio.toLocaleString("es-CO")}</td>
+          <td>$${sub.toLocaleString("es-CO")}</td>
         </tr>`;
-    }
-  });
-}
+            })
+            .join("")
+        : '<tr><td colspan="4">No hay detalle disponible</td></tr>';
 
-
-
-  function verDetalleVenta(index) {
-    const t = transacciones[index];
-    if (!t || t.tipo !== "venta") return;
-
-    document.getElementById('ventaCliente').textContent = t.usuario || 'Cliente desconocido';
-    document.getElementById('ventaCorreo').textContent = t.correo || '';
-    document.getElementById('ventaFecha').textContent = t.fecha;
-    document.getElementById('ventaCliente').setAttribute('data-index', index);
-
-    const tbody = document.getElementById('ventaTabla');
-    tbody.innerHTML = t.detalle ? t.detalle.map(d => `
-      <tr>
-        <td>${d.titulo}</td>
-        <td>${d.cantidad}</td>
-        <td>$${d.precio.toLocaleString('es-CO')}</td>
-        <td>$${(d.cantidad * d.precio).toLocaleString('es-CO')}</td>
-      </tr>
-    `).join('') : '<tr><td colspan="4">No hay detalle disponible</td></tr>';
-
-    document.getElementById('ventaTotal').textContent = t.total.toLocaleString('es-CO');
-    document.getElementById('modalVenta').style.display = 'flex';
+    document.getElementById("ventaTotal").textContent = Number(t.total).toLocaleString("es-CO");
+    document.getElementById("modalVenta").style.display = "flex";
   }
 
   function cerrarModalVenta() {

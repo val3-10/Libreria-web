@@ -71,6 +71,7 @@ async function start() {
     console.log('  GET /api/ping-db  - Prueba de consulta SQL');
     console.log('  GET /api/libros       - Catálogo de libros (BD)');
     console.log('  GET /api/proveedores  - Proveedores (BD)');
+    console.log('  GET /api/ventas          - Listado de ventas (BD)');
     console.log('  POST /api/ventas/checkout - Registrar venta y stock');
   });
 }
