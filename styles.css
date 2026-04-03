@@ -1988,3 +1988,9 @@ body {
   transform: none !important;
   filter: none !important;
 }
+#tablaLibrosAdmin td:last-child,
+#tablaLibrosAdmin th:last-child {
+  max-width: none !important;
+  white-space: nowrap !important;
+  width: auto !important;
+}
