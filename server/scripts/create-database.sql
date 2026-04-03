@@ -113,6 +113,7 @@ BEGIN
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Titulo NVARCHAR(300) NOT NULL,
     Autor NVARCHAR(200) NULL,
+    Saga NVARCHAR(200) NULL,
     EstadoCatalogo NVARCHAR(50) NOT NULL
       CONSTRAINT DF_Libros_EstadoCatalogo DEFAULT (N'disponible'),
     Stock INT NOT NULL DEFAULT 0,
