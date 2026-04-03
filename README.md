@@ -36,6 +36,7 @@ Estructura relevante:
 | `server/scripts/create-database.sql` | Esquema inicial (tablas `Usuarios`, `Libros`, `Documento`, `Categorias`, etc.) |
 | `server/scripts/migrate-evolucion-booknest.sql` | Migración desde esquemas antiguos (ventas, categorías, `Estado` calculado desde `EstadoCatalogo` y `Stock`) |
 | `server/scripts/migrate-categorias-ampliar.sql` | Añade categorías literarias extra si la BD solo tenía las 6 iniciales |
+| `server/scripts/migrate-libros-saga.sql` | Añade columna opcional `Saga` (serie) en `dbo.Libros` |
 | `server/scripts/insert.sql` | Ejemplo de datos de prueba para `Libros` |
 | `server/scripts/insert-admin-usuario.sql` | Usuario admin de prueba (`admin@booknest.com` / `Abc123`) si no existe |
 
@@ -48,7 +49,7 @@ Definido en `server/scripts/create-database.sql` (SQL Server).
 | **Documento** | Catálogo de tipos de documento de identidad (código + nombre). `Usuarios.DocumentoId` referencia aquí; el número va en `Usuarios.NumeroDocumento`. |
 | **Categorias** | Categorías de libros (nombre único). `Libros.CategoriaId` es opcional (FK). |
 | **Usuarios** | Clientes y empleados (correo y usuario únicos, rol, credenciales). |
-| **Libros** | Catálogo con `EstadoCatalogo` (`disponible` / `venta`) y columna calculada **`Estado`**: si `Stock <= 0` es `agotado`, si no coincide con `EstadoCatalogo`. |
+| **Libros** | Catálogo con `EstadoCatalogo` (`disponible` / `venta`) y columna calculada **`Estado`**: si `Stock <= 0` es `agotado`, si no coincide con `EstadoCatalogo`. Campo opcional **`Saga`** (serie o saga). |
 | **Ventas** | Cabecera de venta ligada solo a `UsuarioId` (nombre y correo del cliente vía `JOIN` a `Usuarios`, sin columnas duplicadas). El desglose sigue en `Detalle` (JSON en texto). |
 | **Prestamos** | Préstamo de un libro a un usuario (fechas, estado, cantidad). |
 | **Carrito** | Líneas de carrito por usuario; restricción única `(UsuarioId, LibroId)`. |

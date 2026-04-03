@@ -9,7 +9,7 @@ const { sql } = db;
 const router = express.Router();
 
 const SELECT_BASE =
-  'SELECT L.Id, L.Titulo, L.Autor, L.Estado, L.Stock, L.Precio, L.CaratulaUrl, L.ProveedorId, L.CategoriaId, ' +
+  'SELECT L.Id, L.Titulo, L.Autor, L.Saga, L.Estado, L.Stock, L.Precio, L.CaratulaUrl, L.ProveedorId, L.CategoriaId, ' +
   'P.Nombre AS ProveedorNombre, C.Nombre AS CategoriaNombre ' +
   'FROM dbo.Libros L ' +
   'LEFT JOIN dbo.Proveedores P ON P.Id = L.ProveedorId ' +
@@ -77,7 +77,7 @@ function mapRow(row) {
     stock: row.Stock,
     precio: row.Precio != null ? Number(row.Precio) : 0,
     caratula: row.CaratulaUrl || '',
-    saga: '',
+    saga: row.Saga != null ? String(row.Saga) : '',
     proveedorId: row.ProveedorId != null ? row.ProveedorId : null,
     proveedorNombre: row.ProveedorNombre || '',
     categoriaId: row.CategoriaId != null ? row.CategoriaId : null,
@@ -106,12 +106,18 @@ router.get('/', async (req, res) => {
     return res.json({ books });
   } catch (err) {
     console.error('Error en GET /api/libros:', err);
+    if (err && err.message && /Invalid column name 'Saga'/i.test(err.message)) {
+      return res.status(500).json({
+        error:
+          'Falta la columna Saga en Libros. Ejecuta server/scripts/migrate-libros-saga.sql en la base Booknest.',
+      });
+    }
     return res.status(500).json({ error: 'No se pudieron obtener los libros.' });
   }
 });
 
 // POST /api/libros — alta (admin / integraciones)
-// Body: titulo, autor?, estado?, stock?, precio?, caratula? (texto o URL, máx. 500), proveedorId? (nullable)
+// Body: titulo, autor?, saga?, estado?, stock?, precio?, caratula?, proveedorId?, categoriaId?
 router.post('/', async (req, res) => {
   try {
     const body = req.body || {};
@@ -121,6 +127,8 @@ router.post('/', async (req, res) => {
     }
 
     const autor = body.autor != null ? String(body.autor).trim() : null;
+    const sagaRaw = body.saga != null ? String(body.saga).trim() : '';
+    const saga = sagaRaw ? sagaRaw.slice(0, 200) : null;
     let estadoCatalogo = (body.estado != null && String(body.estado).trim()) || 'disponible';
     if (estadoCatalogo === 'agotado') estadoCatalogo = 'disponible';
     if (estadoCatalogo !== 'disponible' && estadoCatalogo !== 'venta') {
@@ -178,6 +186,7 @@ router.post('/', async (req, res) => {
     const request = pool.request();
     request.input('Titulo', sql.NVarChar(300), titulo);
     request.input('Autor', sql.NVarChar(200), autor || null);
+    request.input('Saga', sql.NVarChar(200), saga);
     request.input('EstadoCatalogo', sql.NVarChar(50), estadoCatalogo);
     request.input('Stock', sql.Int, stockOk);
     request.input('Precio', sql.Decimal(18, 2), precioOk);
@@ -186,9 +195,9 @@ router.post('/', async (req, res) => {
     request.input('CategoriaId', sql.Int, categoriaId);
 
     const ins = await request.query(
-      'INSERT INTO dbo.Libros (Titulo, Autor, EstadoCatalogo, Stock, Precio, CaratulaUrl, ProveedorId, CategoriaId) ' +
+      'INSERT INTO dbo.Libros (Titulo, Autor, Saga, EstadoCatalogo, Stock, Precio, CaratulaUrl, ProveedorId, CategoriaId) ' +
         'OUTPUT INSERTED.Id ' +
-        'VALUES (@Titulo, @Autor, @EstadoCatalogo, @Stock, @Precio, @CaratulaUrl, @ProveedorId, @CategoriaId)',
+        'VALUES (@Titulo, @Autor, @Saga, @EstadoCatalogo, @Stock, @Precio, @CaratulaUrl, @ProveedorId, @CategoriaId)',
     );
 
     const newId = ins.recordset && ins.recordset[0] && ins.recordset[0].Id;
@@ -219,6 +228,12 @@ router.post('/', async (req, res) => {
       return res.status(500).json({
         error:
           'El esquema de Libros no tiene EstadoCatalogo/Estado calculado. Ejecuta migrate-evolucion-booknest.sql o crea la BD con create-database.sql.',
+      });
+    }
+    if (err && err.message && /Invalid column name 'Saga'/i.test(err.message)) {
+      return res.status(500).json({
+        error:
+          'Falta la columna Saga en Libros. Ejecuta server/scripts/migrate-libros-saga.sql en la base Booknest.',
       });
     }
     return res.status(500).json({ error: 'No se pudo crear el libro.' });
