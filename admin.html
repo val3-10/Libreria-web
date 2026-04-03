@@ -165,6 +165,28 @@ header h1 {
     <input type="text" id="titulo" placeholder="Título">
     <input type="text" id="autor" placeholder="Autor">
     <input type="text" id="saga" placeholder="Saga/Serie (opcional)">
+    <label for="genero">Género literario</label>
+<select id="genero">
+  <option value="">— Sin género —</option>
+  <option value="Terror">Terror</option>
+  <option value="Fantasía">Fantasía</option>
+  <option value="Ciencia Ficción">Ciencia Ficción</option>
+  <option value="Romance">Romance</option>
+  <option value="Thriller">Thriller</option>
+  <option value="Misterio">Misterio</option>
+  <option value="Aventura">Aventura</option>
+  <option value="Historia">Historia</option>
+  <option value="Biografía">Biografía</option>
+  <option value="Poesía">Poesía</option>
+  <option value="Infantil">Infantil</option>
+  <option value="Juvenil">Juvenil</option>
+  <option value="Clásico">Clásico</option>
+  <option value="Drama">Drama</option>
+  <option value="Humor">Humor</option>
+  <option value="Filosofía">Filosofía</option>
+  <option value="Autoayuda">Autoayuda</option>
+  <option value="Otro">Otro</option>
+</select>
     <label for="estado">Estado:</label>
     <select id="estado">
       <option value="disponible">Disponible</option>
@@ -185,6 +207,7 @@ header h1 {
           <th>Título</th>
           <th>Autor</th>
           <th>Saga</th>
+          <th>Género</th>
           <th>Proveedor</th>
           <th>Estado</th>
           <th>Stock</th>
@@ -532,6 +555,7 @@ header h1 {
     const titulo = document.getElementById("titulo").value.trim();
     const autor = document.getElementById("autor").value.trim();
     const saga = document.getElementById("saga").value.trim();
+    const genero = document.getElementById("genero").value;
     const estado = document.getElementById("estado").value;
     const stockInput = document.getElementById("stock").value.trim();
     const precioInput = document.getElementById("precio").value.trim();
@@ -573,11 +597,13 @@ header h1 {
         body: JSON.stringify({
           titulo,
           autor,
+          saga,
           estado,
           stock,
           precio,
           caratula: caratulaUrl || null,
           proveedorId,
+          genero: genero || null,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -617,7 +643,7 @@ header h1 {
     const tbody = document.querySelector("#tablaLibrosAdmin tbody");
     tbody.innerHTML = "";
     if (libros.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No hay libros en la base de datos</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No hay libros en la base de datos</td></tr>';
       return;
     }
     libros.forEach((libro) => {
@@ -630,6 +656,7 @@ header h1 {
         <tr>
           <td>${escapeHtml(libro.titulo)}</td>
           <td>${escapeHtml(libro.autor)}</td>
+          <td>${escapeHtml(libro.saga || '-')}</td>
           <td>${escapeHtml(libro.saga || '-')}</td>
           <td>${prov}</td>
           <td>${escapeHtml(libro.estado)}</td>

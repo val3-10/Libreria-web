@@ -824,6 +824,7 @@
     ${sinStock ? '<span class="badge-agotado">Agotado</span>' : ''}
     <h3>${libro.titulo}</h3>
     <p>Autor: ${libro.autor}</p>
+    ${libro.genero ? `<p>Género: ${libro.genero}</p>` : ''}
     <p>Estado: ${libro.estado || ''}</p>
     <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
     <p>Stock: ${sinStock ? '<strong style="color:red">0</strong>' : libro.stock}</p>
