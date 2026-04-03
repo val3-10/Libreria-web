@@ -19,8 +19,10 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/libros', require('./routes/libros'));
 app.use('/api/proveedores', require('./routes/proveedores'));
+app.use('/api/categorias', require('./routes/categorias'));
 app.use('/api/carrito', require('./routes/carrito'));
 app.use('/api/ventas', require('./routes/ventas'));
+app.use('/api/reportes', require('./routes/reportes'));
 
 // Health check (incluye verificación de BD)
 app.get('/api/health', async (_req, res) => {
@@ -70,6 +72,8 @@ async function start() {
     console.log('  GET /api/ping-db  - Prueba de consulta SQL');
     console.log('  GET /api/libros       - Catálogo de libros (BD)');
     console.log('  GET /api/proveedores  - Proveedores (BD)');
+    console.log('  GET /api/categorias   - Categorías de libros (BD)');
+    console.log('  GET /api/ventas          - Listado de ventas (BD)');
     console.log('  POST /api/ventas/checkout - Registrar venta y stock');
   });
 }

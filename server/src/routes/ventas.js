@@ -8,22 +8,60 @@ const db = require('../config/database');
 const { sql } = db;
 const router = express.Router();
 
+// GET /api/ventas — listado para administración (JOIN Usuarios)
+router.get('/', async (_req, res) => {
+  try {
+    const pool = await db.getPool();
+    const result = await pool.request().query(`
+      SELECT
+        v.Id,
+        v.UsuarioId,
+        v.Fecha,
+        v.Total,
+        v.Detalle,
+        u.Nombre AS ClienteNombre,
+        u.Correo AS ClienteCorreo
+      FROM dbo.Ventas v
+      INNER JOIN dbo.Usuarios u ON u.Id = v.UsuarioId
+      ORDER BY v.Fecha DESC, v.Id DESC
+    `);
+
+    const ventas = (result.recordset || []).map((row) => {
+      let detalle = [];
+      if (row.Detalle) {
+        try {
+          const parsed = JSON.parse(row.Detalle);
+          detalle = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          detalle = [];
+        }
+      }
+      return {
+        id: row.Id,
+        usuarioId: row.UsuarioId,
+        fecha: row.Fecha,
+        total: row.Total != null ? Number(row.Total) : 0,
+        clienteNombre: row.ClienteNombre || '',
+        clienteCorreo: row.ClienteCorreo || '',
+        detalle,
+      };
+    });
+
+    return res.json({ ventas });
+  } catch (err) {
+    console.error('Error en GET /api/ventas:', err);
+    return res.status(500).json({ error: err.message || 'No se pudieron obtener las ventas.' });
+  }
+});
+
 // POST /api/ventas/checkout
-// Body: { usuarioId, clienteNombre, clienteCorreo, items: [{ libroId, cantidad }] }
+// Body: { usuarioId, items: [{ libroId, cantidad }] } — nombre/correo del cliente salen de dbo.Usuarios
 router.post('/checkout', async (req, res) => {
-  const { usuarioId, clienteNombre, clienteCorreo, items } = req.body || {};
+  const { usuarioId, items } = req.body || {};
 
   const userId = Number(usuarioId);
   if (!Number.isInteger(userId) || userId <= 0) {
     return res.status(400).json({ error: 'usuarioId no válido.' });
-  }
-
-  if (!clienteNombre || !String(clienteNombre).trim()) {
-    return res.status(400).json({ error: 'Nombre del cliente es obligatorio.' });
-  }
-
-  if (!clienteCorreo || !String(clienteCorreo).trim()) {
-    return res.status(400).json({ error: 'Correo del cliente es obligatorio.' });
   }
 
   if (!Array.isArray(items) || items.length === 0) {
@@ -45,6 +83,17 @@ router.post('/checkout', async (req, res) => {
   const normalized = [...merged.entries()].map(([libroId, cantidad]) => ({ libroId, cantidad }));
 
   const pool = await db.getPool();
+
+  const userReq = await pool
+    .request()
+    .input('Uid', sql.Int, userId)
+    .query(
+      'SELECT TOP 1 Id, Nombre, Correo FROM dbo.Usuarios WHERE Id = @Uid AND Activo = 1',
+    );
+  if (!userReq.recordset || !userReq.recordset[0]) {
+    return res.status(400).json({ error: 'Usuario no encontrado o inactivo.' });
+  }
+
   const transaction = new sql.Transaction(pool);
 
   try {
@@ -101,15 +150,13 @@ router.post('/checkout', async (req, res) => {
 
     const reqIns = new sql.Request(transaction);
     reqIns.input('UsuarioId', sql.Int, userId);
-    reqIns.input('ClienteNombre', sql.NVarChar(200), String(clienteNombre).trim());
-    reqIns.input('ClienteCorreo', sql.NVarChar(255), String(clienteCorreo).trim());
     reqIns.input('Total', sql.Decimal(18, 2), total);
     reqIns.input('Detalle', sql.NVarChar(sql.MAX), detalleJson);
 
     const ins = await reqIns.query(
-      'INSERT INTO dbo.Ventas (UsuarioId, ClienteNombre, ClienteCorreo, Total, Detalle) ' +
+      'INSERT INTO dbo.Ventas (UsuarioId, Total, Detalle) ' +
         'OUTPUT INSERTED.Id AS Id ' +
-        'VALUES (@UsuarioId, @ClienteNombre, @ClienteCorreo, @Total, @Detalle)',
+        'VALUES (@UsuarioId, @Total, @Detalle)',
     );
 
     const ventaId = ins.recordset && ins.recordset[0] && ins.recordset[0].Id;

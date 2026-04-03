@@ -253,7 +253,6 @@
 
   let carrito = usuarioActivo ? leerArrayLocalStorage(`carrito_${usuarioActivo.usuario}`) : [];
   let historialCliente = usuarioActivo ? leerArrayLocalStorage(`historial_${usuarioActivo.usuario}`) : [];
-  let transacciones = leerArrayLocalStorage('transacciones');
   let favoritos = usuarioActivo ? leerArrayLocalStorage(`favoritos_${usuarioActivo.usuario}`) : [];
 
   let accionPendiente = null;
@@ -575,7 +574,6 @@
   }
 
   function guardarDatos() {
-    localStorage.setItem("transacciones", JSON.stringify(transacciones));
     if (usuarioActivo) {
       localStorage.setItem(`carrito_${usuarioActivo.usuario}`, JSON.stringify(carrito));
       localStorage.setItem(`historial_${usuarioActivo.usuario}`, JSON.stringify(historialCliente));
@@ -824,7 +822,7 @@
     ${sinStock ? '<span class="badge-agotado">Agotado</span>' : ''}
     <h3>${libro.titulo}</h3>
     <p>Autor: ${libro.autor}</p>
-    ${libro.genero ? `<p>Género: ${libro.genero}</p>` : ''}
+    ${libro.categoriaNombre ? `<p>Categoría: ${libro.categoriaNombre}</p>` : ''}
     <p>Estado: ${libro.estado || ''}</p>
     <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
     <p>Stock: ${sinStock ? '<strong style="color:red">0</strong>' : libro.stock}</p>
@@ -1309,8 +1307,6 @@
       return false;
     }
 
-    const nombreCliente = usuarioActivo.nombre;
-    const correoCliente = usuarioActivo.correo;
     const fecha = new Date().toLocaleString();
 
     let data;
@@ -1320,8 +1316,6 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           usuarioId: usuarioActivo.id,
-          clienteNombre: nombreCliente,
-          clienteCorreo: correoCliente,
           items: itemsPayload,
         }),
       });
@@ -1366,8 +1360,8 @@
 
     const nuevaFactura = {
       id: data.ventaId != null ? data.ventaId : Date.now(),
-      cliente: nombreCliente,
-      correo: correoCliente,
+      cliente: usuarioActivo.nombre,
+      correo: usuarioActivo.correo,
       fecha,
       detalle: detalleFactura,
       total: totalFactura,
@@ -1378,17 +1372,6 @@
     const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`)) || [];
     facturas.push(nuevaFactura);
     localStorage.setItem(`facturas_${usuarioActivo.usuario}`, JSON.stringify(facturas));
-
-    transacciones.push({
-      fecha,
-      usuario: nombreCliente,
-      correo: correoCliente,
-      tipo: 'venta',
-      libro: detalleFactura.map((d) => d.titulo).join(', '),
-      total: totalFactura,
-      detalle: detalleFactura,
-    });
-    localStorage.setItem('transacciones', JSON.stringify(transacciones));
 
     detalleFactura.forEach((item) => {
       historialCliente.push({ fecha, libro: item.titulo, tipo: 'Compra', estado: 'Completada' });
