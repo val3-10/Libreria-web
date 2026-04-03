@@ -39,13 +39,6 @@ header h1 {
   text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
   margin: 0;
 }
-    /* Imagen de vista previa de la carátula. Se oculta inicialmente */
-    #previewCaratula {
-      max-width: 100px;
-      margin-top: 10px;
-      display: none;
-    }
-
     table img {
       width: 50px;
       height: auto;
@@ -163,9 +156,6 @@ header h1 {
     </select>
     <input type="number" id="stock" placeholder="Stock" min="0">
     <input type="number" id="precio" placeholder="Precio (en $)" min="0">
-    <label for="caratula">Carátula (archivo imagen, opcional)</label>
-    <input type="file" id="caratula" accept="image/*" capture="environment">
-    <img id="previewCaratula" alt="Vista previa">
     <label for="caratulaRuta">Nombre o ruta de carátula</label>
     <input type="text" id="caratulaRuta" maxlength="500" placeholder="Ej. milibro.jpg">
     <button type="button" onclick="agregarLibro()">Guardar en base de datos</button>
@@ -274,23 +264,6 @@ header h1 {
       mostrarTransacciones();
       mostrarSeccion('libros');
     })();
-    
-    // Agregar listener para preview de carátula
-    const caratulaInput = document.getElementById("caratula");
-    if (caratulaInput) {
-      caratulaInput.addEventListener("change", function(e) {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = function(ev) {
-            const preview = document.getElementById("previewCaratula");
-            preview.src = ev.target.result;
-            preview.style.display = "block";
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-    }
   });
 
   function cerrarSesion() {
@@ -305,19 +278,7 @@ header h1 {
   }
 
   function agregarLibro() {
-    const caratulaInput = document.getElementById("caratula");
-    if (caratulaInput && caratulaInput.files.length > 0) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        guardarLibroConCaratula(e.target.result || "");
-      };
-      reader.onerror = function () {
-        mostrarMensaje("error", "No se pudo leer la imagen. Prueba con la ruta de carátula en texto.");
-      };
-      reader.readAsDataURL(caratulaInput.files[0]);
-    } else {
-      guardarLibroConCaratula("");
-    }
+    void guardarLibroConCaratula();
   }
 
   async function cargarLibrosDesdeApi() {
@@ -365,7 +326,7 @@ header h1 {
     if (prev && [...sel.options].some((opt) => opt.value === prev)) sel.value = prev;
   }
 
-  async function guardarLibroConCaratula(caratula) {
+  async function guardarLibroConCaratula() {
     const titulo = document.getElementById("titulo").value.trim();
     const autor = document.getElementById("autor").value.trim();
     const saga = document.getElementById("saga").value.trim();
@@ -401,18 +362,7 @@ header h1 {
 
     const rutaManualEl = document.getElementById("caratulaRuta");
     const rutaManual = (rutaManualEl && rutaManualEl.value.trim()) || "";
-    let caratulaUrl = "";
-    if (rutaManual) {
-      caratulaUrl = rutaManual.slice(0, 500);
-    } else if (caratula && String(caratula).length <= 500) {
-      caratulaUrl = String(caratula).slice(0, 500);
-    } else if (caratula && String(caratula).length > 500) {
-      caratulaUrl = "";
-      mostrarMensaje(
-        "info",
-        "La imagen supera 500 caracteres en la BD: se guarda el libro sin carátula. Indica solo el nombre del archivo en el campo de texto (ej. libro.jpg).",
-      );
-    }
+    const caratulaUrl = rutaManual ? rutaManual.slice(0, 500) : "";
 
     try {
       const res = await fetch(`${API_BASE}/api/libros`, {
@@ -444,13 +394,7 @@ header h1 {
     document.getElementById("stock").value = "";
     document.getElementById("precio").value = "";
     if (proveedorSel) proveedorSel.value = "";
-    document.getElementById("caratula").value = "";
     if (rutaManualEl) rutaManualEl.value = "";
-    const prevImg = document.getElementById("previewCaratula");
-    if (prevImg) {
-      prevImg.removeAttribute("src");
-      prevImg.style.display = "none";
-    }
   }
 
   async function eliminarLibro(id) {
