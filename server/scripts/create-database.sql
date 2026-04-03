@@ -11,25 +11,40 @@ GO
 USE Booknest;
 GO
 
--- Usuarios (clientes y empleados registrados)
-IF OBJECT_ID('dbo.Usuarios', 'U') IS NULL
+-- Catálogo de tipos de documento de identidad (relacionado con Usuarios.DocumentoId)
+IF OBJECT_ID('dbo.Documento', 'U') IS NULL
 BEGIN
-  CREATE TABLE dbo.Usuarios (
+  CREATE TABLE dbo.Documento (
     Id INT IDENTITY(1,1) PRIMARY KEY,
-    Nombre NVARCHAR(200) NOT NULL,
-    TipoDocumento NVARCHAR(50) NULL,
-    Documento NVARCHAR(50) NULL,
-    Correo NVARCHAR(255) NOT NULL UNIQUE,
-    Telefono NVARCHAR(50) NULL,
-    Direccion NVARCHAR(500) NULL,
-    FechaNacimiento DATE NULL,
-    Usuario NVARCHAR(100) NOT NULL UNIQUE,
-    PasswordHash NVARCHAR(255) NOT NULL,
-    Rol NVARCHAR(50) NOT NULL DEFAULT 'cliente',
-    Activo BIT NOT NULL DEFAULT 1,
-    FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    FechaActualizacion DATETIME2 NULL
+    Codigo NVARCHAR(20) NOT NULL UNIQUE,
+    Nombre NVARCHAR(120) NOT NULL
   );
+
+  INSERT INTO dbo.Documento (Codigo, Nombre) VALUES
+    (N'CC',  N'Cédula de Ciudadanía'),
+    (N'CE',  N'Cédula de Extranjería'),
+    (N'PA',  N'Pasaporte'),
+    (N'TI',  N'Tarjeta de Identidad'),
+    (N'NIT', N'NIT'),
+    (N'DNI', N'DNI');
+END
+GO
+
+-- Categorías de libros (Libros.CategoriaId)
+IF OBJECT_ID('dbo.Categorias', 'U') IS NULL
+BEGIN
+  CREATE TABLE dbo.Categorias (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre NVARCHAR(120) NOT NULL UNIQUE
+  );
+
+  INSERT INTO dbo.Categorias (Nombre) VALUES
+    (N'General'),
+    (N'Ficción'),
+    (N'No ficción'),
+    (N'Infantil'),
+    (N'Ciencia ficción'),
+    (N'Terror');
 END
 GO
 
@@ -41,6 +56,37 @@ BEGIN
     Nombre NVARCHAR(200) NOT NULL,
     Contacto NVARCHAR(255) NULL,
     FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+  );
+
+  INSERT INTO dbo.Proveedores (Nombre, Contacto) VALUES
+    (N'Distribuidora Editorial Sur', N'compras@delsur.com.co'),
+    (N'Libros & Más SAS', N'ventas@librosymas.com'),
+    (N'Importadora Lector Global', N'logistica@lectorglobal.co'),
+    (N'Casa del Libro Bogotá', N'proveedores@casadellibro-bog.com'),
+    (N'Distribuidora Panamericana', N'comercial@panamericana.com.co'),
+    (N'Editorial independiente Norte', N'contacto@edinorte.org');
+END
+GO
+
+-- Usuarios (clientes y empleados). Nombre y correo para ventas: vía JOIN, no duplicados en Ventas.
+IF OBJECT_ID('dbo.Usuarios', 'U') IS NULL
+BEGIN
+  CREATE TABLE dbo.Usuarios (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre NVARCHAR(200) NOT NULL,
+    DocumentoId INT NULL,
+    NumeroDocumento NVARCHAR(50) NULL,
+    Correo NVARCHAR(255) NOT NULL UNIQUE,
+    Telefono NVARCHAR(50) NULL,
+    Direccion NVARCHAR(500) NULL,
+    FechaNacimiento DATE NULL,
+    Usuario NVARCHAR(100) NOT NULL UNIQUE,
+    PasswordHash NVARCHAR(255) NOT NULL,
+    Rol NVARCHAR(50) NOT NULL DEFAULT 'cliente',
+    Activo BIT NOT NULL DEFAULT 1,
+    FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    FechaActualizacion DATETIME2 NULL,
+    CONSTRAINT FK_Usuarios_Documento FOREIGN KEY (DocumentoId) REFERENCES dbo.Documento(Id)
   );
 END
 GO
@@ -57,21 +103,21 @@ BEGIN
     Precio DECIMAL(18,2) NULL DEFAULT 0,
     CaratulaUrl NVARCHAR(500) NULL,
     ProveedorId INT NULL,
+    CategoriaId INT NULL,
     FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     FechaActualizacion DATETIME2 NULL,
-    CONSTRAINT FK_Libros_Proveedor FOREIGN KEY (ProveedorId) REFERENCES dbo.Proveedores(Id)
+    CONSTRAINT FK_Libros_Proveedor FOREIGN KEY (ProveedorId) REFERENCES dbo.Proveedores(Id),
+    CONSTRAINT FK_Libros_Categoria FOREIGN KEY (CategoriaId) REFERENCES dbo.Categorias(Id)
   );
 END
 GO
 
--- Ventas / transacciones
+-- Ventas: cliente identificado solo por UsuarioId (nombre/correo en dbo.Usuarios)
 IF OBJECT_ID('dbo.Ventas', 'U') IS NULL
 BEGIN
   CREATE TABLE dbo.Ventas (
     Id INT IDENTITY(1,1) PRIMARY KEY,
-    UsuarioId INT NULL,
-    ClienteNombre NVARCHAR(200) NULL,
-    ClienteCorreo NVARCHAR(255) NULL,
+    UsuarioId INT NOT NULL,
     Fecha DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     Total DECIMAL(18,2) NOT NULL DEFAULT 0,
     Detalle NVARCHAR(MAX) NULL,
@@ -112,6 +158,31 @@ BEGIN
     CONSTRAINT FK_Carrito_Libro FOREIGN KEY (LibroId) REFERENCES dbo.Libros(Id),
     CONSTRAINT UQ_Carrito_Usuario_Libro UNIQUE (UsuarioId, LibroId)
   );
+END
+GO
+
+-- Stock = 0 => Estado 'agotado'; si repone stock y estaba agotado => 'disponible'
+DROP TRIGGER IF EXISTS dbo.TR_Libros_EstadoPorStock;
+GO
+
+CREATE TRIGGER dbo.TR_Libros_EstadoPorStock ON dbo.Libros
+AFTER INSERT, UPDATE
+AS
+BEGIN
+  SET NOCOUNT ON;
+  UPDATE L
+  SET L.Estado = N'agotado',
+      L.FechaActualizacion = SYSUTCDATETIME()
+  FROM dbo.Libros L
+  INNER JOIN inserted i ON L.Id = i.Id
+  WHERE L.Stock <= 0 AND (L.Estado IS NULL OR L.Estado <> N'agotado');
+
+  UPDATE L
+  SET L.Estado = N'disponible',
+      L.FechaActualizacion = SYSUTCDATETIME()
+  FROM dbo.Libros L
+  INNER JOIN inserted i ON L.Id = i.Id
+  WHERE L.Stock > 0 AND L.Estado = N'agotado';
 END
 GO
 

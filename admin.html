@@ -49,7 +49,7 @@ header h1 {
     .toast-info { background: #2196f3; color: #fff; padding: 10px; position: fixed; top: 10px; right: 10px; border-radius: 5px; z-index: 9999;}
     
     /* Tabla compacta sin scroll */
-    #tablaLibrosAdmin, #tablaVentas, #tablaProveedores {
+    #tablaLibrosAdmin, #tablaVentas, #tablaProveedores, #tablaTopClientes, #tablaLibrosVendidos, #tablaSinCompras, #tablaUnionContactos {
       width: 100%;
       font-size: 0.85rem;
       border-collapse: collapse;
@@ -57,7 +57,9 @@ header h1 {
     }
     
     #tablaLibrosAdmin td, #tablaVentas td, #tablaProveedores td,
-    #tablaLibrosAdmin th, #tablaVentas th, #tablaProveedores th {
+    #tablaTopClientes td, #tablaLibrosVendidos td, #tablaSinCompras td, #tablaUnionContactos td,
+    #tablaLibrosAdmin th, #tablaVentas th, #tablaProveedores th,
+    #tablaTopClientes th, #tablaLibrosVendidos th, #tablaSinCompras th, #tablaUnionContactos th {
       padding: 6px;
       word-wrap: break-word;
       overflow-wrap: break-word;
@@ -89,6 +91,19 @@ header h1 {
       margin-bottom: 15px;
     }
 
+    #reportes h3 { margin: 24px 0 10px; font-size: 1.1rem; color: #111; }
+    #reportes h3:first-of-type { margin-top: 0; }
+    .reporte-mayor-proveedor {
+      background: #f8f9fa;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      max-width: 560px;
+    }
+    .reporte-mayor-proveedor p { margin: 6px 0; font-size: 0.9rem; }
+    .reporte-vacio { color: #6b7280; font-size: 0.9rem; margin: 8px 0 20px; }
+
   </style>
 </head>
 
@@ -119,6 +134,11 @@ header h1 {
       <li class="menu-item" onclick="mostrarSeccion('proveedores')">
         <span class="icon"><i class="fi fi-rs-box-alt"></i></span>
         <span class="text">Proveedores</span>
+      </li>
+
+      <li class="menu-item" onclick="mostrarSeccion('reportes')">
+        <span class="icon"><i class="fi fi-rr-chart-histogram"></i></span>
+        <span class="text">Indicadores</span>
       </li>
 
       <li class="menu-item" onclick="crearNuevoAdmin()">
@@ -239,6 +259,75 @@ header h1 {
       <tbody></tbody>
     </table>
   </div>
+
+  <!-- SECCIÓN: INDICADORES (reportes desde API / base de datos) -->
+  <div id="reportes" class="seccion" style="display:none;">
+    <h2>Indicadores</h2>
+    <p style="font-size:0.95rem; color:#444; max-width:720px; margin-bottom:18px;">
+      Datos calculados desde ventas registradas en la base (<code>dbo.Ventas</code>). Actualiza al entrar en esta sección.
+    </p>
+
+    <h3>Directorio unificado (SQL <code>UNION ALL</code>)</h3>
+    <p style="font-size:0.88rem; color:#555; max-width:720px; margin:-8px 0 10px;">
+      Una sola consulta combina filas de <strong>clientes</strong> (usuarios no administradores) y <strong>proveedores</strong>
+      con las mismas columnas: <code>tipo</code>, <code>nombre</code>, <code>contacto</code>. <code>UNION ALL</code> conserva todas las filas (no elimina duplicados como <code>UNION</code>).
+    </p>
+    <table id="tablaUnionContactos">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Nombre</th>
+          <th>Contacto</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Top 10 clientes (por total comprado)</h3>
+    <table id="tablaTopClientes">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Total $</th>
+          <th>Nº ventas</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Libros más comprados (unidades)</h3>
+    <table id="tablaLibrosVendidos">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Título</th>
+          <th>Autor</th>
+          <th>Unidades</th>
+          <th>Subtotal ventas</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Mayor proveedor (por unidades vendidas de sus libros)</h3>
+    <div id="bloqueMayorProveedor" class="reporte-mayor-proveedor">
+      <p class="reporte-vacio">Cargando…</p>
+    </div>
+
+    <h3>Clientes registrados sin ninguna compra</h3>
+    <table id="tablaSinCompras">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Usuario</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>
 
 <script src="config.js"></script>
@@ -274,7 +363,120 @@ header h1 {
 
   function mostrarSeccion(id) {
     document.querySelectorAll(".seccion").forEach(s => s.style.display = "none");
-    document.getElementById(id).style.display = "block";
+    const el = document.getElementById(id);
+    if (el) el.style.display = "block";
+    if (id === "reportes") void cargarReportes();
+  }
+
+  async function cargarReportes() {
+    const tbUnion = document.querySelector("#tablaUnionContactos tbody");
+    const tbCli = document.querySelector("#tablaTopClientes tbody");
+    const tbLib = document.querySelector("#tablaLibrosVendidos tbody");
+    const tbSin = document.querySelector("#tablaSinCompras tbody");
+    const bloqueProv = document.getElementById("bloqueMayorProveedor");
+    if (tbUnion) tbUnion.innerHTML = '<tr><td colspan="3">Cargando…</td></tr>';
+    if (tbCli) tbCli.innerHTML = '<tr><td colspan="5">Cargando…</td></tr>';
+    if (tbLib) tbLib.innerHTML = '<tr><td colspan="5">Cargando…</td></tr>';
+    if (tbSin) tbSin.innerHTML = '<tr><td colspan="3">Cargando…</td></tr>';
+    if (bloqueProv) bloqueProv.innerHTML = '<p class="reporte-vacio">Cargando…</p>';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/reportes/resumen`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "No se pudieron cargar los indicadores");
+
+      const unionRows = Array.isArray(data.contactosUnificados) ? data.contactosUnificados : [];
+      if (tbUnion) {
+        tbUnion.innerHTML = "";
+        if (unionRows.length === 0) {
+          tbUnion.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin datos</td></tr>';
+        } else {
+          unionRows.forEach((row) => {
+            tbUnion.innerHTML += `<tr>
+              <td>${escapeHtml(row.tipo)}</td>
+              <td>${escapeHtml(row.nombre)}</td>
+              <td>${escapeHtml(row.contacto)}</td>
+            </tr>`;
+          });
+        }
+      }
+
+      const top = Array.isArray(data.topClientes) ? data.topClientes : [];
+      if (tbCli) {
+        tbCli.innerHTML = "";
+        if (top.length === 0) {
+          tbCli.innerHTML = '<tr><td colspan="5" style="text-align:center;">Sin ventas aún</td></tr>';
+        } else {
+          top.forEach((c, i) => {
+            tbCli.innerHTML += `<tr>
+              <td>${i + 1}</td>
+              <td>${escapeHtml(c.nombre)}</td>
+              <td>${escapeHtml(c.correo)}</td>
+              <td>$${Number(c.totalCompras).toLocaleString("es-CO")}</td>
+              <td>${c.numVentas}</td>
+            </tr>`;
+          });
+        }
+      }
+
+      const libros = Array.isArray(data.librosMasVendidos) ? data.librosMasVendidos : [];
+      if (tbLib) {
+        tbLib.innerHTML = "";
+        if (libros.length === 0) {
+          tbLib.innerHTML =
+            '<tr><td colspan="5" style="text-align:center;">Sin líneas en ventas o detalle vacío. Revisa <code>Ventas.Detalle</code> en la BD.</td></tr>';
+        } else {
+          libros.forEach((L, i) => {
+            tbLib.innerHTML += `<tr>
+              <td>${i + 1}</td>
+              <td>${escapeHtml(L.titulo)}</td>
+              <td>${escapeHtml(L.autor || "—")}</td>
+              <td>${L.unidadesVendidas}</td>
+              <td>$${Number(L.subtotalVentas).toLocaleString("es-CO")}</td>
+            </tr>`;
+          });
+        }
+      }
+
+      if (bloqueProv) {
+        const mp = data.mayorProveedor;
+        if (!mp || !mp.nombre) {
+          bloqueProv.innerHTML =
+            '<p class="reporte-vacio">No hay datos: los libros vendidos deben tener <strong>proveedor</strong> asignado y existir ventas.</p>';
+        } else {
+          bloqueProv.innerHTML = `
+            <p><strong>${escapeHtml(mp.nombre)}</strong> (Id ${mp.proveedorId})</p>
+            <p>Unidades vendidas (libros suyos): ${mp.unidadesVendidas}</p>
+            <p>Subtotal atribuido: $${Number(mp.ingresosAtribuidos).toLocaleString("es-CO")}</p>
+          `;
+        }
+      }
+
+      const sin = Array.isArray(data.clientesSinCompras) ? data.clientesSinCompras : [];
+      if (tbSin) {
+        tbSin.innerHTML = "";
+        if (sin.length === 0) {
+          tbSin.innerHTML =
+            '<tr><td colspan="3" style="text-align:center;">Ninguno (todos los clientes tienen al menos una venta o no hay clientes)</td></tr>';
+        } else {
+          sin.forEach((u) => {
+            tbSin.innerHTML += `<tr>
+              <td>${escapeHtml(u.nombre)}</td>
+              <td>${escapeHtml(u.correo)}</td>
+              <td>${escapeHtml(u.usuarioLogin || "—")}</td>
+            </tr>`;
+          });
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      mostrarMensaje("error", e.message || "Error al cargar indicadores");
+      if (tbUnion) tbUnion.innerHTML = '<tr><td colspan="3">Error</td></tr>';
+      if (tbCli) tbCli.innerHTML = '<tr><td colspan="5">Error</td></tr>';
+      if (tbLib) tbLib.innerHTML = '<tr><td colspan="5">Error</td></tr>';
+      if (tbSin) tbSin.innerHTML = '<tr><td colspan="3">Error</td></tr>';
+      if (bloqueProv) bloqueProv.innerHTML = '<p class="reporte-vacio">Error al cargar.</p>';
+    }
   }
 
   function agregarLibro() {

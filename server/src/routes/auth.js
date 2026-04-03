@@ -19,6 +19,21 @@ const db = require('../config/database');
 const { sql } = db;
 const router = express.Router();
 
+/** Resuelve tipo de documento (texto del formulario) al Id de dbo.Documento */
+async function resolveDocumentoId(pool, tipoDocumento) {
+  if (!tipoDocumento || !String(tipoDocumento).trim()) return null;
+  const t = String(tipoDocumento).trim();
+  try {
+    const r = await pool.request().input('t', sql.NVarChar(200), t).query(
+      'SELECT TOP 1 Id FROM dbo.Documento WHERE Nombre = @t OR Codigo = @t',
+    );
+    return r.recordset && r.recordset[0] ? r.recordset[0].Id : null;
+  } catch (e) {
+    if (e && e.message && e.message.includes('Invalid object name')) return null;
+    throw e;
+  }
+}
+
 // POST /api/auth/login
 // El frontend llama a esta ruta con fetch('.../api/auth/login', { method: 'POST', body: JSON.stringify({ correo, password }) })
 router.post('/login', async (req, res) => {
@@ -116,10 +131,12 @@ router.post('/register', async (req, res) => {
       });
     }
 
+    const documentoId = await resolveDocumentoId(pool, tipo_documento);
+
     const reqInsert = pool.request();
     reqInsert.input('Nombre', sql.NVarChar, nombre);
-    reqInsert.input('TipoDocumento', sql.NVarChar, tipo_documento || null);
-    reqInsert.input('Documento', sql.NVarChar, documento || null);
+    reqInsert.input('DocumentoId', sql.Int, documentoId);
+    reqInsert.input('NumeroDocumento', sql.NVarChar, documento || null);
     reqInsert.input('Correo', sql.NVarChar, correo);
     reqInsert.input('Telefono', sql.NVarChar, telefono || null);
     reqInsert.input('Direccion', sql.NVarChar, direccion || null);
@@ -129,8 +146,8 @@ router.post('/register', async (req, res) => {
     reqInsert.input('Rol', sql.NVarChar, 'Cliente');
 
     await reqInsert.query(
-      'INSERT INTO Usuarios (Nombre, TipoDocumento, Documento, Correo, Telefono, Direccion, FechaNacimiento, Usuario, PasswordHash, Rol, Activo) ' +
-        'VALUES (@Nombre, @TipoDocumento, @Documento, @Correo, @Telefono, @Direccion, @FechaNacimiento, @Usuario, @PasswordHash, @Rol, 1);',
+      'INSERT INTO Usuarios (Nombre, DocumentoId, NumeroDocumento, Correo, Telefono, Direccion, FechaNacimiento, Usuario, PasswordHash, Rol, Activo) ' +
+        'VALUES (@Nombre, @DocumentoId, @NumeroDocumento, @Correo, @Telefono, @Direccion, @FechaNacimiento, @Usuario, @PasswordHash, @Rol, 1);',
     );
 
     return res.status(201).json({ message: 'Cuenta creada correctamente.' });
@@ -188,10 +205,12 @@ router.post('/register-admin', async (req, res) => {
       });
     }
 
+    const documentoId = await resolveDocumentoId(pool, tipo_documento);
+
     const reqInsert = pool.request();
     reqInsert.input('Nombre', sql.NVarChar, nombre);
-    reqInsert.input('TipoDocumento', sql.NVarChar, tipo_documento || null);
-    reqInsert.input('Documento', sql.NVarChar, documento || null);
+    reqInsert.input('DocumentoId', sql.Int, documentoId);
+    reqInsert.input('NumeroDocumento', sql.NVarChar, documento || null);
     reqInsert.input('Correo', sql.NVarChar, correo);
     reqInsert.input('Telefono', sql.NVarChar, telefono || null);
     reqInsert.input('Direccion', sql.NVarChar, direccion || null);
@@ -201,8 +220,8 @@ router.post('/register-admin', async (req, res) => {
     reqInsert.input('Rol', sql.NVarChar, rol);
 
     await reqInsert.query(
-      'INSERT INTO Usuarios (Nombre, TipoDocumento, Documento, Correo, Telefono, Direccion, FechaNacimiento, Usuario, PasswordHash, Rol, Activo) ' +
-        'VALUES (@Nombre, @TipoDocumento, @Documento, @Correo, @Telefono, @Direccion, @FechaNacimiento, @Usuario, @PasswordHash, @Rol, 1);',
+      'INSERT INTO Usuarios (Nombre, DocumentoId, NumeroDocumento, Correo, Telefono, Direccion, FechaNacimiento, Usuario, PasswordHash, Rol, Activo) ' +
+        'VALUES (@Nombre, @DocumentoId, @NumeroDocumento, @Correo, @Telefono, @Direccion, @FechaNacimiento, @Usuario, @PasswordHash, @Rol, 1);',
     );
 
     return res.status(201).json({ message: 'Cuenta administrativa creada correctamente.' });

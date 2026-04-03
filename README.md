@@ -33,7 +33,8 @@ Estructura relevante:
 | `server/src/config/database.js` | Conexión y helpers (`getPool`, `query`, `healthCheck`) |
 | `server/src/routes/auth.js` | Login, registro, cambio de contraseña |
 | `server/src/routes/libros.js` | Catálogo de libros (lectura desde `dbo.Libros`) |
-| `server/scripts/create-database.sql` | Esquema inicial (tablas `Usuarios`, `Libros`, etc.) |
+| `server/scripts/create-database.sql` | Esquema inicial (tablas `Usuarios`, `Libros`, `Documento`, `Categorias`, etc.) |
+| `server/scripts/migrate-evolucion-booknest.sql` | Migración desde esquemas antiguos (ventas sin duplicar cliente, categorías, trigger de stock) |
 | `server/scripts/insert.sql` | Ejemplo de datos de prueba para `Libros` |
 
 ## Modelo entidad-relación (base de datos Booknest)
@@ -42,16 +43,20 @@ Definido en `server/scripts/create-database.sql` (SQL Server).
 
 | Entidad | Descripción |
 |--------|-------------|
+| **Documento** | Catálogo de tipos de documento de identidad (código + nombre). `Usuarios.DocumentoId` referencia aquí; el número va en `Usuarios.NumeroDocumento`. |
+| **Categorias** | Categorías de libros (nombre único). `Libros.CategoriaId` es opcional (FK). |
 | **Usuarios** | Clientes y empleados (correo y usuario únicos, rol, credenciales). |
-| **Libros** | Catálogo (título, autor, stock, precio, carátula). |
-| **Ventas** | Cabecera de venta; puede ir sin usuario (invitado) con `ClienteNombre` / `ClienteCorreo`; el detalle va en `Detalle` (texto, no tabla hija). |
+| **Libros** | Catálogo (título, autor, estado, stock, precio, carátula, proveedor, categoría). Si `Stock` llega a 0, un trigger pone `Estado = 'agotado'`; al repomer stock desde agotado pasa a `disponible`. |
+| **Ventas** | Cabecera de venta ligada solo a `UsuarioId` (nombre y correo del cliente vía `JOIN` a `Usuarios`, sin columnas duplicadas). El desglose sigue en `Detalle` (JSON en texto). |
 | **Prestamos** | Préstamo de un libro a un usuario (fechas, estado, cantidad). |
 | **Carrito** | Líneas de carrito por usuario; restricción única `(UsuarioId, LibroId)`. |
-| **Proveedores** | Catálogo de proveedores sin claves foráneas hacia otras tablas en el script actual. |
+| **Proveedores** | Catálogo de proveedores; `Libros.ProveedorId` referencia esta tabla. |
 
 **Relaciones:**
 
-- **Usuarios (1) — (0..N) Ventas**: `Ventas.UsuarioId` → `Usuarios.Id` (nullable: venta sin cuenta).
+- **Documento (1) — (0..N) Usuarios**: `Usuarios.DocumentoId` → `Documento.Id` (opcional).
+- **Categorias (1) — (0..N) Libros**: `Libros.CategoriaId` → `Categorias.Id` (opcional).
+- **Usuarios (1) — (0..N) Ventas**: `Ventas.UsuarioId` → `Usuarios.Id` (obligatorio en el esquema actual; el checkout exige usuario autenticado).
 - **Usuarios (1) — (0..N) Prestamos**: `Prestamos.UsuarioId` → `Usuarios.Id` (nullable en DDL).
 - **Libros (1) — (0..N) Prestamos**: `Prestamos.LibroId` → `Libros.Id` (nullable en DDL).
 - **Usuarios (1) — (1..N) Carrito**: `Carrito.UsuarioId` NOT NULL.
@@ -59,17 +64,31 @@ Definido en `server/scripts/create-database.sql` (SQL Server).
 
 ```mermaid
 erDiagram
-  Usuarios ||--o{ Ventas : "realiza (opcional)"
+  Documento ||--o{ Usuarios : "tipo de identidad"
+  Categorias ||--o{ Libros : "clasifica"
+  Usuarios ||--o{ Ventas : "realiza"
   Usuarios ||--o{ Prestamos : "tiene"
   Usuarios ||--o{ Carrito : "posee"
   Libros ||--o{ Prestamos : "en préstamo"
   Libros ||--o{ Carrito : "en carrito"
+  Proveedores ||--o{ Libros : "suministra"
+
+  Documento {
+    int Id PK
+    nvarchar Codigo UK
+    nvarchar Nombre
+  }
+
+  Categorias {
+    int Id PK
+    nvarchar Nombre UK
+  }
 
   Usuarios {
     int Id PK
     nvarchar Nombre
-    nvarchar TipoDocumento
-    nvarchar Documento
+    int DocumentoId FK
+    nvarchar NumeroDocumento
     nvarchar Correo UK
     nvarchar Telefono
     nvarchar Direccion
@@ -90,6 +109,8 @@ erDiagram
     int Stock
     decimal Precio
     nvarchar CaratulaUrl
+    int CategoriaId FK
+    int ProveedorId FK
     datetime2 FechaCreacion
     datetime2 FechaActualizacion
   }
@@ -97,8 +118,6 @@ erDiagram
   Ventas {
     int Id PK
     int UsuarioId FK
-    nvarchar ClienteNombre
-    nvarchar ClienteCorreo
     datetime2 Fecha
     decimal Total
     nvarchar Detalle
@@ -132,7 +151,7 @@ erDiagram
   }
 ```
 
-**Notas:** `Proveedores` no tiene relaciones en el diagrama de cardinalidad porque el esquema no define FKs desde/hacia esa tabla. Las líneas de venta no están normalizadas: no existe tabla de detalle; el desglose puede almacenarse en `Ventas.Detalle` (`NVARCHAR(MAX)`).
+**Notas:** No hay tabla de líneas de venta: el desglose va en `Ventas.Detalle` (`NVARCHAR(MAX)`, JSON). **Categoría** del libro: `dbo.Categorias` + `Libros.CategoriaId`. Bases creadas antes de estos cambios deben ejecutar `migrate-evolucion-booknest.sql`.
 
 Variables de entorno del servidor: archivo `server/.env` (servidor, usuario, contraseña, base `Booknest`, puerto, opciones de cifrado). Ver comentarios en `database.js`.
 
@@ -253,7 +272,7 @@ Cada módulo en `server/src/routes/` exporta un `Router` de Express:
 2. El handler es `async`: obtiene el pool con `await db.getPool()`, arma el `request` de **mssql**, enlaza parámetros con `.input()` para evitar inyección SQL y ejecuta `query()`.
 3. La respuesta al cliente es **JSON** (`res.json(...)`) o códigos HTTP de error (`res.status(400).json({ error: '...' })`).
 
-La ruta de **libros** (`libros.js`) solo implementa **GET /**: lee `Libros`, mapea columnas SQL (`Titulo`, `CaratulaUrl`, etc.) a nombres que entiende el front (`titulo`, `caratula`, etc.) y admite búsqueda opcional con el query `?q=`.
+La ruta de **libros** (`libros.js`) expone **GET /** (listado y `?q=`), **POST /** (alta con `categoriaId` opcional) y **DELETE /:id**; mapea columnas SQL a JSON (`titulo`, `caratula`, `categoriaNombre`, etc.).
 
 Las rutas de **auth** (`auth.js`) cubren registro, login contra la tabla `Usuarios`, registro administrativo y cambio de contraseña, siempre vía SQL parametrizado.
 

@@ -21,6 +21,7 @@ app.use('/api/libros', require('./routes/libros'));
 app.use('/api/proveedores', require('./routes/proveedores'));
 app.use('/api/carrito', require('./routes/carrito'));
 app.use('/api/ventas', require('./routes/ventas'));
+app.use('/api/reportes', require('./routes/reportes'));
 
 // Health check (incluye verificación de BD)
 app.get('/api/health', async (_req, res) => {

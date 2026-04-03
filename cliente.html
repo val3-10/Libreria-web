@@ -1308,8 +1308,6 @@
       return false;
     }
 
-    const nombreCliente = usuarioActivo.nombre;
-    const correoCliente = usuarioActivo.correo;
     const fecha = new Date().toLocaleString();
 
     let data;
@@ -1319,8 +1317,6 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           usuarioId: usuarioActivo.id,
-          clienteNombre: nombreCliente,
-          clienteCorreo: correoCliente,
           items: itemsPayload,
         }),
       });
