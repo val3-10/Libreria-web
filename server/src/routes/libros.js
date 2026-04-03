@@ -78,12 +78,13 @@ router.post('/', async (req, res) => {
     }
 
     const autor = body.autor != null ? String(body.autor).trim() : null;
-    let estado = (body.estado != null && String(body.estado).trim()) || 'disponible';
+    let estadoCatalogo = (body.estado != null && String(body.estado).trim()) || 'disponible';
+    if (estadoCatalogo === 'agotado') estadoCatalogo = 'disponible';
+    if (estadoCatalogo !== 'disponible' && estadoCatalogo !== 'venta') {
+      estadoCatalogo = 'disponible';
+    }
     const stock = Number(body.stock);
     const stockOk = Number.isInteger(stock) && stock >= 0 ? stock : 0;
-    if (stockOk <= 0) {
-      estado = 'agotado';
-    }
     const precio = body.precio != null ? Number(body.precio) : 0;
     const precioOk = Number.isFinite(precio) && precio >= 0 ? precio : 0;
 
@@ -130,7 +131,7 @@ router.post('/', async (req, res) => {
     const request = pool.request();
     request.input('Titulo', sql.NVarChar(300), titulo);
     request.input('Autor', sql.NVarChar(200), autor || null);
-    request.input('Estado', sql.NVarChar(50), estado);
+    request.input('EstadoCatalogo', sql.NVarChar(50), estadoCatalogo);
     request.input('Stock', sql.Int, stockOk);
     request.input('Precio', sql.Decimal(18, 2), precioOk);
     request.input('CaratulaUrl', sql.NVarChar(500), caratulaUrl || null);
@@ -138,9 +139,9 @@ router.post('/', async (req, res) => {
     request.input('CategoriaId', sql.Int, categoriaId);
 
     const ins = await request.query(
-      'INSERT INTO dbo.Libros (Titulo, Autor, Estado, Stock, Precio, CaratulaUrl, ProveedorId, CategoriaId) ' +
+      'INSERT INTO dbo.Libros (Titulo, Autor, EstadoCatalogo, Stock, Precio, CaratulaUrl, ProveedorId, CategoriaId) ' +
         'OUTPUT INSERTED.Id ' +
-        'VALUES (@Titulo, @Autor, @Estado, @Stock, @Precio, @CaratulaUrl, @ProveedorId, @CategoriaId)',
+        'VALUES (@Titulo, @Autor, @EstadoCatalogo, @Stock, @Precio, @CaratulaUrl, @ProveedorId, @CategoriaId)',
     );
 
     const newId = ins.recordset && ins.recordset[0] && ins.recordset[0].Id;
@@ -165,6 +166,12 @@ router.post('/', async (req, res) => {
       return res.status(500).json({
         error:
           'Falta la tabla Categorias o la columna CategoriaId. Ejecuta server/scripts/migrate-evolucion-booknest.sql en Booknest.',
+      });
+    }
+    if (err && err.message && err.message.includes('EstadoCatalogo')) {
+      return res.status(500).json({
+        error:
+          'El esquema de Libros no tiene EstadoCatalogo/Estado calculado. Ejecuta migrate-evolucion-booknest.sql o crea la BD con create-database.sql.',
       });
     }
     return res.status(500).json({ error: 'No se pudo crear el libro.' });

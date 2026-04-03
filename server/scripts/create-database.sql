@@ -98,7 +98,8 @@ BEGIN
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Titulo NVARCHAR(300) NOT NULL,
     Autor NVARCHAR(200) NULL,
-    Estado NVARCHAR(50) NOT NULL DEFAULT 'disponible',
+    EstadoCatalogo NVARCHAR(50) NOT NULL
+      CONSTRAINT DF_Libros_EstadoCatalogo DEFAULT (N'disponible'),
     Stock INT NOT NULL DEFAULT 0,
     Precio DECIMAL(18,2) NULL DEFAULT 0,
     CaratulaUrl NVARCHAR(500) NULL,
@@ -106,6 +107,9 @@ BEGIN
     CategoriaId INT NULL,
     FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     FechaActualizacion DATETIME2 NULL,
+    Estado AS (
+      CASE WHEN Stock <= 0 THEN CONVERT(NVARCHAR(50), N'agotado') ELSE EstadoCatalogo END
+    ) PERSISTED,
     CONSTRAINT FK_Libros_Proveedor FOREIGN KEY (ProveedorId) REFERENCES dbo.Proveedores(Id),
     CONSTRAINT FK_Libros_Categoria FOREIGN KEY (CategoriaId) REFERENCES dbo.Categorias(Id)
   );
@@ -161,29 +165,6 @@ BEGIN
 END
 GO
 
--- Stock = 0 => Estado 'agotado'; si repone stock y estaba agotado => 'disponible'
-DROP TRIGGER IF EXISTS dbo.TR_Libros_EstadoPorStock;
-GO
-
-CREATE TRIGGER dbo.TR_Libros_EstadoPorStock ON dbo.Libros
-AFTER INSERT, UPDATE
-AS
-BEGIN
-  SET NOCOUNT ON;
-  UPDATE L
-  SET L.Estado = N'agotado',
-      L.FechaActualizacion = SYSUTCDATETIME()
-  FROM dbo.Libros L
-  INNER JOIN inserted i ON L.Id = i.Id
-  WHERE L.Stock <= 0 AND (L.Estado IS NULL OR L.Estado <> N'agotado');
-
-  UPDATE L
-  SET L.Estado = N'disponible',
-      L.FechaActualizacion = SYSUTCDATETIME()
-  FROM dbo.Libros L
-  INNER JOIN inserted i ON L.Id = i.Id
-  WHERE L.Stock > 0 AND L.Estado = N'agotado';
-END
-GO
+-- Estado visible: columna calculada PERSISTED (Stock <= 0 => agotado; si no, EstadoCatalogo disponible|venta)
 
 PRINT 'Base de datos Booknest y tablas creadas correctamente.';

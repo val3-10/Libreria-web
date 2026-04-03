@@ -34,7 +34,7 @@ Estructura relevante:
 | `server/src/routes/auth.js` | Login, registro, cambio de contraseña |
 | `server/src/routes/libros.js` | Catálogo de libros (lectura desde `dbo.Libros`) |
 | `server/scripts/create-database.sql` | Esquema inicial (tablas `Usuarios`, `Libros`, `Documento`, `Categorias`, etc.) |
-| `server/scripts/migrate-evolucion-booknest.sql` | Migración desde esquemas antiguos (ventas sin duplicar cliente, categorías, trigger de stock) |
+| `server/scripts/migrate-evolucion-booknest.sql` | Migración desde esquemas antiguos (ventas, categorías, `Estado` calculado desde `EstadoCatalogo` y `Stock`) |
 | `server/scripts/insert.sql` | Ejemplo de datos de prueba para `Libros` |
 
 ## Modelo entidad-relación (base de datos Booknest)
@@ -46,7 +46,7 @@ Definido en `server/scripts/create-database.sql` (SQL Server).
 | **Documento** | Catálogo de tipos de documento de identidad (código + nombre). `Usuarios.DocumentoId` referencia aquí; el número va en `Usuarios.NumeroDocumento`. |
 | **Categorias** | Categorías de libros (nombre único). `Libros.CategoriaId` es opcional (FK). |
 | **Usuarios** | Clientes y empleados (correo y usuario únicos, rol, credenciales). |
-| **Libros** | Catálogo (título, autor, estado, stock, precio, carátula, proveedor, categoría). Si `Stock` llega a 0, un trigger pone `Estado = 'agotado'`; al repomer stock desde agotado pasa a `disponible`. |
+| **Libros** | Catálogo con `EstadoCatalogo` (`disponible` / `venta`) y columna calculada **`Estado`**: si `Stock <= 0` es `agotado`, si no coincide con `EstadoCatalogo`. |
 | **Ventas** | Cabecera de venta ligada solo a `UsuarioId` (nombre y correo del cliente vía `JOIN` a `Usuarios`, sin columnas duplicadas). El desglose sigue en `Detalle` (JSON en texto). |
 | **Prestamos** | Préstamo de un libro a un usuario (fechas, estado, cantidad). |
 | **Carrito** | Líneas de carrito por usuario; restricción única `(UsuarioId, LibroId)`. |
@@ -105,12 +105,13 @@ erDiagram
     int Id PK
     nvarchar Titulo
     nvarchar Autor
-    nvarchar Estado
+    nvarchar EstadoCatalogo
     int Stock
     decimal Precio
     nvarchar CaratulaUrl
     int CategoriaId FK
     int ProveedorId FK
+    nvarchar Estado
     datetime2 FechaCreacion
     datetime2 FechaActualizacion
   }
@@ -242,7 +243,7 @@ Hoy el catálogo **solo lee** la tabla `dbo.Libros`; no hay pantalla de administ
 
    - **Titulo** (obligatorio)
    - **Autor** (opcional)
-   - **Estado** (por defecto `disponible` en el esquema)
+   - **EstadoCatalogo** (`disponible` o `venta`; la columna **Estado** es calculada según stock)
    - **Stock**, **Precio**
    - **CaratulaUrl** — ruta relativa a la web (ej. `img/BookNest.png`) o URL absoluta; si es `NULL`, el front usa una imagen por defecto.
 
@@ -252,8 +253,8 @@ Ejemplo (también puedes usar o adaptar `server/scripts/insert.sql`):
 USE Booknest;
 GO
 
-INSERT INTO dbo.Libros (Titulo, Autor, Estado, Stock, Precio, CaratulaUrl)
-VALUES (N'Título del libro', N'Nombre del autor', N'disponible', 10, 29900, N'img/BookNest.png');
+INSERT INTO dbo.Libros (Titulo, Autor, EstadoCatalogo, Stock, Precio, CaratulaUrl, CategoriaId)
+VALUES (N'Título del libro', N'Nombre del autor', N'disponible', 10, 29900, N'img/BookNest.png', 1);
 GO
 ```
 

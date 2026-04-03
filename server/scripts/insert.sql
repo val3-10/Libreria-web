@@ -13,7 +13,7 @@ INSERT INTO dbo.Proveedores (Nombre, Contacto) VALUES
 GO
 
 -- Requiere tablas Categorias y Libros con columna CategoriaId (create-database.sql o migrate-evolucion-booknest.sql).
-INSERT INTO dbo.Libros (Titulo, Autor, Estado, Stock, Precio, CaratulaUrl, CategoriaId)
+INSERT INTO dbo.Libros (Titulo, Autor, EstadoCatalogo, Stock, Precio, CaratulaUrl, CategoriaId)
 VALUES
   (N'Cien años de soledad', N'Gabriel García Márquez', N'disponible', 12, 45000, N'caratulas/cien años de soledad.jpg', 1),
   (N'El principito', N'Antoine de Saint-Exupéry', N'disponible', 30, 22000,  N'caratulas/El principito.jpg', 1),

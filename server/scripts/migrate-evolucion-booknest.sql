@@ -1,7 +1,7 @@
 -- Migración para bases Booknest ya creadas con el esquema anterior.
 -- Ejecutar en SSMS sobre la base Booknest (una vez).
 -- Incluye: Documento + Usuarios.DocumentoId/NumeroDocumento, Categorias + Libros.CategoriaId,
---          Ventas sin ClienteNombre/ClienteCorreo, trigger de stock/estado.
+--          Ventas sin ClienteNombre/ClienteCorreo, Estado calculado (sin trigger).
 
 USE Booknest;
 GO
@@ -127,32 +127,44 @@ BEGIN
 END
 GO
 
--- 6) Alinear estado con stock existente
-UPDATE dbo.Libros SET Estado = N'agotado' WHERE Stock <= 0 AND (Estado IS NULL OR Estado <> N'agotado');
-GO
-
--- 7) Trigger stock / estado
+-- 6) Estado como columna calculada PERSISTED (sin trigger): EstadoCatalogo + Estado
 DROP TRIGGER IF EXISTS dbo.TR_Libros_EstadoPorStock;
 GO
 
-CREATE TRIGGER dbo.TR_Libros_EstadoPorStock ON dbo.Libros
-AFTER INSERT, UPDATE
-AS
+IF EXISTS (
+  SELECT 1
+  FROM sys.columns c
+  WHERE c.object_id = OBJECT_ID(N'dbo.Libros') AND c.name = N'Estado'
+    AND NOT EXISTS (
+      SELECT 1 FROM sys.computed_columns cc
+      WHERE cc.object_id = c.object_id AND cc.column_id = c.column_id
+    )
+)
 BEGIN
-  SET NOCOUNT ON;
-  UPDATE L
-  SET L.Estado = N'agotado',
-      L.FechaActualizacion = SYSUTCDATETIME()
-  FROM dbo.Libros L
-  INNER JOIN inserted i ON L.Id = i.Id
-  WHERE L.Stock <= 0 AND (L.Estado IS NULL OR L.Estado <> N'agotado');
+  IF COL_LENGTH('dbo.Libros', 'EstadoCatalogo') IS NULL
+    ALTER TABLE dbo.Libros ADD EstadoCatalogo NVARCHAR(50) NULL;
 
-  UPDATE L
-  SET L.Estado = N'disponible',
-      L.FechaActualizacion = SYSUTCDATETIME()
-  FROM dbo.Libros L
-  INNER JOIN inserted i ON L.Id = i.Id
-  WHERE L.Stock > 0 AND L.Estado = N'agotado';
+  UPDATE dbo.Libros
+  SET EstadoCatalogo = CASE
+    WHEN Estado = N'agotado' THEN N'disponible'
+    ELSE COALESCE(Estado, N'disponible')
+  END;
+
+  UPDATE dbo.Libros SET EstadoCatalogo = N'disponible' WHERE EstadoCatalogo IS NULL;
+
+  ALTER TABLE dbo.Libros ALTER COLUMN EstadoCatalogo NVARCHAR(50) NOT NULL;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM sys.default_constraints
+    WHERE parent_object_id = OBJECT_ID(N'dbo.Libros') AND name = N'DF_Libros_EstadoCatalogo'
+  )
+    ALTER TABLE dbo.Libros ADD CONSTRAINT DF_Libros_EstadoCatalogo DEFAULT (N'disponible') FOR EstadoCatalogo;
+
+  ALTER TABLE dbo.Libros DROP COLUMN Estado;
+
+  ALTER TABLE dbo.Libros ADD Estado AS (
+    CASE WHEN Stock <= 0 THEN CONVERT(NVARCHAR(50), N'agotado') ELSE EstadoCatalogo END
+  ) PERSISTED;
 END
 GO
 
