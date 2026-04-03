@@ -35,6 +35,7 @@ Estructura relevante:
 | `server/src/routes/libros.js` | Catálogo de libros (lectura desde `dbo.Libros`) |
 | `server/scripts/create-database.sql` | Esquema inicial (tablas `Usuarios`, `Libros`, `Documento`, `Categorias`, etc.) |
 | `server/scripts/migrate-evolucion-booknest.sql` | Migración desde esquemas antiguos (ventas, categorías, `Estado` calculado desde `EstadoCatalogo` y `Stock`) |
+| `server/scripts/migrate-categorias-ampliar.sql` | Añade categorías literarias extra si la BD solo tenía las 6 iniciales |
 | `server/scripts/insert.sql` | Ejemplo de datos de prueba para `Libros` |
 | `server/scripts/insert-admin-usuario.sql` | Usuario admin de prueba (`admin@booknest.com` / `Abc123`) si no existe |
 
@@ -153,7 +154,7 @@ erDiagram
   }
 ```
 
-**Notas:** No hay tabla de líneas de venta: el desglose va en `Ventas.Detalle` (`NVARCHAR(MAX)`, JSON). **Categoría** del libro: `dbo.Categorias` + `Libros.CategoriaId`. Bases creadas antes de estos cambios deben ejecutar `migrate-evolucion-booknest.sql`.
+**Notas:** No hay tabla de líneas de venta: el desglose va en `Ventas.Detalle` (`NVARCHAR(MAX)`, JSON). **Categoría** del libro: `dbo.Categorias` + `Libros.CategoriaId`. Bases creadas antes de estos cambios deben ejecutar `migrate-evolucion-booknest.sql`. Si ya migraste pero solo tienes seis categorías, ejecuta `migrate-categorias-ampliar.sql` para alinear el catálogo con el formulario del admin.
 
 Variables de entorno del servidor: archivo `server/.env` (servidor, usuario, contraseña, base `Booknest`, puerto, opciones de cifrado). Ver comentarios en `database.js`.
 
@@ -267,6 +268,7 @@ Las APIs son **rutas HTTP de Express** registradas en `server/src/index.js`:
 
 - `app.use('/api/auth', require('./routes/auth'));`
 - `app.use('/api/libros', require('./routes/libros'));`
+- `app.use('/api/categorias', require('./routes/categorias'));`
 
 Cada módulo en `server/src/routes/` exporta un `Router` de Express:
 
@@ -275,6 +277,8 @@ Cada módulo en `server/src/routes/` exporta un `Router` de Express:
 3. La respuesta al cliente es **JSON** (`res.json(...)`) o códigos HTTP de error (`res.status(400).json({ error: '...' })`).
 
 La ruta de **libros** (`libros.js`) expone **GET /** (listado y `?q=`), **POST /** (alta con `categoriaId` opcional) y **DELETE /:id**; mapea columnas SQL a JSON (`titulo`, `caratula`, `categoriaNombre`, etc.).
+
+**Categorías** (`categorias.js`): **GET /** devuelve `{ categorias: [{ id, nombre }] }` desde `dbo.Categorias` (orden por nombre). El formulario de alta de libros en `admin.html` usa este listado en lugar de un desplegable fijo de “género”.
 
 Las rutas de **auth** (`auth.js`) cubren registro, login contra la tabla `Usuarios`, registro administrativo y cambio de contraseña, siempre vía SQL parametrizado.
 

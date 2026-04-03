@@ -165,28 +165,10 @@ header h1 {
     <input type="text" id="titulo" placeholder="Título">
     <input type="text" id="autor" placeholder="Autor">
     <input type="text" id="saga" placeholder="Saga/Serie (opcional)">
-    <label for="genero">Género literario</label>
-<select id="genero">
-  <option value="">— Sin género —</option>
-  <option value="Terror">Terror</option>
-  <option value="Fantasía">Fantasía</option>
-  <option value="Ciencia Ficción">Ciencia Ficción</option>
-  <option value="Romance">Romance</option>
-  <option value="Thriller">Thriller</option>
-  <option value="Misterio">Misterio</option>
-  <option value="Aventura">Aventura</option>
-  <option value="Historia">Historia</option>
-  <option value="Biografía">Biografía</option>
-  <option value="Poesía">Poesía</option>
-  <option value="Infantil">Infantil</option>
-  <option value="Juvenil">Juvenil</option>
-  <option value="Clásico">Clásico</option>
-  <option value="Drama">Drama</option>
-  <option value="Humor">Humor</option>
-  <option value="Filosofía">Filosofía</option>
-  <option value="Autoayuda">Autoayuda</option>
-  <option value="Otro">Otro</option>
-</select>
+    <label for="categoriaLibroId">Categoría</label>
+    <select id="categoriaLibroId">
+      <option value="">— Sin categoría —</option>
+    </select>
     <label for="estado">Estado:</label>
     <select id="estado">
       <option value="disponible">Disponible</option>
@@ -199,7 +181,7 @@ header h1 {
     <input type="number" id="stock" placeholder="Stock" min="0">
     <input type="number" id="precio" placeholder="Precio (en $)" min="0">
     <label for="caratulaRuta">Nombre o ruta de carátula</label>
-    <input type="text" id="caratulaRuta" maxlength="500" placeholder="Ej. milibro.jpg">
+    <input type="text" id="caratulaRuta" maxlength="500" placeholder="Ej. milibro.jpg (solo .jpg; se guarda en caratulas/)">
     <button type="button" onclick="agregarLibro()">Guardar en base de datos</button>
     <table id="tablaLibrosAdmin">
       <thead>
@@ -207,7 +189,7 @@ header h1 {
           <th>Título</th>
           <th>Autor</th>
           <th>Saga</th>
-          <th>Género</th>
+          <th>Categoría</th>
           <th>Proveedor</th>
           <th>Estado</th>
           <th>Stock</th>
@@ -361,6 +343,7 @@ header h1 {
   /** Ventas desde dbo.Ventas (GET /api/ventas) */
   let ventasBd = [];
   let proveedores = [];
+  let categorias = [];
 
   function escapeHtml(s) {
     if (s == null) return '';
@@ -371,8 +354,31 @@ header h1 {
       .replace(/"/g, '&quot;');
   }
 
+  /** Vacío = válido. Si hay valor: solo .jpg (URL http(s) o ruta local). */
+  function caratulaEsJpgValida(valor) {
+    const s = (valor || '').trim();
+    if (!s) return { ok: true };
+    if (/^https?:\/\//i.test(s)) {
+      try {
+        const p = new URL(s).pathname;
+        if (!/\.jpg$/i.test(p)) {
+          return { ok: false, msg: 'La URL de la carátula debe apuntar a un archivo .jpg.' };
+        }
+      } catch {
+        return { ok: false, msg: 'La URL de la carátula no es válida.' };
+      }
+      return { ok: true };
+    }
+    const pathPart = s.split('?')[0].split('#')[0];
+    if (!/\.jpg$/i.test(pathPart)) {
+      return { ok: false, msg: 'La carátula solo admite archivos .jpg (ej. portada.jpg).' };
+    }
+    return { ok: true };
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     void (async () => {
+      await cargarCategoriasDesdeApi();
       await cargarProveedoresDesdeApi();
       await cargarLibrosDesdeApi();
       mostrarSeccion('libros');
@@ -567,6 +573,35 @@ header h1 {
     }
   }
 
+  async function cargarCategoriasDesdeApi() {
+    try {
+      const res = await fetch(`${API_BASE}/api/categorias`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Error al cargar categorías');
+      categorias = Array.isArray(data.categorias) ? data.categorias : [];
+      llenarSelectCategoriasLibro();
+    } catch (e) {
+      console.error(e);
+      categorias = [];
+      llenarSelectCategoriasLibro();
+      mostrarMensaje('error', e.message || 'No se pudieron cargar las categorías desde la API.');
+    }
+  }
+
+  function llenarSelectCategoriasLibro() {
+    const sel = document.getElementById('categoriaLibroId');
+    if (!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— Sin categoría —</option>';
+    categorias.forEach((c) => {
+      const o = document.createElement('option');
+      o.value = String(c.id);
+      o.textContent = c.nombre;
+      sel.appendChild(o);
+    });
+    if (prev && [...sel.options].some((opt) => opt.value === prev)) sel.value = prev;
+  }
+
   async function cargarProveedoresDesdeApi() {
     try {
       const res = await fetch(`${API_BASE}/api/proveedores`);
@@ -601,7 +636,6 @@ header h1 {
     const titulo = document.getElementById("titulo").value.trim();
     const autor = document.getElementById("autor").value.trim();
     const saga = document.getElementById("saga").value.trim();
-    const genero = document.getElementById("genero").value;
     const estado = document.getElementById("estado").value;
     const stockInput = document.getElementById("stock").value.trim();
     const precioInput = document.getElementById("precio").value.trim();
@@ -610,6 +644,12 @@ header h1 {
     if (proveedorSel && proveedorSel.value) {
       const pid = Number(proveedorSel.value);
       if (Number.isInteger(pid) && pid > 0) proveedorId = pid;
+    }
+    const categoriaSel = document.getElementById("categoriaLibroId");
+    let categoriaId = null;
+    if (categoriaSel && categoriaSel.value) {
+      const cid = Number(categoriaSel.value);
+      if (Number.isInteger(cid) && cid > 0) categoriaId = cid;
     }
 
     if (!titulo) {
@@ -634,6 +674,11 @@ header h1 {
 
     const rutaManualEl = document.getElementById("caratulaRuta");
     const rutaManual = (rutaManualEl && rutaManualEl.value.trim()) || "";
+    const chkCar = caratulaEsJpgValida(rutaManual);
+    if (!chkCar.ok) {
+      mostrarMensaje('error', chkCar.msg);
+      return;
+    }
     const caratulaUrl = rutaManual ? rutaManual.slice(0, 500) : "";
 
     try {
@@ -649,7 +694,7 @@ header h1 {
           precio,
           caratula: caratulaUrl || null,
           proveedorId,
-          genero: genero || null,
+          categoriaId,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -668,6 +713,7 @@ header h1 {
     document.getElementById("stock").value = "";
     document.getElementById("precio").value = "";
     if (proveedorSel) proveedorSel.value = "";
+    if (categoriaSel) categoriaSel.value = "";
     if (rutaManualEl) rutaManualEl.value = "";
   }
 
@@ -703,7 +749,7 @@ header h1 {
           <td>${escapeHtml(libro.titulo)}</td>
           <td>${escapeHtml(libro.autor)}</td>
           <td>${escapeHtml(libro.saga || '-')}</td>
-          <td>${escapeHtml(libro.genero || '-')}</td>
+          <td>${escapeHtml(libro.categoriaNombre || '-')}</td>
           <td>${prov}</td>
           <td>${escapeHtml(libro.estado)}</td>
           <td>${libro.stock}</td>

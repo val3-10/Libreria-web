@@ -44,7 +44,22 @@ BEGIN
     (N'No ficción'),
     (N'Infantil'),
     (N'Ciencia ficción'),
-    (N'Terror');
+    (N'Terror'),
+    (N'Fantasía'),
+    (N'Romance'),
+    (N'Thriller'),
+    (N'Misterio'),
+    (N'Aventura'),
+    (N'Historia'),
+    (N'Biografía'),
+    (N'Poesía'),
+    (N'Juvenil'),
+    (N'Clásico'),
+    (N'Drama'),
+    (N'Humor'),
+    (N'Filosofía'),
+    (N'Autoayuda'),
+    (N'Otro');
 END
 GO
 
