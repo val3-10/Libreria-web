@@ -169,10 +169,7 @@ header h1 {
     <select id="categoriaLibroId">
       <option value="">— Sin categoría —</option>
     </select>
-    <label for="estado">Estado:</label>
-    <select id="estado">
-      <option value="disponible">Disponible</option>
-      <option value="venta">En venta</option>
+
     </select>
     <label for="proveedorLibroId">Proveedor</label>
     <select id="proveedorLibroId">
@@ -785,9 +782,14 @@ header h1 {
           <td>${libro.stock}</td>
           <td>$${Number(libro.precio).toLocaleString('es-CO')}</td>
           <td>${carStatus}</td>
-          <td><button type="button" onclick="eliminarLibro(${libro.id})">Eliminar</button></td>
-        </tr>
-      `;
+          <td style="white-space:nowrap; text-align:left;">
+            <button type="button" onclick="editarLibro(${libro.id})" title="Editar" style="background:none;border:none;cursor:pointer;color:#1976d2;font-size:1.1rem;">
+              <i class="fi fi-rr-pencil"></i>
+            </button>
+            <button type="button" onclick="eliminarLibro(${libro.id})" title="Eliminar" style="background:#e53935;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;color:white;font-size:1rem;">🗑</button>
+          </td>
+         </tr>
+        `;
     });
   }
 
@@ -939,7 +941,23 @@ header h1 {
     function crearNuevoAdmin() {
       window.location.href = "register-admin.html";
     }
-
+function editarLibro(id) {
+  const libro = libros.find(l => l.id === id);
+  if (!libro) return;
+  mostrarSeccion('libros');
+  document.getElementById('titulo').value = libro.titulo || '';
+  document.getElementById('autor').value = libro.autor || '';
+  document.getElementById('saga').value = libro.saga || '';
+  document.getElementById('stock').value = libro.stock ?? '';
+  document.getElementById('precio').value = libro.precio ?? '';
+  document.getElementById('caratulaRuta').value = libro.caratula || '';
+  const categoriaSel = document.getElementById('categoriaLibroId');
+  if (categoriaSel) categoriaSel.value = libro.categoriaId ? String(libro.categoriaId) : '';
+  const proveedorSel = document.getElementById('proveedorLibroId');
+  if (proveedorSel) proveedorSel.value = libro.proveedorId ? String(libro.proveedorId) : '';
+  document.getElementById('titulo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('titulo').focus();
+}
 
 </script>
 </body>
