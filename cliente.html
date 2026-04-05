@@ -153,7 +153,7 @@
 
   <!-- MODAL CARRITO -->
   <div id="modalCarrito" class="modal">
-    <div class="modal-contenido" style="width: 700px; max-height: 700px;">
+     <div class="modal-contenido" id="modalCarritoContenido" style="width: 700px; max-height: 700px;">
       <h3>Carrito de Compras</h3>
       <div style="max-height: 500px; overflow-y: auto;">
         <table id="tablaCarrito">
@@ -483,6 +483,7 @@
         throw new Error(data.error || 'Error al cargar el catálogo');
       }
       libros = Array.isArray(data.books) ? data.books : [];
+      poblarFiltroCategoria();
     } catch (e) {
       console.error(e);
       libros = [];
@@ -1018,22 +1019,24 @@
     }
   }
 
-  function renderCartaLibroHTML(libro) {
+function renderCartaLibroHTML(libro) {
   const sinStock = libro.stock <= 0;
+  const esFav = estaEnFavoritos(libro.titulo);
   return `
     <img src="${libro.caratula || 'img/BookNest.png'}">
     ${sinStock ? '<span class="badge-agotado">Agotado</span>' : ''}
     <h3>${libro.titulo}</h3>
-    <p>Autor: ${libro.autor}</p>
-    ${libro.categoriaNombre ? `<p>Categoría: ${libro.categoriaNombre}</p>` : ''}
-    <p>Estado: ${libro.estado || ''}</p>
-    <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-    <p>Stock: ${sinStock ? '<strong style="color:red">0</strong>' : libro.stock}</p>
+    <div class="carta-meta">
+      <p>${libro.autor}</p>
+      ${libro.categoriaNombre ? `<p>${libro.categoriaNombre}</p>` : ''}
+      <p class="carta-precio">$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
+      <p class="carta-stock">${sinStock ? '<strong style="color:#e53935">Sin stock</strong>' : `Stock: ${libro.stock}`}</p>
+    </div>
     <div class="carta-botones">
       <div class="carta-fila-top">
-        <button class="btn-fav" title="${estaEnFavoritos(libro.titulo) ? 'Remover de favoritos' : 'Agregar a favoritos'}"
+        <button class="btn-fav" title="${esFav ? 'Remover de favoritos' : 'Agregar a favoritos'}"
           onclick="event.stopPropagation(); toggleFavorito('${encodeURIComponent(libro.titulo)}')">
-          <i class="${estaEnFavoritos(libro.titulo) ? 'fi fi-ss-heart' : 'fi fi-rr-heart'}"></i>
+          <i class="${esFav ? 'fi fi-ss-heart' : 'fi fi-rr-heart'}"></i>
         </button>
         ${!sinStock ? `
         <div class="cantidad-selector">
@@ -1053,21 +1056,38 @@
 }
 
   function toggleFavorito(tituloCodificado) {
-    const titulo = decodeURIComponent(tituloCodificado);
-    const index = favoritos.indexOf(titulo);
+  const titulo = decodeURIComponent(tituloCodificado);
+  const index = favoritos.indexOf(titulo);
 
-    if (index >= 0) {
-      favoritos.splice(index, 1);
-      mostrarMensaje('success', `"${titulo}" eliminado de favoritos`);
-    } else {
-      favoritos.push(titulo);
-      mostrarMensaje('success', `"${titulo}" agregado a favoritos`);
-    }
-
-    guardarDatos();
-    // Actualizar la vista actual en lugar de solo mostrar catálogo
-    actualizarVistaActual();
+  if (index >= 0) {
+    favoritos.splice(index, 1);
+    mostrarMensaje('success', `"${titulo}" eliminado de favoritos`);
+  } else {
+    favoritos.push(titulo);
+    mostrarMensaje('success', `"${titulo}" agregado a favoritos`);
   }
+
+  guardarDatos();
+  actualizarVistaActual();
+
+  // Actualizar iconos de corazón en el carrusel sin rerenderizar
+  document.querySelectorAll('.carrusel-hero-slide--book').forEach(slide => {
+    const btnFav = slide.querySelector('.btn-fav--carrusel');
+    if (!btnFav) return;
+    const tituloSlide = decodeURIComponent(
+      slide.querySelector('.btn-fav--carrusel')
+        ?.getAttribute('onclick')
+        ?.match(/toggleFavorito\('(.+?)'\)/)?.[1] || ''
+    );
+    if (!tituloSlide) return;
+    const esFav = favoritos.includes(tituloSlide);
+    const icono = btnFav.querySelector('i');
+    if (icono) {
+      icono.className = esFav ? 'fi fi-ss-heart' : 'fi fi-rr-heart';
+    }
+    btnFav.title = esFav ? 'Remover de favoritos' : 'Agregar a favoritos';
+  });
+}
 
   function toggleFavoritos() {
     mostrarSeccion('favoritos');
