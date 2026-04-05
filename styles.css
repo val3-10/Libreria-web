@@ -122,24 +122,7 @@ body {
   margin-bottom: 10px;
 }
 
-/* Botones dentro de cartas */
-.carta-botones {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-/* Botones de carta */
-.carta-botones button,
-.btn-fav {
-  min-height: 44px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  min-width: 80px;
-  max-width: 100px;
-  box-sizing: border-box;
-}
+/* carta-botones — ver bloque definitivo al final */
 
 /* Botón favorito */
 .btn-fav {
@@ -773,29 +756,7 @@ body {
     font-family: inherit;
   }
 
-  .carta-botones {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-  width: auto;
-  margin-top: 8px;
-  padding: 0 6px;
-}
-
-.carta-botones button,
-.btn-fav {
-  min-width: 90px;
-  max-width: 110px;
-  padding: 4px 8px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.82rem;
-  font-family: inherit;
-  min-height: 35px;
-    background-color: #000000;
-    color: white;
-  }
+  /* carta-botones — ver bloque definitivo al final */
 
   .carta-botones button:hover,
   .btn-fav:hover {
@@ -814,7 +775,7 @@ body {
   }
 
   .carta-libro:hover {
-    transform: scale(1.1);
+    transform: scale(1.03);
   }
 
   .carta-libro img:hover {
@@ -1993,4 +1954,287 @@ body {
   max-width: none !important;
   white-space: nowrap !important;
   width: auto !important;
+}
+/* ========================= */
+/* FILTROS DE CATÁLOGO       */
+/* ========================= */
+
+.filtros-wrapper {
+  margin-top: 4px;
+}
+
+.filtros-panel {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 8px 12px;
+  background: #111827;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+.filtros-panel.visible {
+  display: flex;
+}
+
+.filtro-label {
+  color: #9ca3af;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.filtro-select {
+  width: 100%;
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.filtro-select:focus {
+  border-color: #6366f1;
+}
+
+.filtro-select option {
+  background: #1f2937;
+}
+
+.btn-limpiar-filtros {
+  margin-top: 12px;
+  background: transparent;
+  color: #9ca3af;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-limpiar-filtros:hover {
+  background: #374151;
+  color: #fff;
+}
+
+/* Chip que muestra filtros activos */
+.filtros-chips {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 6px 14px;
+  margin-bottom: 12px;
+  font-size: 0.83rem;
+  color: #94a3b8;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip-resultado {
+  background: #6366f1;
+  color: #fff;
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* Ocultar scrollbar manteniendo el scroll funcional */
+* {
+  scrollbar-width: none;       
+  -ms-overflow-style: none;    
+}
+*::-webkit-scrollbar {
+  display: none;                
+}
+/* ================================================ */
+/* CARTA BOTONES — BLOQUE DEFINITIVO                */
+/* ================================================ */
+
+.carta-botones {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  margin-top: 8px;
+  padding: 0 2px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Fila superior: corazón izquierda, selector derecha */
+.carta-fila-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+/* Corazón — cuadrado fijo */
+.carta-botones .btn-fav {
+  width: 34px; height: 34px;
+  min-width: 34px; max-width: 34px; min-height: 34px;
+  padding: 0; flex-shrink: 0;
+  background: #1f2937; color: #fff;
+  border: none; border-radius: 6px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.carta-botones .btn-fav:hover { opacity: 0.88; transform: translateY(-1px); }
+
+/* Selector − n + */
+.cantidad-selector {
+  display: flex; align-items: center; gap: 5px;
+  flex: 1; justify-content: flex-end;
+}
+
+.btn-cantidad {
+  width: 26px; height: 26px;
+  min-width: 26px; max-width: 26px; min-height: 26px;
+  padding: 0; font-size: 1rem; line-height: 1;
+  border-radius: 5px; border: none;
+  background: #1f2937; color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0;
+}
+.btn-cantidad:hover { background: #374151; }
+
+.cantidad-valor {
+  min-width: 20px; text-align: center;
+  font-weight: 700; font-size: 0.9rem; color: #1f2937;
+}
+
+/* Botón agregar carrito — ancho completo, altura fija */
+.btn-agregar-carrito {
+  width: 100%; min-height: 32px; height: 32px;
+  padding: 0 6px; font-size: 0.78rem;
+  box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  background: #1f2937; color: #fff;
+  border: none; border-radius: 6px; cursor: pointer;
+  margin: 0;
+  transition: background 0.2s;
+}
+.btn-agregar-carrito:hover:not(:disabled) { background: #374151; }
+.btn-agregar-carrito:disabled {
+  opacity: 0.45; cursor: not-allowed; background: #aaa;
+}
+
+/* Botón único centrado (index.html — invitado) */
+.carta-botones.solo-carrito {
+  flex-direction: row;
+  justify-content: center;
+}
+/* ========================= */
+/* MODAL GENÉRICO            */
+/* ========================= */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.75); /* Más oscuro, como fondos de otras secciones */
+  backdrop-filter: blur(4px); /* Un pequeño difuminado de fondo, moderno y elegante */
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.modal-contenido {
+  background: #e6ebf1; /* Mismo color de fondo que las secciones principales */
+  padding: 2rem;
+  border-radius: 16px; /* Mismo radio que .seccion */
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 8px 25px rgb(0, 0, 0); /* Misma sombra que .seccion y .registro-box */
+  animation: fadeInUp 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05); /* Un borde sutil para dar definición */
+}
+
+.modal-contenido h3 {
+  margin-top: 0;
+  color: #d4a017; /* Color dorado, como los títulos y th de las tablas */
+  font-size: 1.6rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.modal-contenido p {
+  color: #1f2937; /* Texto oscuro pero suave, como el de las cards */
+  margin-bottom: 1.8rem;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.modal-botones {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.modal-botones button {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 30px; /* Botones más redondeados, como los del menú */
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease; /* Transición suave, consistente con el resto */
+  font-size: 0.9rem;
+}
+
+/* Botón de confirmación (estilo primario) */
+.modal-botones button:first-child {
+  background-color: #1f2937; /* Mismo color que los botones principales */
+  color: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.modal-botones button:first-child:hover {
+  background-color: #2e2e2e; /* Mismo hover que otros botones */
+  transform: translateY(-2px); /* Pequeña elevación al hacer hover */
+}
+
+/* Botón de cancelar (estilo secundario) */
+.modal-botones button:last-child {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.modal-botones button:last-child:hover {
+  background-color: #c0c0c0;
+  transform: translateY(-2px);
+}
+
+/* Animación de entrada, consistente con otras animaciones de la app */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
