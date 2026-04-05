@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
- <link rel="icon" type="image/png" href="img/BookNesticon.png">
-<link rel="shortcut icon" href="img/BookNesticon.png" type="image/x-icon">
+  <link rel="icon" type="image/png" href="img/BookNesticon.png">
+  <link rel="shortcut icon" href="img/BookNesticon.png" type="image/x-icon">
   <title>Booknest - Catálogo</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/uicons-solid-straight/css/uicons-solid-straight.css">
@@ -57,6 +57,42 @@
       </div>
     </div>
 
+    <!-- PANEL DE FILTROS -->
+    <div class="filtros-wrapper">
+      <button class="btn-toggle-buscador" onclick="toggleFiltros()">
+        <i class="fi fi-rr-filter"></i>
+        <span class="buscador-text">Filtrar</span>
+      </button>
+      <div id="filtrosPanel" class="buscador-panel filtros-panel">
+
+        <label class="filtro-label">Ordenar por:</label>
+        <select id="filtroOrden" class="filtro-select" onchange="aplicarFiltros()">
+          <option value="">Sin orden</option>
+          <option value="precio-asc">Precio: menor a mayor</option>
+          <option value="precio-desc">Precio: mayor a menor</option>
+          <option value="popular">Más popular (mayor stock)</option>
+          <option value="az">Título A → Z</option>
+          <option value="za">Título Z → A</option>
+        </select>
+
+        <label class="filtro-label" style="margin-top:10px;">Categoría:</label>
+        <select id="filtroCategoria" class="filtro-select" onchange="aplicarFiltros()">
+          <option value="">Todas</option>
+        </select>
+
+        <label class="filtro-label" style="margin-top:10px;">Estado:</label>
+        <select id="filtroEstado" class="filtro-select" onchange="aplicarFiltros()">
+          <option value="">Todos</option>
+          <option value="disponible">Disponible</option>
+          <option value="venta">En venta</option>
+        </select>
+
+        <button class="btn-limpiar-filtros" onclick="limpiarFiltros()">
+          <i class="fi fi-rr-cross-small"></i> Limpiar filtros
+        </button>
+      </div>
+    </div>
+
     <ul>
       <li class="menu-item" onclick="mostrarSeccion('catalogo')">
         <span class="icon"><i class="fi fi-rr-books"></i></span>
@@ -82,7 +118,7 @@
     <div id="catalogoLibros" class="catalogo-libros"></div>
   </div>
 
-  <!-- SAGAS (sin seccion-hidden + !important: impedía mostrar con style.display = 'block') -->
+  <!-- SAGAS -->
   <div id="seccionSagas" class="seccion" style="display: none;">
     <h2>Sagas</h2>
     <div id="sagasContainer" class="sagas-container"></div>
@@ -93,11 +129,11 @@
   <!-- MODAL PARA INICIAR SESIÓN -->
   <div id="modalLogin" class="modal">
     <div class="modal-contenido">
-      <h3>¿Quieres iniciar sesión para comprar?</h3>
-      <p>Para agregar al carrito y realizar compras, necesitas estar registrado.</p>
+      <h3>Inicia sesión para comprar</h3>
+      <p>Para agregar este libro al carrito y realizar compras, necesitas tener una cuenta.</p>
       <div class="modal-botones">
         <button onclick="irALogin()">Sí, iniciar sesión</button>
-        <button onclick="cerrarModalLogin()">No, continuar viendo</button>
+        <button onclick="cerrarModalLogin()">No, seguir viendo</button>
       </div>
     </div>
   </div>
@@ -115,6 +151,332 @@
   const CARRUSEL_AUTO_MS = 4000;
   const CARRUSEL_GAP_PX = 12;
 
+  // Variable para saber qué sección está activa
+  let seccionActiva = 'catalogo';
+
+  // Función para obtener libros filtrados (sin aplicar orden ni mostrar)
+  function getLibrosFiltrados() {
+    const texto = document.getElementById('buscadorLibros')?.value.toLowerCase() || '';
+    const cat = document.getElementById('filtroCategoria')?.value || '';
+    const estado = document.getElementById('filtroEstado')?.value || '';
+
+    let filtrados = [...libros];
+
+    if (texto) {
+      filtrados = filtrados.filter(l =>
+        String(l.titulo || '').toLowerCase().includes(texto) ||
+        (l.autor || '').toLowerCase().includes(texto)
+      );
+    }
+
+    if (cat) filtrados = filtrados.filter(l => l.categoriaNombre === cat);
+    if (estado) filtrados = filtrados.filter(l => (l.estadoCatalogo || l.estado || '').toLowerCase() === estado);
+
+    return filtrados;
+  }
+
+  // Función para ordenar libros según el filtro seleccionado
+  function ordenarLibros(librosArray) {
+    const orden = document.getElementById('filtroOrden')?.value || '';
+    let ordenados = [...librosArray];
+    
+    if (orden === 'precio-asc') ordenados.sort((a,b) => (a.precio||0)-(b.precio||0));
+    else if (orden === 'precio-desc') ordenados.sort((a,b) => (b.precio||0)-(a.precio||0));
+    else if (orden === 'popular') ordenados.sort((a,b) => (b.stock||0)-(a.stock||0));
+    else if (orden === 'az') ordenados.sort((a,b) => String(a.titulo||'').localeCompare(String(b.titulo||'')));
+    else if (orden === 'za') ordenados.sort((a,b) => String(b.titulo||'').localeCompare(String(a.titulo||'')));
+    else ordenados.sort((a,b) => String(a.titulo||'').localeCompare(String(b.titulo||'')));
+    
+    return ordenados;
+  }
+
+  // Función principal que aplica filtros según la sección activa
+  function aplicarFiltros() {
+    if (seccionActiva === 'catalogo') {
+      mostrarLibrosCatalogo();
+    } else if (seccionActiva === 'sagas') {
+      mostrarSagas();
+    }
+  }
+
+  function limpiarFiltros() {
+    const orden = document.getElementById('filtroOrden');
+    const cat = document.getElementById('filtroCategoria');
+    const estado = document.getElementById('filtroEstado');
+    const buscador = document.getElementById('buscadorLibros');
+    
+    if (orden) orden.value = '';
+    if (cat) cat.value = '';
+    if (estado) estado.value = '';
+    if (buscador) buscador.value = '';
+    
+    aplicarFiltros();
+  }
+
+  function mostrarLibrosCatalogo() {
+    const contenedor = document.getElementById("catalogoLibros");
+    if (!contenedor) return;
+    
+    // Obtener y ordenar libros filtrados
+    let filtrados = getLibrosFiltrados();
+    filtrados = ordenarLibros(filtrados);
+    
+    contenedor.innerHTML = "";
+
+    if (filtrados.length === 0) {
+      contenedor.innerHTML = "<p>No se encontraron libros con esos filtros.</p>";
+      return;
+    }
+
+    // Mostrar chips de filtros activos
+    mostrarChipsFiltros(filtrados.length, contenedor);
+
+    filtrados.forEach((libro) => {
+      const carta = document.createElement("div");
+      carta.className = "carta-libro";
+      carta.innerHTML = renderCartaInvitadoHTML(libro);
+      contenedor.appendChild(carta);
+    });
+  }
+
+  function mostrarSagas() {
+    const contenedor = document.getElementById("sagasContainer");
+    if (!contenedor) return;
+    
+    // Obtener y ordenar libros filtrados
+    let filtrados = getLibrosFiltrados();
+    filtrados = ordenarLibros(filtrados);
+    
+    contenedor.innerHTML = "";
+    
+    if (filtrados.length === 0) {
+      contenedor.innerHTML = "<p>No se encontraron libros con esos filtros.</p>";
+      return;
+    }
+
+    // Mostrar chips de filtros activos
+    mostrarChipsFiltros(filtrados.length, contenedor, true);
+
+    const sagas = {};
+    const librosSinSaga = [];
+    
+    filtrados.forEach(libro => {
+      if (libro.saga && libro.saga.trim()) {
+        if (!sagas[libro.saga]) sagas[libro.saga] = [];
+        sagas[libro.saga].push(libro);
+      } else {
+        librosSinSaga.push(libro);
+      }
+    });
+
+    const sagasOrdenadas = Object.keys(sagas).sort((a, b) => a.localeCompare(b));
+
+    sagasOrdenadas.forEach((saga) => {
+      const librosSaga = sagas[saga];
+      const seccionSaga = document.createElement("div");
+      seccionSaga.className = "seccion-saga";
+      const titulo = document.createElement("h3");
+      titulo.textContent = saga;
+      seccionSaga.appendChild(titulo);
+      const contenedorLibros = document.createElement("div");
+      contenedorLibros.className = "saga-libros";
+      librosSaga.forEach((libro) => {
+        const carta = document.createElement("div");
+        carta.className = "carta-libro";
+        carta.innerHTML = renderCartaInvitadoHTML(libro);
+        contenedorLibros.appendChild(carta);
+      });
+      seccionSaga.appendChild(contenedorLibros);
+      contenedor.appendChild(seccionSaga);
+    });
+
+    if (librosSinSaga.length > 0) {
+      const seccionSinSaga = document.createElement("div");
+      seccionSinSaga.className = "seccion-saga";
+      const titulo = document.createElement("h3");
+      titulo.textContent = "Otros Libros";
+      seccionSinSaga.appendChild(titulo);
+      const contenedorLibros = document.createElement("div");
+      contenedorLibros.className = "saga-libros";
+      librosSinSaga.forEach((libro) => {
+        const carta = document.createElement("div");
+        carta.className = "carta-libro";
+        carta.innerHTML = renderCartaInvitadoHTML(libro);
+        contenedorLibros.appendChild(carta);
+      });
+      seccionSinSaga.appendChild(contenedorLibros);
+      contenedor.appendChild(seccionSinSaga);
+    }
+  }
+
+  function mostrarChipsFiltros(cantidad, contenedor, esSagas = false) {
+    const ordenVal = document.getElementById('filtroOrden')?.value;
+    const catVal = document.getElementById('filtroCategoria')?.value;
+    const estadoVal = document.getElementById('filtroEstado')?.value;
+    const textoBusqueda = document.getElementById('buscadorLibros')?.value.toLowerCase();
+    
+    const activos = [];
+    
+    if (textoBusqueda) activos.push(`Buscar: "${textoBusqueda}"`);
+    if (ordenVal) {
+      const ordenSelect = document.getElementById('filtroOrden');
+      activos.push(`Orden: ${ordenSelect.options[ordenSelect.selectedIndex]?.text || ordenVal}`);
+    }
+    if (catVal) activos.push(`Categoría: ${catVal}`);
+    if (estadoVal) activos.push(`Estado: ${estadoVal === 'disponible' ? 'Disponible' : 'En venta'}`);
+    
+    // Eliminar chips anteriores
+    const chipsAnteriores = contenedor.parentElement?.querySelectorAll('.filtros-chips');
+    chipsAnteriores?.forEach(chip => chip.remove());
+    
+    if (activos.length > 0) {
+      const chipHTML = `
+        <div class="filtros-chips" style="margin-bottom: 20px;">
+          <span>${activos.join(' · ')}</span>
+          <span class="chip-resultado">${cantidad} libro${cantidad !== 1 ? 's' : ''}</span>
+        </div>
+      `;
+      contenedor.insertAdjacentHTML('beforebegin', chipHTML);
+    }
+  }
+
+  function renderCartaInvitadoHTML(libro) {
+    const sinStock = libro.stock <= 0;
+    return `
+      <img src="${libro.caratula || 'img/BookNest.png'}">
+      ${sinStock ? '<span class="badge-agotado">Agotado</span>' : ''}
+      <h3>${escapeHtml(libro.titulo)}</h3>
+      <p>Autor: ${escapeHtml(libro.autor)}</p>
+      ${libro.categoriaNombre ? `<p>Categoría: ${escapeHtml(libro.categoriaNombre)}</p>` : ''}
+      <p>Estado: ${libro.estado}</p>
+      <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
+      <p>Stock: ${sinStock ? '<strong style="color:red">0</strong>' : libro.stock}</p>
+      <div class="carta-botones" style="justify-content:center; flex-direction:row;">
+        <button type="button" onclick="verificarSesionYAgregarCarrito(${libro.id}, '${escapeHtml(libro.titulo).replace(/'/g, "\\'")}')"
+          ${sinStock ? 'disabled title="Sin stock disponible"' : ''}>
+          <i class="fi fi-rr-shopping-cart"></i>
+          ${sinStock ? 'No disponible' : 'Agregar al Carrito'}
+        </button>
+      </div>
+    `;
+  }
+
+  function buscarLibros() {
+    aplicarFiltros();
+  }
+
+  function toggleBuscador() {
+    const panel = document.getElementById('buscadorPanel');
+    if (!panel) return;
+    panel.classList.toggle('visible');
+    const input = document.getElementById('buscadorLibros');
+    if (panel.classList.contains('visible') && input) input.focus();
+  }
+
+  function toggleFiltros() {
+    const panel = document.getElementById('filtrosPanel');
+    if (!panel) return;
+    panel.classList.toggle('visible');
+  }
+
+  function mostrarSeccion(tipo) {
+    const seccionCatalogo = document.getElementById('seccionCatalogo');
+    const seccionSagas = document.getElementById('seccionSagas');
+
+    if (seccionCatalogo) seccionCatalogo.style.display = 'none';
+    if (seccionSagas) seccionSagas.style.display = 'none';
+
+    seccionActiva = tipo;
+
+    if (tipo === 'catalogo') {
+      if (seccionCatalogo) seccionCatalogo.style.display = 'block';
+      mostrarLibrosCatalogo();
+    } else if (tipo === 'sagas') {
+      if (seccionSagas) seccionSagas.style.display = 'block';
+      mostrarSagas();
+    }
+  }
+
+  function poblarFiltroCategoria() {
+    const sel = document.getElementById('filtroCategoria');
+    if (!sel) return;
+    const categorias = [...new Set(libros.map(l => l.categoriaNombre).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    sel.innerHTML = '<option value="">Todas</option>';
+    categorias.forEach(cat => {
+      const op = document.createElement('option');
+      op.value = cat;
+      op.textContent = cat;
+      sel.appendChild(op);
+    });
+  }
+
+  // Funciones de carrito y modal
+  async function verificarSesionYAgregarCarrito(libroId, titulo) {
+    const usuarioLogueado = localStorage.getItem('usuarioActual');
+    
+    if (usuarioLogueado) {
+      await agregarAlCarritoDirecto(libroId, titulo);
+    } else {
+      localStorage.setItem('libroPendienteId', libroId);
+      localStorage.setItem('libroPendiente', titulo);
+      mostrarModalLogin();
+    }
+  }
+
+  async function agregarAlCarritoDirecto(libroId, titulo) {
+    try {
+      const usuarioActual = JSON.parse(localStorage.getItem('usuarioActual') || '{}');
+      const userId = usuarioActual.id || 1;
+      
+      const response = await fetch(`${API_BASE}/api/carrito/agregar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuarioId: userId, libroId: libroId, cantidad: 1 })
+      });
+      
+      if (response.ok) {
+        mostrarMensaje('success', `¡"${titulo}" agregado al carrito!`);
+      } else {
+        const errorData = await response.json();
+        mostrarMensaje('error', errorData.error || 'Error al agregar al carrito');
+      }
+    } catch (error) {
+      console.error('Error al agregar al carrito:', error);
+      mostrarMensaje('error', 'Error de conexión. Intenta de nuevo.');
+    }
+  }
+
+  function mostrarModalLogin() {
+    const modal = document.getElementById('modalLogin');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function cerrarModalLogin() {
+    const modal = document.getElementById('modalLogin');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function irALogin() {
+    localStorage.setItem('redirectAfterLogin', window.location.pathname);
+    window.location.href = "login.html";
+  }
+
+  function mostrarMensaje(tipo, mensaje) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${tipo}`;
+    toast.textContent = mensaje;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  function escapeHtml(text) {
+    if (text == null || text === '') return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Funciones del carrusel (sin cambios)
   function stopCarruselAutoplay() {
     if (carruselAutoplayId != null) {
       clearInterval(carruselAutoplayId);
@@ -132,386 +494,12 @@
     }, CARRUSEL_AUTO_MS);
   }
 
-  /** Navegación manual: reinicia el temporizador de 4 s */
   function carruselHeroNavigate(i) {
     const n = carruselHeroItems.length;
     if (n === 0) return;
     stopCarruselAutoplay();
     goCarruselHero(i);
     startCarruselAutoplay();
-  }
-
-  async function cargarLibrosDesdeApi() {
-    const contenedor = document.getElementById('catalogoLibros');
-    const track = document.getElementById('carruselHeroTrack');
-    if (contenedor) contenedor.innerHTML = '<p>Cargando libros…</p>';
-    if (track) {
-      track.innerHTML = '<div class="carrusel-hero-slide carrusel-hero-slide--loading"><p>Cargando destacados…</p></div>';
-      track.style.transform = 'translateX(0)';
-    }
-
-    try {
-      const controller = new AbortController();
-      const to = setTimeout(() => controller.abort(), 20000);
-      const res = await fetch(`${API_BASE}/api/libros`, { signal: controller.signal });
-      clearTimeout(to);
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data.error || 'Error al cargar el catálogo');
-      }
-      libros = Array.isArray(data.books) ? data.books : [];
-    } catch (e) {
-      console.error(e);
-      libros = [];
-      mostrarMensaje('error', 'No se pudieron cargar los libros. Verifica el servidor y la base de datos.');
-      if (contenedor) {
-        contenedor.innerHTML =
-          '<p>No se pudo obtener el catálogo. Asegúrate de que la API esté en ejecución (npm run start en server).</p>';
-      }
-      try {
-        renderCarruselHero();
-      } catch (err2) {
-        console.error(err2);
-      }
-      return;
-    }
-
-    const seccionSagas = document.getElementById('seccionSagas');
-    try {
-      renderCarruselHero();
-      if (seccionSagas && seccionSagas.style.display !== 'none') {
-        mostrarSagas();
-      } else {
-        mostrarLibrosCatalogo();
-      }
-    } catch (err) {
-      console.error('Error al pintar catálogo o carrusel:', err);
-      mostrarMensaje('error', 'Error al mostrar los libros. Recarga la página.');
-      if (contenedor) {
-        contenedor.innerHTML = '<p>No se pudo mostrar el catálogo. Revisa la consola del navegador.</p>';
-      }
-      try {
-        renderCarruselHero();
-      } catch (err2) {
-        console.error(err2);
-      }
-    }
-  }
-
-  function mostrarLibrosCatalogo() {
-    
-    const contenedor = document.getElementById("catalogoLibros");
-    if (!contenedor) return;
-    contenedor.innerHTML = "";
-
-    if (libros.length === 0) {
-      contenedor.innerHTML = "<p>No hay libros disponibles</p>";
-      return;
-    }
-
-    // Vista catálogo normal (sin agrupar por saga)
-    const librosOrdenados = [...libros].sort((a, b) =>
-      String(a.titulo || '').localeCompare(String(b.titulo || '')),
-    );
-
-    librosOrdenados.forEach((libro) => {
-      const carta = document.createElement("div");
-      carta.className = "carta-libro";
-       carta.innerHTML = renderCartaInvitadoHTML(libro);
-
-      contenedor.appendChild(carta);
-    });
-  }
-
-  function renderCartaInvitadoHTML(libro) {
-  const sinStock = libro.stock <= 0;
-  return `
-    <img src="${libro.caratula || 'img/BookNest.png'}">
-    ${sinStock ? '<span class="badge-agotado">Agotado</span>' : ''}
-    <h3>${libro.titulo}</h3>
-    <p>Autor: ${libro.autor}</p>
-    ${libro.categoriaNombre ? `<p>Categoría: ${libro.categoriaNombre}</p>` : ''}
-    <p>Estado: ${libro.estado}</p>
-    <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-    <p>Stock: ${sinStock ? '<strong style="color:red">0</strong>' : libro.stock}</p>
-    <div class="carta-botones">
-      <button type="button" onclick="prepararCarritoInvitado(${libro.id}, ${JSON.stringify(libro.titulo)})"
-        ${sinStock ? 'disabled title="Sin stock disponible"' : ''}>
-        <i class="fi fi-rr-shopping-cart"></i>
-        ${sinStock ? 'No disponible' : 'Agregar al Carrito'}
-      </button>
-    </div>
-  `;
-}
-  function mostrarSagas() {
-    const contenedor = document.getElementById("sagasContainer");
-    if (!contenedor) return;
-    contenedor.innerHTML = "";
-
-    if (libros.length === 0) {
-      contenedor.innerHTML = "<p>No hay libros disponibles</p>";
-      return;
-    }
-
-    // Agrupar por sagas
-    const sagas = {};
-    const librosSinSaga = [];
-    
-    libros.forEach(libro => {
-      if (libro.saga && libro.saga.trim()) {
-        if (!sagas[libro.saga]) sagas[libro.saga] = [];
-        sagas[libro.saga].push(libro);
-      } else {
-        librosSinSaga.push(libro);
-      }
-    });
-
-    // Ordenar sagas alfabéticamente
-    const sagasOrdenadas = Object.keys(sagas).sort((a, b) => a.localeCompare(b));
-
-    // Mostrar sagas con libros en layout horizontal
-    sagasOrdenadas.forEach((saga) => {
-      const librosSaga = sagas[saga];
-      const seccionSaga = document.createElement("div");
-      seccionSaga.className = "seccion-saga";
-      
-      const titulo = document.createElement("h3");
-      titulo.textContent = saga;
-      seccionSaga.appendChild(titulo);
-
-      const contenedorLibros = document.createElement("div");
-      contenedorLibros.className = "saga-libros";
-
-      librosSaga.sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || ''))).forEach((libro) => {
-        const carta = document.createElement("div");
-        carta.className = "carta-libro";
-
-        carta.innerHTML = renderCartaInvitadoHTML(libro);
-        contenedorLibros.appendChild(carta);
-      });
-
-      seccionSaga.appendChild(contenedorLibros);
-      contenedor.appendChild(seccionSaga);
-    });
-
-    // Mostrar libros sin saga (si existen)
-    if (librosSinSaga.length > 0) {
-      const seccionSinSaga = document.createElement("div");
-      seccionSinSaga.className = "seccion-saga";
-      
-      const titulo = document.createElement("h3");
-      titulo.textContent = "Otros Libros";
-      seccionSinSaga.appendChild(titulo);
-
-      const contenedorLibros = document.createElement("div");
-      contenedorLibros.className = "saga-libros";
-
-      librosSinSaga.sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || ''))).forEach((libro) => {
-        const carta = document.createElement("div");
-        carta.className = "carta-libro";
-
-       carta.innerHTML = renderCartaInvitadoHTML(libro);
-
-        contenedorLibros.appendChild(carta);
-      });
-
-      seccionSinSaga.appendChild(contenedorLibros);
-      contenedor.appendChild(seccionSinSaga);
-    }
-  }
-
-  function buscarLibros() {
-    const texto = document.getElementById("buscadorLibros").value.toLowerCase();
-    
-    // Determinar en qué sección estamos
-    const seccionCatalogo = document.getElementById('seccionCatalogo');
-    const seccionSagas = document.getElementById('seccionSagas');
-    
-    if (!texto) {
-      // Si el input queda vacío, mostrar la sección actual completamente
-      if (seccionSagas.style.display !== 'none') {
-        mostrarSagas();
-      } else {
-        mostrarLibrosCatalogo();
-      }
-      return;
-    }
-
-    const filtrados = [...libros]
-      .sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || '')))
-      .filter(
-        (libro) =>
-          String(libro.titulo || '').toLowerCase().includes(texto) ||
-          (libro.autor || '').toLowerCase().includes(texto),
-      );
-
-    // Si estamos en sagas, mostrar filtrados en sagas
-    if (seccionSagas.style.display !== 'none') {
-      mostrarLibrosFiltradosSagas(filtrados);
-    } else {
-      // Si estamos en catálogo, mostrar filtrados en catálogo
-      mostrarLibrosFiltradosCatalogo(filtrados);
-    }
-  }
-
-  function mostrarLibrosFiltradosCatalogo(filtrados) {
-    const contenedor = document.getElementById("catalogoLibros");
-    if (!contenedor) return;
-    contenedor.innerHTML = "";
-
-    if (filtrados.length === 0) {
-      contenedor.innerHTML = "<p>No se encontraron libros</p>";
-      return;
-    }
-
-    filtrados.forEach((libro) => {
-      const carta = document.createElement("div");
-      carta.className = "carta-libro";
-
-      carta.innerHTML = renderCartaInvitadoHTML(libro);
-      contenedor.appendChild(carta);
-    });
-  }
-
-  function mostrarLibrosFiltradosSagas(filtrados) {
-    const contenedor = document.getElementById("sagasContainer");
-    if (!contenedor) return;
-    contenedor.innerHTML = "";
-
-    if (filtrados.length === 0) {
-      contenedor.innerHTML = "<p>No se encontraron libros</p>";
-      return;
-    }
-
-    // Agrupar por sagas en orden
-    const sagas = {};
-    const librosSinSaga = [];
-    
-    filtrados.forEach(libro => {
-      if (libro.saga && libro.saga.trim()) {
-        if (!sagas[libro.saga]) sagas[libro.saga] = [];
-        sagas[libro.saga].push(libro);
-      } else {
-        librosSinSaga.push(libro);
-      }
-    });
-
-    // Ordenar sagas de A a la Z
-    const sagasOrdenadas = Object.keys(sagas).sort((a, b) => a.localeCompare(b));
-
-    // Mostrar sagas buscadas
-    sagasOrdenadas.forEach((saga) => {
-      const librosSaga = sagas[saga];
-      const seccionSaga = document.createElement("div");
-      seccionSaga.className = "seccion-saga";
-      
-      const titulo = document.createElement("h3");
-      titulo.textContent = saga;
-      seccionSaga.appendChild(titulo);
-
-      const contenedorLibros = document.createElement("div");
-      contenedorLibros.className = "saga-libros";
-
-      librosSaga.sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || ''))).forEach((libro) => {
-        const carta = document.createElement("div");
-        carta.className = "carta-libro";
-
-       carta.innerHTML = renderCartaInvitadoHTML(libro);
-        contenedorLibros.appendChild(carta);
-      });
-
-      seccionSaga.appendChild(contenedorLibros);
-      contenedor.appendChild(seccionSaga);
-    });
-
-    // Mostrar libros sin saga 
-    if (librosSinSaga.length > 0) {
-      const seccionSinSaga = document.createElement("div");
-      seccionSinSaga.className = "seccion-saga";
-      
-      const titulo = document.createElement("h3");
-      titulo.textContent = "Otros Libros";
-      seccionSinSaga.appendChild(titulo);
-
-      const contenedorLibros = document.createElement("div");
-      contenedorLibros.className = "saga-libros";
-
-      librosSinSaga.sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || ''))).forEach((libro) => {
-        const carta = document.createElement("div");
-        carta.className = "carta-libro";
-
-        carta.innerHTML = renderCartaInvitadoHTML(libro);
-        contenedorLibros.appendChild(carta);
-      });
-
-      seccionSinSaga.appendChild(contenedorLibros);
-      contenedor.appendChild(seccionSinSaga);
-    }
-  }
-
-  function toggleBuscador() {
-    const panel = document.getElementById('buscadorPanel');
-    if (!panel) return;
-    panel.classList.toggle('visible');
-    const input = document.getElementById('buscadorLibros');
-    if (panel.classList.contains('visible') && input) input.focus();
-  }
-
-  function mostrarSeccion(tipo) {
-    const seccionCatalogo = document.getElementById('seccionCatalogo');
-    const seccionSagas = document.getElementById('seccionSagas');
-
-    if (seccionCatalogo) seccionCatalogo.style.display = 'none';
-    if (seccionSagas) seccionSagas.style.display = 'none';
-
-    if (tipo === 'catalogo') {
-      if (seccionCatalogo) seccionCatalogo.style.display = 'block';
-      mostrarLibrosCatalogo();
-    } else if (tipo === 'sagas') {
-      if (seccionSagas) seccionSagas.style.display = 'block';
-      mostrarSagas();
-    }
-  }
-
-  function escapeHtml(text) {
-    if (text == null || text === '') return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  /** Guarda id del libro (BD) y título para que, tras el login, cliente.html sincronice el carrito con la API. */
-  function prepararCarritoInvitado(libroId, titulo) {
-    const id = Number(libroId);
-    if (Number.isInteger(id) && id > 0) {
-      localStorage.setItem('libroPendienteId', String(id));
-    } else {
-      localStorage.removeItem('libroPendienteId');
-    }
-    if (titulo != null && String(titulo).trim() !== '') {
-      localStorage.setItem('libroPendiente', String(titulo).trim());
-    }
-    mostrarModalLogin();
-  }
-
-  function mostrarModalLogin() {
-    document.getElementById('modalLogin').style.display = 'flex';
-  }
-
-  function cerrarModalLogin() {
-    document.getElementById('modalLogin').style.display = 'none';
-  }
-
-  function irALogin() {
-    window.location.href = "login.html";
-  }
-
-  function mostrarMensaje(tipo, mensaje) {
-    const toast = document.createElement('div');
-    toast.className = `toast ${tipo}`;
-    toast.textContent = mensaje;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
   }
 
   function goCarruselHero(i) {
@@ -525,9 +513,7 @@
     const viewport = document.querySelector('.carrusel-hero-viewport');
     const track = document.getElementById('carruselHeroTrack');
     if (!viewport || !track) return;
-    const slides = track.querySelectorAll(
-      '.carrusel-hero-slide:not(.carrusel-hero-slide--empty):not(.carrusel-hero-slide--loading)',
-    );
+    const slides = track.querySelectorAll('.carrusel-hero-slide:not(.carrusel-hero-slide--empty):not(.carrusel-hero-slide--loading)');
     if (slides.length === 0) return;
     const vw = viewport.getBoundingClientRect().width;
     const pct = window.matchMedia('(max-width: 640px)').matches ? 0.9 : 0.62;
@@ -542,9 +528,7 @@
     const viewport = document.querySelector('.carrusel-hero-viewport');
     const track = document.getElementById('carruselHeroTrack');
     if (!track || !viewport || carruselHeroItems.length === 0) return;
-    const first = track.querySelector(
-      '.carrusel-hero-slide:not(.carrusel-hero-slide--empty):not(.carrusel-hero-slide--loading)',
-    );
+    const first = track.querySelector('.carrusel-hero-slide:not(.carrusel-hero-slide--empty):not(.carrusel-hero-slide--loading)');
     if (!first) {
       track.style.transform = 'translateX(0)';
       return;
@@ -584,8 +568,7 @@
     track.style.width = '';
 
     if (carruselHeroItems.length === 0) {
-      track.innerHTML =
-        '<div class="carrusel-hero-slide carrusel-hero-slide--empty"><p>No hay libros para mostrar en el carrusel.</p></div>';
+      track.innerHTML = '<div class="carrusel-hero-slide carrusel-hero-slide--empty"><p>No hay libros para mostrar en el carrusel.</p></div>';
       track.style.gap = '0';
       track.style.transform = 'translateX(0)';
       if (prev) prev.disabled = true;
@@ -612,7 +595,7 @@
           <p class="carrusel-hero-stock">${sinStock ? 'Sin stock' : `Stock: ${libro.stock}`}</p>
           <div class="carrusel-hero-acciones carrusel-hero-acciones--solo-carrito">
             <button type="button" class="btn-carrusel-carrito" ${sinStock ? 'disabled' : ''}
-              onclick="prepararCarritoInvitado(${libro.id}, ${JSON.stringify(libro.titulo)})">
+              onclick="verificarSesionYAgregarCarrito(${libro.id}, '${escapeHtml(libro.titulo).replace(/'/g, "\\'")}')">
               <i class="fi fi-rr-shopping-cart"></i> Agregar al carrito
             </button>
           </div>
@@ -638,6 +621,59 @@
     });
   }
 
+  async function cargarLibrosDesdeApi() {
+    const contenedor = document.getElementById('catalogoLibros');
+    const track = document.getElementById('carruselHeroTrack');
+    if (contenedor) contenedor.innerHTML = '<p>Cargando libros…</p>';
+    if (track) {
+      track.innerHTML = '<div class="carrusel-hero-slide carrusel-hero-slide--loading"><p>Cargando destacados…</p></div>';
+      track.style.transform = 'translateX(0)';
+    }
+
+    try {
+      const controller = new AbortController();
+      const to = setTimeout(() => controller.abort(), 20000);
+      const res = await fetch(`${API_BASE}/api/libros`, { signal: controller.signal });
+      clearTimeout(to);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al cargar el catálogo');
+      }
+      libros = Array.isArray(data.books) ? data.books : [];
+    } catch (e) {
+      console.error(e);
+      libros = [];
+      mostrarMensaje('error', 'No se pudieron cargar los libros. Verifica el servidor y la base de datos.');
+      if (contenedor) {
+        contenedor.innerHTML = '<p>No se pudo obtener el catálogo. Asegúrate de que la API esté en ejecución.</p>';
+      }
+      try {
+        renderCarruselHero();
+      } catch (err2) {
+        console.error(err2);
+      }
+      return;
+    }
+
+    try {
+      poblarFiltroCategoria();
+      renderCarruselHero();
+      mostrarLibrosCatalogo();
+    } catch (err) {
+      console.error('Error al pintar catálogo o carrusel:', err);
+      mostrarMensaje('error', 'Error al mostrar los libros. Recarga la página.');
+      if (contenedor) {
+        contenedor.innerHTML = '<p>No se pudo mostrar el catálogo. Revisa la consola del navegador.</p>';
+      }
+      try {
+        renderCarruselHero();
+      } catch (err2) {
+        console.error(err2);
+      }
+    }
+  }
+
+  // Eventos del DOM
   document.addEventListener('DOMContentLoaded', () => {
     const prev = document.getElementById('carruselPrev');
     const next = document.getElementById('carruselNext');

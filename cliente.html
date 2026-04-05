@@ -64,7 +64,41 @@
     >
   </div>
 </div>
+<!-- PANEL DE FILTROS -->
+    <div class="filtros-wrapper">
+      <button class="btn-toggle-buscador" onclick="toggleFiltros()">
+        <i class="fi fi-rr-filter"></i>
+        <span class="buscador-text">Filtrar</span>
+      </button>
+      <div id="filtrosPanel" class="buscador-panel filtros-panel">
 
+        <label class="filtro-label">Ordenar por:</label>
+        <select id="filtroOrden" class="filtro-select" onchange="aplicarFiltros()">
+          <option value="">Sin orden</option>
+          <option value="precio-asc">Precio: menor a mayor</option>
+          <option value="precio-desc">Precio: mayor a menor</option>
+          <option value="popular">Más popular (mayor stock)</option>
+          <option value="az">Título A → Z</option>
+          <option value="za">Título Z → A</option>
+        </select>
+
+        <label class="filtro-label" style="margin-top:10px;">Categoría:</label>
+        <select id="filtroCategoria" class="filtro-select" onchange="aplicarFiltros()">
+          <option value="">Todas</option>
+        </select>
+
+        <label class="filtro-label" style="margin-top:10px;">Estado:</label>
+        <select id="filtroEstado" class="filtro-select" onchange="aplicarFiltros()">
+          <option value="">Todos</option>
+          <option value="disponible">Disponible</option>
+          <option value="venta">En venta</option>
+        </select>
+
+        <button class="btn-limpiar-filtros" onclick="limpiarFiltros()">
+          <i class="fi fi-rr-cross-small"></i> Limpiar filtros
+        </button>
+      </div>
+    </div>
     <ul>
 
       <li class="menu-item" onclick="mostrarSeccion('catalogo')">
@@ -266,6 +300,9 @@
   let carruselAutoplayId = null;
   const CARRUSEL_AUTO_MS = 4000;
   const CARRUSEL_GAP_PX = 12;
+
+  // Variable para saber qué sección está activa
+  let seccionActiva = 'catalogo';
 
   function escapeHtml(text) {
     if (text == null || text === '') return '';
@@ -757,20 +794,263 @@
     return favoritos.includes(titulo);
   }
 
-  // Función para actualizar la vista según la sección actual
-  function actualizarVistaActual() {
-    const seccionCatalogo = document.getElementById('seccionCatalogo');
-    const seccionSagas = document.getElementById('seccionSagas');
-    const seccionFavoritos = document.getElementById('favoritosSeccion');
+  // Función para obtener libros filtrados (sin aplicar orden)
+  function getLibrosFiltrados() {
+    const texto = document.getElementById('buscadorLibros')?.value.toLowerCase() || '';
+    const cat = document.getElementById('filtroCategoria')?.value || '';
+    const estado = document.getElementById('filtroEstado')?.value || '';
+
+    let filtrados = [...libros];
+
+    if (texto) {
+      filtrados = filtrados.filter(l =>
+        String(l.titulo || '').toLowerCase().includes(texto) ||
+        (l.autor || '').toLowerCase().includes(texto)
+      );
+    }
+
+    if (cat) filtrados = filtrados.filter(l => l.categoriaNombre === cat);
+    if (estado) filtrados = filtrados.filter(l => (l.estadoCatalogo || l.estado || '').toLowerCase() === estado);
+
+    return filtrados;
+  }
+
+  // Función para ordenar libros según el filtro seleccionado
+  function ordenarLibros(librosArray) {
+    const orden = document.getElementById('filtroOrden')?.value || '';
+    let ordenados = [...librosArray];
     
-    if (seccionCatalogo.style.display !== 'none') {
+    if (orden === 'precio-asc') ordenados.sort((a,b) => (a.precio||0)-(b.precio||0));
+    else if (orden === 'precio-desc') ordenados.sort((a,b) => (b.precio||0)-(a.precio||0));
+    else if (orden === 'popular') ordenados.sort((a,b) => (b.stock||0)-(a.stock||0));
+    else if (orden === 'az') ordenados.sort((a,b) => String(a.titulo||'').localeCompare(String(b.titulo||'')));
+    else if (orden === 'za') ordenados.sort((a,b) => String(b.titulo||'').localeCompare(String(a.titulo||'')));
+    else ordenados.sort((a,b) => String(a.titulo||'').localeCompare(String(b.titulo||'')));
+    
+    return ordenados;
+  }
+
+  // Función principal que aplica filtros según la sección activa
+  function aplicarFiltros() {
+    if (seccionActiva === 'catalogo') {
       mostrarLibrosCliente();
-    } else if (seccionSagas.style.display !== 'none') {
+    } else if (seccionActiva === 'sagas') {
       mostrarSagas();
-    } else if (seccionFavoritos.style.display !== 'none') {
+    } else if (seccionActiva === 'favoritos') {
       mostrarFavoritos();
     }
   }
+
+  function limpiarFiltros() {
+    const orden = document.getElementById('filtroOrden');
+    const cat = document.getElementById('filtroCategoria');
+    const estado = document.getElementById('filtroEstado');
+    const buscador = document.getElementById('buscadorLibros');
+    
+    if (orden) orden.value = '';
+    if (cat) cat.value = '';
+    if (estado) estado.value = '';
+    if (buscador) buscador.value = '';
+    
+    aplicarFiltros();
+  }
+
+  function mostrarFavoritos() {
+    const contenedor = document.getElementById('listaFavoritos');
+    const sinFav = document.getElementById('sinFavoritos');
+    if (!contenedor || !sinFav) return;
+
+    // Obtener libros favoritos y aplicar filtros
+    let favoritosLibros = libros.filter(libro => favoritos.includes(libro.titulo));
+    
+    // Aplicar filtros de búsqueda, categoría y estado a los favoritos
+    const texto = document.getElementById('buscadorLibros')?.value.toLowerCase() || '';
+    const cat = document.getElementById('filtroCategoria')?.value || '';
+    const estado = document.getElementById('filtroEstado')?.value || '';
+    
+    if (texto) {
+      favoritosLibros = favoritosLibros.filter(l =>
+        String(l.titulo || '').toLowerCase().includes(texto) ||
+        (l.autor || '').toLowerCase().includes(texto)
+      );
+    }
+    if (cat) favoritosLibros = favoritosLibros.filter(l => l.categoriaNombre === cat);
+    if (estado) favoritosLibros = favoritosLibros.filter(l => (l.estadoCatalogo || l.estado || '').toLowerCase() === estado);
+    
+    // Ordenar favoritos
+    favoritosLibros = ordenarLibros(favoritosLibros);
+    
+    contenedor.innerHTML = '';
+
+    if (favoritosLibros.length === 0) {
+      sinFav.style.display = 'block';
+      contenedor.innerHTML = '';
+      return;
+    }
+
+    sinFav.style.display = 'none';
+    
+    // Mostrar chips de filtros activos
+    mostrarChipsFiltros(favoritosLibros.length, contenedor, true);
+    
+    favoritosLibros.forEach(libro => {
+      const card = document.createElement('div');
+      card.className = 'carta-libro';
+      card.innerHTML = renderCartaLibroHTML(libro);
+      contenedor.appendChild(card);
+    });
+  }
+
+  function mostrarChipsFiltros(cantidad, contenedor, esSagas = false) {
+    const ordenVal = document.getElementById('filtroOrden')?.value;
+    const catVal = document.getElementById('filtroCategoria')?.value;
+    const estadoVal = document.getElementById('filtroEstado')?.value;
+    const textoBusqueda = document.getElementById('buscadorLibros')?.value.toLowerCase();
+    
+    const activos = [];
+    
+    if (textoBusqueda) activos.push(`Buscar: "${textoBusqueda}"`);
+    if (ordenVal) {
+      const ordenSelect = document.getElementById('filtroOrden');
+      activos.push(`Orden: ${ordenSelect.options[ordenSelect.selectedIndex]?.text || ordenVal}`);
+    }
+    if (catVal) activos.push(`Categoría: ${catVal}`);
+    if (estadoVal) activos.push(`Estado: ${estadoVal === 'disponible' ? 'Disponible' : 'En venta'}`);
+    
+    // Eliminar chips anteriores
+    const chipsAnteriores = contenedor.parentElement?.querySelectorAll('.filtros-chips');
+    chipsAnteriores?.forEach(chip => chip.remove());
+    
+    if (activos.length > 0) {
+      const chipHTML = `
+        <div class="filtros-chips" style="margin-bottom: 20px;">
+          <span>${activos.join(' · ')}</span>
+          <span class="chip-resultado">${cantidad} libro${cantidad !== 1 ? 's' : ''}</span>
+        </div>
+      `;
+      contenedor.insertAdjacentHTML('beforebegin', chipHTML);
+    }
+  }
+
+  function mostrarSagas() {
+    const contenedor = document.getElementById("sagasContainer");
+    if (!contenedor) return;
+    contenedor.innerHTML = "";
+
+    if (libros.length === 0) {
+      contenedor.innerHTML = "<p>No hay libros disponibles</p>";
+      return;
+    }
+
+    // Obtener y ordenar libros filtrados
+    let filtrados = getLibrosFiltrados();
+    filtrados = ordenarLibros(filtrados);
+
+    if (filtrados.length === 0) {
+      contenedor.innerHTML = "<p>No se encontraron libros con esos filtros.</p>";
+      return;
+    }
+
+    // Mostrar chips de filtros activos
+    mostrarChipsFiltros(filtrados.length, contenedor, true);
+
+    // Agrupar por sagas
+    const sagas = {};
+    const librosSinSaga = [];
+    
+    filtrados.forEach(libro => {
+      if (libro.saga && libro.saga.trim()) {
+        if (!sagas[libro.saga]) sagas[libro.saga] = [];
+        sagas[libro.saga].push(libro);
+      } else {
+        librosSinSaga.push(libro);
+      }
+    });
+
+    // Ordenar sagas alfabéticamente
+    const sagasOrdenadas = Object.keys(sagas).sort((a, b) => a.localeCompare(b));
+
+    // Mostrar sagas con libros en layout horizontal
+    sagasOrdenadas.forEach((saga) => {
+      const librosSaga = sagas[saga];
+      const seccionSaga = document.createElement("div");
+      seccionSaga.className = "seccion-saga";
+      
+      const titulo = document.createElement("h3");
+      titulo.textContent = saga;
+      seccionSaga.appendChild(titulo);
+
+      const contenedorLibros = document.createElement("div");
+      contenedorLibros.className = "saga-libros";
+
+      librosSaga.forEach((libro) => {
+        const carta = document.createElement("div");
+        carta.className = "carta-libro";
+        carta.innerHTML = renderCartaLibroHTML(libro);
+        contenedorLibros.appendChild(carta);
+      });
+
+      seccionSaga.appendChild(contenedorLibros);
+      contenedor.appendChild(seccionSaga);
+    });
+
+    // Mostrar libros sin saga (si existen)
+    if (librosSinSaga.length > 0) {
+      const seccionSinSaga = document.createElement("div");
+      seccionSinSaga.className = "seccion-saga";
+      
+      const titulo = document.createElement("h3");
+      titulo.textContent = "Otros Libros";
+      seccionSinSaga.appendChild(titulo);
+
+      const contenedorLibros = document.createElement("div");
+      contenedorLibros.className = "saga-libros";
+
+      librosSinSaga.forEach((libro) => {
+        const carta = document.createElement("div");
+        carta.className = "carta-libro";
+        carta.innerHTML = renderCartaLibroHTML(libro);
+        contenedorLibros.appendChild(carta);
+      });
+
+      seccionSinSaga.appendChild(contenedorLibros);
+      contenedor.appendChild(seccionSinSaga);
+    }
+  }
+
+  function renderCartaLibroHTML(libro) {
+  const sinStock = libro.stock <= 0;
+  return `
+    <img src="${libro.caratula || 'img/BookNest.png'}">
+    ${sinStock ? '<span class="badge-agotado">Agotado</span>' : ''}
+    <h3>${libro.titulo}</h3>
+    <p>Autor: ${libro.autor}</p>
+    ${libro.categoriaNombre ? `<p>Categoría: ${libro.categoriaNombre}</p>` : ''}
+    <p>Estado: ${libro.estado || ''}</p>
+    <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
+    <p>Stock: ${sinStock ? '<strong style="color:red">0</strong>' : libro.stock}</p>
+    <div class="carta-botones">
+      <div class="carta-fila-top">
+        <button class="btn-fav" title="${estaEnFavoritos(libro.titulo) ? 'Remover de favoritos' : 'Agregar a favoritos'}"
+          onclick="event.stopPropagation(); toggleFavorito('${encodeURIComponent(libro.titulo)}')">
+          <i class="${estaEnFavoritos(libro.titulo) ? 'fi fi-ss-heart' : 'fi fi-rr-heart'}"></i>
+        </button>
+        ${!sinStock ? `
+        <div class="cantidad-selector">
+          <button type="button" class="btn-cantidad" onclick="cambiarCantidad(this,-1,${libro.stock})">−</button>
+          <span class="cantidad-valor">0</span>
+          <button type="button" class="btn-cantidad" onclick="cambiarCantidad(this,1,${libro.stock})">+</button>
+        </div>` : ''}
+      </div>
+      <button class="btn-agregar-carrito"
+        onclick="agregarCarritoPorTitulo('${encodeURIComponent(libro.titulo)}', this)"
+        ${sinStock ? 'disabled title="Sin stock disponible"' : ''}>
+        <i class="fi fi-rr-shopping-cart"></i>
+        ${sinStock ? 'No disponible' : 'Agregar al carrito'}
+      </button>
+    </div>
+  `;
+}
 
   function toggleFavorito(tituloCodificado) {
     const titulo = decodeURIComponent(tituloCodificado);
@@ -803,6 +1083,9 @@
     if (seccionSagas) seccionSagas.style.display = 'none';
     if (seccionFavoritos) seccionFavoritos.style.display = 'none';
     
+    // Actualizar sección activa
+    seccionActiva = tipo;
+    
     // Mostrar solo la sección seleccionada
     if (tipo === 'catalogo') {
       if (seccionCatalogo) seccionCatalogo.style.display = 'block';
@@ -815,52 +1098,25 @@
       mostrarFavoritos();
     }
   }
-  function renderCartaLibroHTML(libro) {
-  const sinStock = libro.stock <= 0;
-  return `
-    <img src="${libro.caratula || 'img/BookNest.png'}">
-    ${sinStock ? '<span class="badge-agotado">Agotado</span>' : ''}
-    <h3>${libro.titulo}</h3>
-    <p>Autor: ${libro.autor}</p>
-    ${libro.categoriaNombre ? `<p>Categoría: ${libro.categoriaNombre}</p>` : ''}
-    <p>Estado: ${libro.estado || ''}</p>
-    <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-    <p>Stock: ${sinStock ? '<strong style="color:red">0</strong>' : libro.stock}</p>
-    <div class="carta-botones">
-      <button class="btn-fav" title="${estaEnFavoritos(libro.titulo) ? 'Remover de favoritos' : 'Agregar a favoritos'}"
-        onclick="event.stopPropagation(); toggleFavorito('${encodeURIComponent(libro.titulo)}')">
-        <i class="${estaEnFavoritos(libro.titulo) ? 'fi fi-ss-heart' : 'fi fi-rr-heart'}"></i>
-      </button>
-      <button onclick="agregarCarritoPorTitulo('${encodeURIComponent(libro.titulo)}')"
-        ${sinStock ? 'disabled title="Sin stock disponible"' : ''}>
-        <i class="fi fi-rr-shopping-cart"></i>
-        ${sinStock ? 'No disponible' : 'Agregar al Carrito'}
-      </button>
-    </div>
-  `;
-}
 
-  function mostrarFavoritos() {
-    const contenedor = document.getElementById('listaFavoritos');
-    const sinFav = document.getElementById('sinFavoritos');
-    if (!contenedor || !sinFav) return;
-
-    const favoritosLibros = libros.filter(libro => favoritos.includes(libro.titulo));
-    contenedor.innerHTML = '';
-
-    if (favoritosLibros.length === 0) {
-      sinFav.style.display = 'block';
-      contenedor.innerHTML = '';
-      return;
+  // Función para actualizar la vista actual (usada después de toggle favorito)
+  function actualizarVistaActual() {
+    if (seccionActiva === 'catalogo') {
+      mostrarLibrosCliente();
+    } else if (seccionActiva === 'sagas') {
+      mostrarSagas();
+    } else if (seccionActiva === 'favoritos') {
+      mostrarFavoritos();
     }
+  }
 
-    sinFav.style.display = 'none';
-    favoritosLibros.forEach(libro => {
-      const card = document.createElement('div');
-      card.className = 'carta-libro';
-     carta.innerHTML = renderCartaLibroHTML(libro);
-      contenedor.appendChild(card);
-    });
+  function cambiarCantidad(btn, delta, stockMax) {
+    const selector = btn.closest('.cantidad-selector');
+    const span = selector.querySelector('.cantidad-valor');
+    let actual = parseInt(span.textContent);
+    if (isNaN(actual)) actual = 0;
+    actual = Math.min(Math.max(actual + delta, 0), stockMax);
+    span.textContent = actual;
   }
 
   // Devuelve una copia ordenada alfabéticamente por título.
@@ -871,6 +1127,11 @@
   function mostrarLibrosCliente() {
     const contenedor = document.getElementById("catalogoLibros");
     if (!contenedor) return;
+    
+    // Obtener y ordenar libros filtrados
+    let filtrados = getLibrosFiltrados();
+    filtrados = ordenarLibros(filtrados);
+    
     contenedor.innerHTML = "";
 
     if (libros.length === 0) {
@@ -878,124 +1139,39 @@
       return;
     }
 
-    // Vista catálogo normal (sin agrupar por saga)
-    const librosOrdenados = obtenerLibrosOrdenados();
+    if (filtrados.length === 0) {
+      contenedor.innerHTML = "<p>No se encontraron libros con esos filtros.</p>";
+      return;
+    }
 
-    librosOrdenados.forEach((libro) => {
+    // Mostrar chips de filtros activos
+    mostrarChipsFiltros(filtrados.length, contenedor);
+
+    filtrados.forEach((libro) => {
       const carta = document.createElement("div");
       carta.className = "carta-libro";
-
       carta.innerHTML = renderCartaLibroHTML(libro);
-
       contenedor.appendChild(carta);
     });
   }
 
-  function mostrarSagas() {
-    const contenedor = document.getElementById("sagasContainer");
-    contenedor.innerHTML = "";
-
-    if (libros.length === 0) {
-      contenedor.innerHTML = "<p>No hay libros disponibles</p>";
-      return;
-    }
-
-    // Agrupar por sagas
-    const sagas = {};
-    const librosSinSaga = [];
-    
-    libros.forEach(libro => {
-      if (libro.saga && libro.saga.trim()) {
-        if (!sagas[libro.saga]) sagas[libro.saga] = [];
-        sagas[libro.saga].push(libro);
-      } else {
-        librosSinSaga.push(libro);
-      }
+  function poblarFiltroCategoria() {
+    const sel = document.getElementById('filtroCategoria');
+    if (!sel) return;
+    const categorias = [...new Set(libros.map(l => l.categoriaNombre).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    sel.innerHTML = '<option value="">Todas</option>';
+    categorias.forEach(cat => {
+      const op = document.createElement('option');
+      op.value = cat;
+      op.textContent = cat;
+      sel.appendChild(op);
     });
+  }
 
-    // Ordenar sagas alfabéticamente
-    const sagasOrdenadas = Object.keys(sagas).sort((a, b) => a.localeCompare(b));
-
-    // Mostrar sagas con libros en layout horizontal
-    sagasOrdenadas.forEach((saga) => {
-      const librosSaga = sagas[saga];
-      const seccionSaga = document.createElement("div");
-      seccionSaga.className = "seccion-saga";
-      
-      const titulo = document.createElement("h3");
-      titulo.textContent = saga;
-      seccionSaga.appendChild(titulo);
-
-      const contenedorLibros = document.createElement("div");
-      contenedorLibros.className = "saga-libros";
-
-      librosSaga.sort((a, b) => a.titulo.localeCompare(b.titulo)).forEach((libro) => {
-        const carta = document.createElement("div");
-        carta.className = "carta-libro";
-
-        carta.innerHTML = `
-          <img src="${libro.caratula || 'img/BookNest.png'}">
-          <h3>${libro.titulo}</h3>
-          <p>Autor: ${libro.autor}</p>
-          <p>Estado: ${libro.estado}</p>
-          <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-          <p>Stock: ${libro.stock}</p>
-          <div class="carta-botones">
-            <button class="btn-fav" title="${estaEnFavoritos(libro.titulo) ? 'Remover de favoritos' : 'Agregar a favoritos'}" onclick="event.stopPropagation(); toggleFavorito('${encodeURIComponent(libro.titulo)}')">
-              <i class="${estaEnFavoritos(libro.titulo) ? 'fi fi-ss-heart' : 'fi fi-rr-heart'}"></i>
-            </button>
-            <button onclick="agregarCarritoPorTitulo('${encodeURIComponent(libro.titulo)}')">
-              <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
-            </button>
-          </div>
-        `;
-
-        contenedorLibros.appendChild(carta);
-      });
-
-      seccionSaga.appendChild(contenedorLibros);
-      contenedor.appendChild(seccionSaga);
-    });
-
-    // Mostrar libros sin saga (si existen)
-    if (librosSinSaga.length > 0) {
-      const seccionSinSaga = document.createElement("div");
-      seccionSinSaga.className = "seccion-saga";
-      
-      const titulo = document.createElement("h3");
-      titulo.textContent = "Otros Libros";
-      seccionSinSaga.appendChild(titulo);
-
-      const contenedorLibros = document.createElement("div");
-      contenedorLibros.className = "saga-libros";
-
-      librosSinSaga.sort((a, b) => a.titulo.localeCompare(b.titulo)).forEach((libro) => {
-        const carta = document.createElement("div");
-        carta.className = "carta-libro";
-
-        carta.innerHTML = `
-          <img src="${libro.caratula || 'img/BookNest.png'}">
-          <h3>${libro.titulo}</h3>
-          <p>Autor: ${libro.autor}</p>
-          <p>Estado: ${libro.estado}</p>
-          <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-          <p>Stock: ${libro.stock}</p>
-          <div class="carta-botones">
-            <button class="btn-fav" title="${estaEnFavoritos(libro.titulo) ? 'Remover de favoritos' : 'Agregar a favoritos'}" onclick="event.stopPropagation(); toggleFavorito('${encodeURIComponent(libro.titulo)}')">
-              <i class="${estaEnFavoritos(libro.titulo) ? 'fi fi-ss-heart' : 'fi fi-rr-heart'}"></i>
-            </button>
-            <button onclick="agregarCarritoPorTitulo('${encodeURIComponent(libro.titulo)}')">
-              <i class="fi fi-rr-shopping-cart"></i> Agregar al Carrito
-            </button>
-          </div>
-        `;
-
-        contenedorLibros.appendChild(carta);
-      });
-
-      seccionSinSaga.appendChild(contenedorLibros);
-      contenedor.appendChild(seccionSinSaga);
-    }
+  function toggleFiltros() {
+    const panel = document.getElementById('filtrosPanel');
+    if (!panel) return;
+    panel.classList.toggle('visible');
   }
 
   function abrirModal(tipo, i) {
@@ -1022,7 +1198,7 @@
 
 
   // Agrega el libro al carrito por título (funciona con libros ordenados o filtrados)
-  async function agregarCarritoPorTitulo(tituloCodificado) {
+  async function agregarCarritoPorTitulo(tituloCodificado, btnRef) {
 
   const titulo = decodeURIComponent(tituloCodificado);
 
@@ -1038,18 +1214,35 @@
     return;
   }
 
+  // Leer cantidad del selector; si está en 0 usamos 1
+  let cantidadElegida = 1;
+  if (btnRef) {
+    const span = btnRef.closest('.carta-botones')?.querySelector('.cantidad-valor');
+    if (span) {
+      const v = parseInt(span.textContent) || 0;
+      cantidadElegida = v > 0 ? v : 1;
+    }
+  }
+  cantidadElegida = Math.min(cantidadElegida, libro.stock);
+
   const existente = carrito.find(item => item.titulo === libro.titulo);
 
   if (existente) {
-    existente.cantidad++;
+    existente.cantidad = Math.min(existente.cantidad + cantidadElegida, libro.stock);
     if (existente.libroId == null) existente.libroId = libro.id;
   } else {
     carrito.push({
       titulo: libro.titulo,
       precio: libro.precio,
-      cantidad: 1,
+      cantidad: cantidadElegida,
       libroId: libro.id,
     });
+  }
+
+  // Reiniciar el selector a 0 después de agregar
+  if (btnRef) {
+    const span = btnRef.closest('.carta-botones')?.querySelector('.cantidad-valor');
+    if (span) span.textContent = '0';
   }
 
   let guardadoEnServidor = false;
@@ -1064,7 +1257,7 @@
       body: JSON.stringify({
         usuarioId: usuarioActivo.id,
         libroId: libro.id,
-        cantidad: 1,
+        cantidad: cantidadElegida,
       }),
     });
 
@@ -1109,6 +1302,7 @@
     const tbody = document.querySelector("#tablaCarrito tbody");
     if (!tbody) return;
     tbody.replaceChildren();
+
     if (carrito.length === 0) {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
@@ -1121,15 +1315,31 @@
         const precio = Number(item.precio) || 0;
         const cantidad = Number(item.cantidad) || 0;
         const total = precio * cantidad;
+        const libroReal = libros.find(l => l.titulo === item.titulo);
+        const stockMax = libroReal ? libroReal.stock : cantidad;
+
         const tr = document.createElement('tr');
+
         const tdLibro = document.createElement('td');
         tdLibro.textContent = item.titulo ?? '';
+
         const tdCant = document.createElement('td');
-        tdCant.textContent = String(cantidad);
+        tdCant.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
+            <button type="button" onclick="editarCantidadCarrito(${i},-1)"
+              style="width:22px;height:22px;padding:0;font-size:0.9rem;border-radius:4px;border:1px solid #ccc;cursor:pointer;background:#1f2937;color:#fff;min-width:unset;margin:0;">−</button>
+            <span style="min-width:20px;text-align:center;font-weight:700;">${cantidad}</span>
+            <button type="button" onclick="editarCantidadCarrito(${i},1)"
+              ${cantidad >= stockMax ? 'disabled' : ''}
+              style="width:22px;height:22px;padding:0;font-size:0.9rem;border-radius:4px;border:1px solid #ccc;cursor:pointer;background:#1f2937;color:#fff;min-width:unset;margin:0;">+</button>
+          </div>`;
+
         const tdPrecio = document.createElement('td');
         tdPrecio.textContent = '$' + precio.toFixed(2);
+
         const tdTotal = document.createElement('td');
         tdTotal.textContent = '$' + total.toFixed(2);
+
         const tdAcc = document.createElement('td');
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -1137,11 +1347,66 @@
         btn.setAttribute('data-remove-cart-index', String(i));
         btn.className = 'btn-eliminar-carrito';
         tdAcc.appendChild(btn);
+
         tr.append(tdLibro, tdCant, tdPrecio, tdTotal, tdAcc);
         tbody.appendChild(tr);
       });
+
+      // Fila total + vaciar
+      const totalGeneral = carrito.reduce((s, it) => s + (Number(it.precio)||0) * (Number(it.cantidad)||0), 0);
+      const trFoot = document.createElement('tr');
+      trFoot.innerHTML = `
+        <td colspan="3" style="text-align:right;font-weight:700;border-top:2px solid #ddd;">Total:</td>
+        <td style="font-weight:700;border-top:2px solid #ddd;">$${totalGeneral.toFixed(2)}</td>
+        <td style="border-top:2px solid #ddd;">
+          <button type="button" onclick="vaciarCarrito()"
+            style="background:#c0392b;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:0.8rem;width:auto;min-width:unset;margin:0;">
+            Vaciar todo
+          </button>
+         </td>
+      `;
+      tbody.appendChild(trFoot);
     }
     actualizarContadorCarrito();
+  }
+
+  async function editarCantidadCarrito(i, delta) {
+    const item = carrito[i];
+    if (!item) return;
+    const libroReal = libros.find(l => l.titulo === item.titulo);
+    const stockMax = libroReal ? libroReal.stock : item.cantidad;
+    const nueva = item.cantidad + delta;
+    if (nueva <= 0) {
+      await eliminarDelCarrito(i);
+      return;
+    }
+    if (nueva > stockMax) {
+      mostrarMensaje('error', `Solo hay ${stockMax} en stock`);
+      return;
+    }
+    item.cantidad = nueva;
+    guardarDatos();
+    mostrarCarrito();
+  }
+
+  async function vaciarCarrito() {
+    if (!confirm('¿Vaciar todo el carrito?')) return;
+    for (const item of [...carrito]) {
+      const libroId = item.libroId ?? (libros.find(l => l.titulo === item.titulo) || {}).id;
+      if (usuarioActivo?.id && libroId) {
+        try {
+          await fetch(`${API_BASE}/api/carrito/eliminar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuarioId: usuarioActivo.id, libroId }),
+          });
+        } catch (e) { console.error(e); }
+      }
+    }
+    carrito = [];
+    guardarDatos();
+    mostrarCarrito();
+    mostrarMensaje('success', 'Carrito vaciado');
   }
 
   async function eliminarDelCarrito(i) {
@@ -1449,130 +1714,10 @@
 
   function cerrarModalFactura(){ document.getElementById('modalFactura').style.display='none'; }
 
-
-function buscarLibros() {
-  const texto = document.getElementById("buscadorLibros").value.toLowerCase();
+  function buscarLibros() {
+    aplicarFiltros();
+  }
   
-  // Determinar en qué sección estamos
-  const seccionCatalogo = document.getElementById('seccionCatalogo');
-  const seccionSagas = document.getElementById('seccionSagas');
-  
-  if (!texto) {
-    // Si el input queda vacío, mostrar la sección actual completamente
-    if (seccionSagas.style.display !== 'none') {
-      mostrarSagas();
-    } else {
-      mostrarLibrosCliente();
-    }
-    return;
-  }
-
-  const filtrados = obtenerLibrosOrdenados().filter(libro =>
-    libro.titulo.toLowerCase().includes(texto) ||
-    (libro.autor || '').toLowerCase().includes(texto)
-  );
-
-  // Si estamos en sagas, mostrar filtrados en sagas
-  if (seccionSagas.style.display !== 'none') {
-    mostrarLibrosFiltradosSagas(filtrados);
-  } else {
-    // Si estamos en catálogo, mostrar filtrados en catálogo
-    mostrarLibrosFiltradosCatalogo(filtrados);
-  }
-}
-
-function mostrarLibrosFiltradosCatalogo(filtrados) {
-  const contenedor = document.getElementById("catalogoLibros");
-  contenedor.innerHTML = "";
-
-  if (filtrados.length === 0) {
-    contenedor.innerHTML = "<p>No se encontraron libros</p>";
-    return;
-  }
-
-  filtrados.forEach((libro) => {
-    const carta = document.createElement("div");
-    carta.className = "carta-libro";
-
-    carta.innerHTML = renderCartaLibroHTML(libro);
-    contenedor.appendChild(carta);
-  });
-}
-
-function mostrarLibrosFiltradosSagas(filtrados) {
-  const contenedor = document.getElementById("sagasContainer");
-  contenedor.innerHTML = "";
-
-  if (filtrados.length === 0) {
-    contenedor.innerHTML = "<p>No se encontraron libros</p>";
-    return;
-  }
-
-  // Agrupar por sagas los filtrados
-  const sagas = {};
-  const librosSinSaga = [];
-  
-  filtrados.forEach(libro => {
-    if (libro.saga && libro.saga.trim()) {
-      if (!sagas[libro.saga]) sagas[libro.saga] = [];
-      sagas[libro.saga].push(libro);
-    } else {
-      librosSinSaga.push(libro);
-    }
-  });
-
-  // Ordenar sagas alfabéticamente
-  const sagasOrdenadas = Object.keys(sagas).sort((a, b) => a.localeCompare(b));
-
-  // Mostrar sagas filtradas
-  sagasOrdenadas.forEach((saga) => {
-    const librosSaga = sagas[saga];
-    const seccionSaga = document.createElement("div");
-    seccionSaga.className = "seccion-saga";
-    
-    const titulo = document.createElement("h3");
-    titulo.textContent = saga;
-    seccionSaga.appendChild(titulo);
-
-    const contenedorLibros = document.createElement("div");
-    contenedorLibros.className = "saga-libros";
-
-    librosSaga.sort((a, b) => a.titulo.localeCompare(b.titulo)).forEach((libro) => {
-      const carta = document.createElement("div");
-      carta.className = "carta-libro";
-
-      carta.innerHTML = renderCartaLibroHTML(libro);
-      contenedorLibros.appendChild(carta);
-    });
-
-    seccionSaga.appendChild(contenedorLibros);
-    contenedor.appendChild(seccionSaga);
-  });
-
-  // Mostrar libros sin saga (si existen)
-  if (librosSinSaga.length > 0) {
-    const seccionSinSaga = document.createElement("div");
-    seccionSinSaga.className = "seccion-saga";
-    
-    const titulo = document.createElement("h3");
-    titulo.textContent = "Otros Libros";
-    seccionSinSaga.appendChild(titulo);
-
-    const contenedorLibros = document.createElement("div");
-    contenedorLibros.className = "saga-libros";
-
-    librosSinSaga.sort((a, b) => a.titulo.localeCompare(b.titulo)).forEach((libro) => {
-      const carta = document.createElement("div");
-      carta.className = "carta-libro";
-
-     carta.innerHTML = renderCartaLibroHTML(libro);
-      contenedorLibros.appendChild(carta);
-    });
-
-    seccionSinSaga.appendChild(contenedorLibros);
-    contenedor.appendChild(seccionSinSaga);
-  }
-}
 
 </script>
 </body>
