@@ -21,6 +21,7 @@ app.use('/api/libros', require('./routes/libros'));
 app.use('/api/proveedores', require('./routes/proveedores'));
 app.use('/api/categorias', require('./routes/categorias'));
 app.use('/api/carrito', require('./routes/carrito'));
+app.use('/api/favoritos', require('./routes/favoritos'));
 app.use('/api/ventas', require('./routes/ventas'));
 app.use('/api/reportes', require('./routes/reportes'));
 
