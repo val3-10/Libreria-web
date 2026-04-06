@@ -892,7 +892,8 @@ tr:nth-child(even) { background: rgba(127,0,255,0.05); }
 /* 17. NOTIFICACIONES TOAST  */
 /* ========================= */
 /* Aparecen en la esquina superior derecha por 3 segundos */
-.toast { position: fixed; top: 20px; right: 20px; padding: 10px 20px; border-radius: 5px; color: #fff; opacity: 0.9; z-index: 1000; }
+/* Por encima de #checkout (10050) y demás modales, para que errores/éxito se vean al pagar */
+.toast { position: fixed; top: 20px; right: 20px; padding: 10px 20px; border-radius: 5px; color: #fff; opacity: 0.95; z-index: 11000; }
 .toast.success { background-color: #00ff08; }
 .toast.error   { background-color: #ec1000; }
 .toast.info    { background-color: #319ef7; }
