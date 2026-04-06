@@ -209,7 +209,7 @@
   <div id="checkout" class="modal" aria-modal="true" role="dialog" aria-labelledby="checkoutTitulo">
     <div class="modal-contenido">
       <h3 id="checkoutTitulo">Portal de Pago</h3>
-      <form>
+      <form onsubmit="return false;">
         <div class="checkout-card-row">
           <div class="checkout-card-input-wrap">
             <input type="text" id="tarjeta" inputmode="numeric" autocomplete="cc-number" placeholder="Número de tarjeta" maxlength="19" oninput="detectarTipoTarjeta(this)">
