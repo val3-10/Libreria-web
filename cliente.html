@@ -493,6 +493,7 @@
         throw new Error(data.error || 'Error al cargar el catálogo');
       }
       libros = Array.isArray(data.books) ? data.books : [];
+      await cargarFavoritosDesdeApi();
       poblarFiltroCategoria();
     } catch (e) {
       console.error(e);
@@ -800,6 +801,26 @@
     return false;
   }
 
+  async function cargarFavoritosDesdeApi() {
+    if (!usuarioActivo?.id) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/favoritos/${usuarioActivo.id}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status !== 503) {
+          console.warn('Favoritos:', data.error || res.status);
+        }
+        return;
+      }
+      if (Array.isArray(data.titulos)) {
+        favoritos = [...data.titulos];
+        guardarDatos();
+      }
+    } catch (e) {
+      console.warn('cargarFavoritosDesdeApi', e);
+    }
+  }
+
   function estaEnFavoritos(titulo) {
     if (!Array.isArray(favoritos)) return false;
     return favoritos.includes(titulo);
@@ -1065,39 +1086,84 @@ function renderCartaLibroHTML(libro) {
   `;
 }
 
-  function toggleFavorito(tituloCodificado) {
-  const titulo = decodeURIComponent(tituloCodificado);
-  const index = favoritos.indexOf(titulo);
-
-  if (index >= 0) {
-    favoritos.splice(index, 1);
-    mostrarMensaje('success', `"${titulo}" eliminado de favoritos`);
-  } else {
-    favoritos.push(titulo);
-    mostrarMensaje('success', `"${titulo}" agregado a favoritos`);
+  function refrescarCorazonesCarruselHero() {
+    document.querySelectorAll('.carrusel-hero-slide--book').forEach((slide) => {
+      const btnFav = slide.querySelector('.btn-fav--carrusel');
+      if (!btnFav) return;
+      const tituloSlide = decodeURIComponent(
+        slide
+          .querySelector('.btn-fav--carrusel')
+          ?.getAttribute('onclick')
+          ?.match(/toggleFavorito\('(.+?)'\)/)?.[1] || '',
+      );
+      if (!tituloSlide) return;
+      const esFav = favoritos.includes(tituloSlide);
+      const icono = btnFav.querySelector('i');
+      if (icono) {
+        icono.className = esFav ? 'fi fi-ss-heart' : 'fi fi-rr-heart';
+      }
+      btnFav.title = esFav ? 'Remover de favoritos' : 'Agregar a favoritos';
+    });
   }
 
-  guardarDatos();
-  actualizarVistaActual();
+  async function toggleFavorito(tituloCodificado) {
+    const titulo = decodeURIComponent(tituloCodificado);
+    const index = favoritos.indexOf(titulo);
+    const estaba = index >= 0;
 
-  // Actualizar iconos de corazón en el carrusel sin rerenderizar
-  document.querySelectorAll('.carrusel-hero-slide--book').forEach(slide => {
-    const btnFav = slide.querySelector('.btn-fav--carrusel');
-    if (!btnFav) return;
-    const tituloSlide = decodeURIComponent(
-      slide.querySelector('.btn-fav--carrusel')
-        ?.getAttribute('onclick')
-        ?.match(/toggleFavorito\('(.+?)'\)/)?.[1] || ''
-    );
-    if (!tituloSlide) return;
-    const esFav = favoritos.includes(tituloSlide);
-    const icono = btnFav.querySelector('i');
-    if (icono) {
-      icono.className = esFav ? 'fi fi-ss-heart' : 'fi fi-rr-heart';
+    const libro = libros.find((l) => l.titulo === titulo);
+    if (!libro || libro.id == null) {
+      mostrarMensaje('error', 'No se encontró el libro en el catálogo.');
+      return;
     }
-    btnFav.title = esFav ? 'Remover de favoritos' : 'Agregar a favoritos';
-  });
-}
+
+    if (estaba) {
+      favoritos.splice(index, 1);
+      mostrarMensaje('success', `"${titulo}" eliminado de favoritos`);
+    } else {
+      favoritos.push(titulo);
+      mostrarMensaje('success', `"${titulo}" agregado a favoritos`);
+    }
+
+    guardarDatos();
+    actualizarVistaActual();
+    refrescarCorazonesCarruselHero();
+
+    if (!usuarioActivo?.id) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/favoritos/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuarioId: usuarioActivo.id, libroId: libro.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        mostrarMensaje('error', data.error || 'No se pudo guardar el favorito en el servidor.');
+        if (estaba) {
+          favoritos.push(titulo);
+        } else {
+          const i = favoritos.indexOf(titulo);
+          if (i >= 0) favoritos.splice(i, 1);
+        }
+        guardarDatos();
+        actualizarVistaActual();
+        refrescarCorazonesCarruselHero();
+      }
+    } catch (err) {
+      console.error(err);
+      mostrarMensaje('error', 'No se pudo sincronizar con el servidor.');
+      if (estaba) {
+        favoritos.push(titulo);
+      } else {
+        const i = favoritos.indexOf(titulo);
+        if (i >= 0) favoritos.splice(i, 1);
+      }
+      guardarDatos();
+      actualizarVistaActual();
+      refrescarCorazonesCarruselHero();
+    }
+  }
 
   function toggleFavoritos() {
     mostrarSeccion('favoritos');
@@ -1422,6 +1488,32 @@ document.querySelector('.sidebar')?.addEventListener('mouseleave', () => {
     item.cantidad = nueva;
     guardarDatos();
     mostrarCarrito();
+
+    const libroId =
+      item.libroId != null
+        ? item.libroId
+        : (libros.find((l) => l.titulo === item.titulo) || {}).id;
+
+    if (usuarioActivo?.id && libroId) {
+      try {
+        const res = await fetch(`${API_BASE}/api/carrito/cantidad`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            usuarioId: usuarioActivo.id,
+            libroId,
+            cantidad: nueva,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          mostrarMensaje('error', data.error || 'No se pudo guardar la cantidad en el servidor.');
+        }
+      } catch (err) {
+        console.error(err);
+        mostrarMensaje('error', 'No se pudo sincronizar con el servidor; el carrito ya se actualizó aquí.');
+      }
+    }
   }
 
  async function vaciarCarrito() {

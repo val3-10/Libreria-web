@@ -181,6 +181,20 @@ BEGIN
 END
 GO
 
+-- Favoritos por usuario (corazón en catálogo / carrusel)
+IF OBJECT_ID('dbo.Favoritos', 'U') IS NULL
+BEGIN
+  CREATE TABLE dbo.Favoritos (
+    UsuarioId INT NOT NULL,
+    LibroId INT NOT NULL,
+    FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT PK_Favoritos PRIMARY KEY (UsuarioId, LibroId),
+    CONSTRAINT FK_Favoritos_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id),
+    CONSTRAINT FK_Favoritos_Libro FOREIGN KEY (LibroId) REFERENCES dbo.Libros(Id)
+  );
+END
+GO
+
 -- Estado visible: columna calculada PERSISTED (Stock <= 0 => agotado; si no, EstadoCatalogo disponible|venta)
 
 PRINT 'Base de datos Booknest y tablas creadas correctamente.';
