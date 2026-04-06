@@ -592,8 +592,10 @@ header h1 {
 
   function normalizarLibroApi(b) {
     if (!b || typeof b !== 'object') return b;
-    const id = b.id != null ? b.id : b.Id;
-    return Object.assign({}, b, { id: id != null ? Number(id) : undefined });
+    const raw = b.id != null ? b.id : b.Id;
+    let id = raw != null && raw !== '' ? Number(raw) : undefined;
+    if (id != null && (!Number.isFinite(id) || id <= 0)) id = undefined;
+    return Object.assign({}, b, { id });
   }
 
   async function cargarLibrosDesdeApi() {
@@ -681,11 +683,30 @@ header h1 {
     if (h) h.textContent = editing ? 'Editar libro' : 'Registrar libro';
     if (btn) btn.textContent = editing ? 'Actualizar libro' : 'Guardar en base de datos';
     if (cancel) cancel.style.display = editing ? 'inline-block' : 'none';
+    if (btn && !editing) delete btn.dataset.libroId;
+  }
+
+  /** Id a actualizar: memoria + data-libro-id del botón + hidden (por si el navegador pierde uno). */
+  function resolverIdEdicionLibro() {
+    const btn = document.getElementById('btnGuardarLibro');
+    const fromDs = btn && btn.dataset && btn.dataset.libroId ? parseInt(String(btn.dataset.libroId), 10) : NaN;
+    const hid = document.getElementById('libroEditId');
+    const fromHidden = hid && String(hid.value || '').trim() ? parseInt(String(hid.value).trim(), 10) : NaN;
+    const fromMem =
+      libroEditandoId != null && Number.isFinite(libroEditandoId) && libroEditandoId > 0 ? libroEditandoId : NaN;
+    const candidates = [fromMem, fromDs, fromHidden];
+    for (let i = 0; i < candidates.length; i += 1) {
+      const n = candidates[i];
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+    return null;
   }
 
   function cancelarEdicionLibro() {
     libroEditandoId = null;
     document.getElementById('libroEditId').value = '';
+    const btnG = document.getElementById('btnGuardarLibro');
+    if (btnG) delete btnG.dataset.libroId;
     document.getElementById('titulo').value = '';
     document.getElementById('autor').value = '';
     document.getElementById('saga').value = '';
@@ -711,9 +732,16 @@ header h1 {
       mostrarMensaje('error', 'No se encontró el libro en el listado. Recarga la página.');
       return;
     }
-    libroEditandoId = Number(libro.id);
+    const lid = libro.id != null ? Number(libro.id) : NaN;
+    if (!Number.isFinite(lid) || lid <= 0) {
+      mostrarMensaje('error', 'El libro no tiene un Id válido en la API. Revisa el servidor (GET /api/libros).');
+      return;
+    }
+    libroEditandoId = lid;
     const hid = document.getElementById('libroEditId');
     if (hid) hid.value = String(libroEditandoId);
+    const btnG = document.getElementById('btnGuardarLibro');
+    if (btnG) btnG.dataset.libroId = String(libroEditandoId);
 
     mostrarSeccion('libros');
     document.getElementById('titulo').value = libro.titulo || '';
@@ -738,13 +766,6 @@ header h1 {
 
   async function guardarLibroConCaratula() {
     const libroEditIdEl = document.getElementById('libroEditId');
-    const fromMem = libroEditandoId != null && Number.isFinite(libroEditandoId) && libroEditandoId > 0
-      ? libroEditandoId
-      : NaN;
-    const editIdRaw = libroEditIdEl && libroEditIdEl.value.trim();
-    const fromHidden = editIdRaw ? parseInt(editIdRaw, 10) : NaN;
-    const editId = Number.isFinite(fromMem) && fromMem > 0 ? fromMem : fromHidden;
-    const esEdicion = Number.isFinite(editId) && editId > 0;
 
     const titulo = document.getElementById("titulo").value.trim();
     const autor = document.getElementById("autor").value.trim();
@@ -794,23 +815,26 @@ header h1 {
     }
     const caratulaUrl = rutaManual ? rutaManual.slice(0, 500) : "";
 
+    const editId = resolverIdEdicionLibro();
+    const esEdicion = editId != null;
+
     try {
-      const url = esEdicion ? `${API_BASE}/api/libros/${editId}` : `${API_BASE}/api/libros`;
-      const method = esEdicion ? 'PUT' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          titulo,
-          autor,
-          saga,
-          estado,
-          stock,
-          precio,
-          caratula: caratulaUrl || null,
-          proveedorId,
-          categoriaId,
-        }),
+      const payload = {
+        titulo,
+        autor,
+        saga,
+        estado,
+        stock,
+        precio,
+        caratula: caratulaUrl || null,
+        proveedorId,
+        categoriaId,
+      };
+      if (esEdicion) payload.id = editId;
+      const res = await fetch(`${API_BASE}/api/libros`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "No se pudo guardar el libro en la base de datos");
@@ -824,6 +848,8 @@ header h1 {
 
     libroEditandoId = null;
     if (libroEditIdEl) libroEditIdEl.value = "";
+    const btnGuardarFin = document.getElementById('btnGuardarLibro');
+    if (btnGuardarFin) delete btnGuardarFin.dataset.libroId;
     actualizarEncabezadoFormLibro(false);
     document.getElementById("titulo").value = "";
     document.getElementById("autor").value = "";

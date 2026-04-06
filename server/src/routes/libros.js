@@ -86,6 +86,58 @@ function mapRow(row) {
   };
 }
 
+const UPDATE_LIBRO_SET =
+  'UPDATE dbo.Libros SET Titulo=@Titulo, Autor=@Autor, Saga=@Saga, EstadoCatalogo=@EstadoCatalogo, ' +
+  'Stock=@Stock, Precio=@Precio, CaratulaUrl=@CaratulaUrl, ProveedorId=@ProveedorId, CategoriaId=@CategoriaId';
+
+/**
+ * Actualiza un libro por Id (mismos campos que INSERT).
+ * @returns {ReturnType<typeof mapRow>}
+ */
+async function actualizarLibroPorId(
+  pool,
+  libroId,
+  { titulo, autor, saga, estadoCatalogo, stockOk, precioOk, caratulaUrl, proveedorId, categoriaId },
+) {
+  const reqUp = pool.request();
+  reqUp.input('Id', sql.Int, libroId);
+  reqUp.input('Titulo', sql.NVarChar(300), titulo);
+  reqUp.input('Autor', sql.NVarChar(200), autor || null);
+  reqUp.input('Saga', sql.NVarChar(200), saga);
+  reqUp.input('EstadoCatalogo', sql.NVarChar(50), estadoCatalogo);
+  reqUp.input('Stock', sql.Int, stockOk);
+  reqUp.input('Precio', sql.Decimal(18, 2), precioOk);
+  reqUp.input('CaratulaUrl', sql.NVarChar(500), caratulaUrl || null);
+  reqUp.input('ProveedorId', sql.Int, proveedorId);
+  reqUp.input('CategoriaId', sql.Int, categoriaId);
+  try {
+    await reqUp.query(
+      `${UPDATE_LIBRO_SET}, FechaActualizacion=SYSUTCDATETIME() WHERE Id=@Id`,
+    );
+  } catch (eUp) {
+    if (eUp && eUp.message && /Invalid column name 'FechaActualizacion'/i.test(eUp.message)) {
+      await pool
+        .request()
+        .input('Id', sql.Int, libroId)
+        .input('Titulo', sql.NVarChar(300), titulo)
+        .input('Autor', sql.NVarChar(200), autor || null)
+        .input('Saga', sql.NVarChar(200), saga)
+        .input('EstadoCatalogo', sql.NVarChar(50), estadoCatalogo)
+        .input('Stock', sql.Int, stockOk)
+        .input('Precio', sql.Decimal(18, 2), precioOk)
+        .input('CaratulaUrl', sql.NVarChar(500), caratulaUrl || null)
+        .input('ProveedorId', sql.Int, proveedorId)
+        .input('CategoriaId', sql.Int, categoriaId)
+        .query(`${UPDATE_LIBRO_SET} WHERE Id=@Id`);
+    } else {
+      throw eUp;
+    }
+  }
+  const sel = await pool.request().input('Id', sql.Int, libroId).query(SELECT_BASE + 'WHERE L.Id = @Id');
+  const row = sel.recordset && sel.recordset[0];
+  return mapRow(row);
+}
+
 // GET /api/libros  — listado; ?q= texto opcional (título o autor)
 router.get('/', async (req, res) => {
   try {
@@ -117,8 +169,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/libros — alta (admin / integraciones)
-// Body: titulo, autor?, saga?, estado?, stock?, precio?, caratula?, proveedorId?, categoriaId?
+// POST /api/libros — merge: (1) body.id → update si existe; (2) sin id, mismo título+autor (trim, sin distinguir mayúsculas) → update; (3) si no, insert
+// Body: ... , id? , mergePorClave? (default true; false fuerza insert aunque exista duplicado título+autor)
 router.post('/', async (req, res) => {
   try {
     const body = req.body || {};
@@ -181,6 +233,51 @@ router.post('/', async (req, res) => {
       );
       if (!chk.recordset || !chk.recordset[0]) {
         return res.status(400).json({ error: 'El proveedor indicado no existe.' });
+      }
+    }
+
+    const updateViaPostId =
+      body.id != null && body.id !== '' ? parseInt(String(body.id), 10) : NaN;
+    const payload = {
+      titulo,
+      autor,
+      saga,
+      estadoCatalogo,
+      stockOk,
+      precioOk,
+      caratulaUrl,
+      proveedorId,
+      categoriaId,
+    };
+
+    if (Number.isFinite(updateViaPostId) && updateViaPostId > 0) {
+      const existe = await pool
+        .request()
+        .input('Id', sql.Int, updateViaPostId)
+        .query('SELECT Id FROM dbo.Libros WHERE Id = @Id');
+      if (!existe.recordset || !existe.recordset[0]) {
+        return res.status(404).json({ error: 'Libro no encontrado para actualizar.' });
+      }
+      const book = await actualizarLibroPorId(pool, updateViaPostId, payload);
+      return res.json({ book, merged: true });
+    }
+
+    const mergePorClave = body.mergePorClave !== false;
+    if (mergePorClave) {
+      const autorBusca = autor != null ? autor : '';
+      const dup = await pool
+        .request()
+        .input('Titulo', sql.NVarChar(300), titulo)
+        .input('Autor', sql.NVarChar(200), autorBusca)
+        .query(
+          'SELECT TOP 1 Id FROM dbo.Libros ' +
+            'WHERE LOWER(LTRIM(RTRIM(Titulo))) = LOWER(LTRIM(RTRIM(@Titulo))) ' +
+            "AND LOWER(LTRIM(RTRIM(ISNULL(Autor, N'')))) = LOWER(LTRIM(RTRIM(ISNULL(@Autor, N''))))",
+        );
+      const idDup = dup.recordset && dup.recordset[0] && dup.recordset[0].Id;
+      if (idDup != null) {
+        const book = await actualizarLibroPorId(pool, idDup, payload);
+        return res.json({ book, merged: true });
       }
     }
 
@@ -312,33 +409,22 @@ router.put('/:id', async (req, res) => {
       }
     }
 
-    const request = pool.request();
-    request.input('Id', sql.Int, id);
-    request.input('Titulo', sql.NVarChar(300), titulo);
-    request.input('Autor', sql.NVarChar(200), autor || null);
-    request.input('Saga', sql.NVarChar(200), saga);
-    request.input('EstadoCatalogo', sql.NVarChar(50), estadoCatalogo);
-    request.input('Stock', sql.Int, stockOk);
-    request.input('Precio', sql.Decimal(18, 2), precioOk);
-    request.input('CaratulaUrl', sql.NVarChar(500), caratulaUrl || null);
-    request.input('ProveedorId', sql.Int, proveedorId);
-    request.input('CategoriaId', sql.Int, categoriaId);
-
-    const upd = await request.query(
-      'UPDATE dbo.Libros SET Titulo=@Titulo, Autor=@Autor, Saga=@Saga, EstadoCatalogo=@EstadoCatalogo, ' +
-        'Stock=@Stock, Precio=@Precio, CaratulaUrl=@CaratulaUrl, ProveedorId=@ProveedorId, CategoriaId=@CategoriaId, ' +
-        'FechaActualizacion=SYSUTCDATETIME() WHERE Id=@Id',
-    );
-
-    const ra = upd.rowsAffected;
-    const affected = Array.isArray(ra) ? ra[0] : ra;
-    if (!affected) {
+    const existePut = await pool.request().input('Id', sql.Int, id).query('SELECT 1 AS Ok FROM dbo.Libros WHERE Id = @Id');
+    if (!existePut.recordset || !existePut.recordset[0]) {
       return res.status(404).json({ error: 'Libro no encontrado.' });
     }
-
-    const sel = await pool.request().input('Id', sql.Int, id).query(SELECT_BASE + 'WHERE L.Id = @Id');
-    const row = sel.recordset && sel.recordset[0];
-    return res.json({ book: mapRow(row) });
+    const book = await actualizarLibroPorId(pool, id, {
+      titulo,
+      autor,
+      saga,
+      estadoCatalogo,
+      stockOk,
+      precioOk,
+      caratulaUrl,
+      proveedorId,
+      categoriaId,
+    });
+    return res.json({ book });
   } catch (err) {
     console.error('Error en PUT /api/libros/:id:', err);
     if (err && err.message && err.message.includes('FK_Libros_Proveedor')) {
