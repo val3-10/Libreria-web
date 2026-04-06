@@ -742,6 +742,25 @@
     return longitudValidaParaFranquicia(d, tipo);
   }
 
+  /** Texto para el toast cuando la longitud del PAN no coincide con la franquicia detectada (ej. Amex 14 vs 15). */
+  function mensajeLongitudTarjetaRechazada(d) {
+    const tipo = tipoTarjetaDesdeDigitos(d);
+    const len = String(d || '').length;
+    const esperado = {
+      'American Express': '15 dígitos',
+      Visa: '13, 16 o 19 dígitos',
+      MasterCard: '16 dígitos',
+      Discover: '16 o 19 dígitos',
+      'Diners Club': '14 o 16 dígitos',
+      JCB: '16 dígitos',
+      UnionPay: '16 a 19 dígitos',
+    };
+    const esp = tipo
+      ? esperado[tipo] || 'una longitud válida para esa franquicia'
+      : '13 a 19 dígitos según el tipo de tarjeta';
+    return `Revisa el número: tienes ${len} dígito${len === 1 ? '' : 's'}; ${tipo ? `para ${tipo} se esperan ${esp}` : `debe tener ${esp}`}.`;
+  }
+
   function cvvValidoParaTarjeta(digitosTarjeta, cvv) {
     const t = tipoTarjetaDesdeDigitos(digitosTarjeta);
     if (t === 'American Express') return /^\d{4}$/.test(cvv);
@@ -1677,10 +1696,7 @@ document.querySelector('.sidebar')?.addEventListener('mouseleave', () => {
     const titular = document.getElementById('titular').value.trim();
 
     if (!esTarjetaAceptada(tarjetaRaw)) {
-      mostrarMensaje(
-        'error',
-        'Revisa el número: la cantidad de dígitos no coincide con la franquicia (ej. Visa 13/16/19, Amex 15, Diners 14…).',
-      );
+      mostrarMensaje('error', mensajeLongitudTarjetaRechazada(tarjetaRaw));
       return false;
     }
     if (!cvvValidoParaTarjeta(tarjetaRaw, cvv)) {
