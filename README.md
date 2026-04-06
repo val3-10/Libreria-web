@@ -277,7 +277,7 @@ Cada módulo en `server/src/routes/` exporta un `Router` de Express:
 2. El handler es `async`: obtiene el pool con `await db.getPool()`, arma el `request` de **mssql**, enlaza parámetros con `.input()` para evitar inyección SQL y ejecuta `query()`.
 3. La respuesta al cliente es **JSON** (`res.json(...)`) o códigos HTTP de error (`res.status(400).json({ error: '...' })`).
 
-La ruta de **libros** (`libros.js`) expone **GET /** (listado y `?q=`), **POST /** (alta con `categoriaId` opcional) y **DELETE /:id**; mapea columnas SQL a JSON (`titulo`, `caratula`, `categoriaNombre`, etc.).
+La ruta de **libros** (`libros.js`) expone **GET /** (listado y `?q=`), **POST /** (alta), **PUT /:id** (actualizar) y **DELETE /:id**; mapea columnas SQL a JSON (`titulo`, `caratula`, `categoriaNombre`, `estadoCatalogo`, etc.).
 
 **Categorías** (`categorias.js`): **GET /** devuelve `{ categorias: [{ id, nombre }] }` desde `dbo.Categorias` (orden por nombre). El formulario de alta de libros en `admin.html` usa este listado en lugar de un desplegable fijo de “género”.
 

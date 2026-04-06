@@ -161,22 +161,20 @@ header h1 {
 
   <!-- SECCIÓN: REGISTRO DE LIBROS -->
   <div id="libros" class="seccion">
-    <h2>Registrar libro</h2>
+    <h2 id="libroFormEncabezado">Registrar libro</h2>
+    <input type="hidden" id="libroEditId" value="">
     <input type="text" id="titulo" placeholder="Título">
     <input type="text" id="autor" placeholder="Autor">
     <input type="text" id="saga" placeholder="Saga/Serie (opcional)">
-    <label for="estado">Estado</label>
+    <label for="estado">Estado catálogo</label>
     <select id="estado">
       <option value="disponible">Disponible</option>
-      <option value="agotado">Agotado</option>
-      <option value="descontinuado">Descontinuado</option>
+      <option value="venta">En venta</option>
     </select>
-    <label for="categoriaLibroId">Categoría</label> 
+    <p style="font-size:0.82rem; color:#666; margin:4px 0 0;">El valor mostrado en la tabla como «agotado» depende del stock (si es 0).</p>
     <label for="categoriaLibroId">Categoría</label>
     <select id="categoriaLibroId">
       <option value="">— Sin categoría —</option>
-    </select>
-
     </select>
     <label for="proveedorLibroId">Proveedor</label>
     <select id="proveedorLibroId">
@@ -186,7 +184,10 @@ header h1 {
     <input type="number" id="precio" placeholder="Precio (en $)" min="0">
     <label for="caratulaRuta">Nombre o ruta de carátula</label>
     <input type="text" id="caratulaRuta" maxlength="500" placeholder="Ej. milibro.jpg (solo .jpg; se guarda en caratulas/)">
-    <button type="button" onclick="agregarLibro()">Guardar en base de datos</button>
+    <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:8px;">
+      <button type="button" id="btnGuardarLibro" onclick="agregarLibro()">Guardar en base de datos</button>
+      <button type="button" id="btnCancelarEdicionLibro" onclick="cancelarEdicionLibro()" style="display:none;">Cancelar edición</button>
+    </div>
     <table id="tablaLibrosAdmin">
       <thead>
         <tr>
@@ -344,6 +345,8 @@ header h1 {
 <script>
   const API_BASE = window.API_BASE;
   let libros = [];
+  /** Id del libro en edición (PUT); redundante al hidden #libroEditId para no perder el modo edición. */
+  let libroEditandoId = null;
   /** Ventas desde dbo.Ventas (GET /api/ventas) */
   let ventasBd = [];
   let proveedores = [];
@@ -410,6 +413,7 @@ header h1 {
       await cargarProveedoresDesdeApi();
       await cargarLibrosDesdeApi();
       mostrarSeccion('libros');
+      actualizarEncabezadoFormLibro(false);
     })();
   });
 
@@ -586,12 +590,19 @@ header h1 {
     void guardarLibroConCaratula();
   }
 
+  function normalizarLibroApi(b) {
+    if (!b || typeof b !== 'object') return b;
+    const id = b.id != null ? b.id : b.Id;
+    return Object.assign({}, b, { id: id != null ? Number(id) : undefined });
+  }
+
   async function cargarLibrosDesdeApi() {
     try {
       const res = await fetch(`${API_BASE}/api/libros`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Error al cargar libros');
-      libros = Array.isArray(data.books) ? data.books : [];
+      const raw = Array.isArray(data.books) ? data.books : [];
+      libros = raw.map(normalizarLibroApi);
       mostrarLibrosAdmin();
     } catch (e) {
       console.error(e);
@@ -663,7 +674,78 @@ header h1 {
     if (prev && [...sel.options].some((opt) => opt.value === prev)) sel.value = prev;
   }
 
+  function actualizarEncabezadoFormLibro(editing) {
+    const h = document.getElementById('libroFormEncabezado');
+    const btn = document.getElementById('btnGuardarLibro');
+    const cancel = document.getElementById('btnCancelarEdicionLibro');
+    if (h) h.textContent = editing ? 'Editar libro' : 'Registrar libro';
+    if (btn) btn.textContent = editing ? 'Actualizar libro' : 'Guardar en base de datos';
+    if (cancel) cancel.style.display = editing ? 'inline-block' : 'none';
+  }
+
+  function cancelarEdicionLibro() {
+    libroEditandoId = null;
+    document.getElementById('libroEditId').value = '';
+    document.getElementById('titulo').value = '';
+    document.getElementById('autor').value = '';
+    document.getElementById('saga').value = '';
+    document.getElementById('stock').value = '';
+    document.getElementById('precio').value = '';
+    document.getElementById('estado').value = 'disponible';
+    const rutaManualEl = document.getElementById('caratulaRuta');
+    if (rutaManualEl) {
+      rutaManualEl.value = '';
+      if (typeof rutaManualEl.setCustomValidity === 'function') rutaManualEl.setCustomValidity('');
+    }
+    const categoriaSel = document.getElementById('categoriaLibroId');
+    const proveedorSel = document.getElementById('proveedorLibroId');
+    if (categoriaSel) categoriaSel.value = '';
+    if (proveedorSel) proveedorSel.value = '';
+    actualizarEncabezadoFormLibro(false);
+  }
+
+  function editarLibro(id) {
+    const nid = Number(id);
+    const libro = libros.find((l) => Number(l.id) === nid);
+    if (!libro) {
+      mostrarMensaje('error', 'No se encontró el libro en el listado. Recarga la página.');
+      return;
+    }
+    libroEditandoId = Number(libro.id);
+    const hid = document.getElementById('libroEditId');
+    if (hid) hid.value = String(libroEditandoId);
+
+    mostrarSeccion('libros');
+    document.getElementById('titulo').value = libro.titulo || '';
+    document.getElementById('autor').value = libro.autor || '';
+    document.getElementById('saga').value = libro.saga || '';
+    document.getElementById('stock').value = libro.stock ?? '';
+    document.getElementById('precio').value = libro.precio ?? '';
+    document.getElementById('caratulaRuta').value = libro.caratula || '';
+    const estadoSel = document.getElementById('estado');
+    if (estadoSel) {
+      const ec = libro.estadoCatalogo != null ? String(libro.estadoCatalogo) : 'disponible';
+      estadoSel.value = ec === 'venta' ? 'venta' : 'disponible';
+    }
+    const categoriaSel = document.getElementById('categoriaLibroId');
+    if (categoriaSel) categoriaSel.value = libro.categoriaId ? String(libro.categoriaId) : '';
+    const proveedorSel = document.getElementById('proveedorLibroId');
+    if (proveedorSel) proveedorSel.value = libro.proveedorId ? String(libro.proveedorId) : '';
+    actualizarEncabezadoFormLibro(true);
+    document.getElementById('titulo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('titulo').focus();
+  }
+
   async function guardarLibroConCaratula() {
+    const libroEditIdEl = document.getElementById('libroEditId');
+    const fromMem = libroEditandoId != null && Number.isFinite(libroEditandoId) && libroEditandoId > 0
+      ? libroEditandoId
+      : NaN;
+    const editIdRaw = libroEditIdEl && libroEditIdEl.value.trim();
+    const fromHidden = editIdRaw ? parseInt(editIdRaw, 10) : NaN;
+    const editId = Number.isFinite(fromMem) && fromMem > 0 ? fromMem : fromHidden;
+    const esEdicion = Number.isFinite(editId) && editId > 0;
+
     const titulo = document.getElementById("titulo").value.trim();
     const autor = document.getElementById("autor").value.trim();
     const saga = document.getElementById("saga").value.trim();
@@ -713,8 +795,10 @@ header h1 {
     const caratulaUrl = rutaManual ? rutaManual.slice(0, 500) : "";
 
     try {
-      const res = await fetch(`${API_BASE}/api/libros`, {
-        method: "POST",
+      const url = esEdicion ? `${API_BASE}/api/libros/${editId}` : `${API_BASE}/api/libros`;
+      const method = esEdicion ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           titulo,
@@ -731,18 +815,22 @@ header h1 {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "No se pudo guardar el libro en la base de datos");
       await cargarLibrosDesdeApi();
-      mostrarMensaje("success", "Libro insertado en SQL Server correctamente.");
+      mostrarMensaje("success", esEdicion ? "Libro actualizado correctamente." : "Libro insertado en SQL Server correctamente.");
     } catch (e) {
       console.error(e);
       mostrarMensaje("error", e.message || "Error al guardar el libro");
       return;
     }
 
+    libroEditandoId = null;
+    if (libroEditIdEl) libroEditIdEl.value = "";
+    actualizarEncabezadoFormLibro(false);
     document.getElementById("titulo").value = "";
     document.getElementById("autor").value = "";
     document.getElementById("saga").value = "";
     document.getElementById("stock").value = "";
     document.getElementById("precio").value = "";
+    document.getElementById("estado").value = "disponible";
     if (proveedorSel) proveedorSel.value = "";
     if (categoriaSel) categoriaSel.value = "";
     if (rutaManualEl) {
@@ -949,23 +1037,6 @@ header h1 {
     function crearNuevoAdmin() {
       window.location.href = "register-admin.html";
     }
-function editarLibro(id) {
-  const libro = libros.find(l => l.id === id);
-  if (!libro) return;
-  mostrarSeccion('libros');
-  document.getElementById('titulo').value = libro.titulo || '';
-  document.getElementById('autor').value = libro.autor || '';
-  document.getElementById('saga').value = libro.saga || '';
-  document.getElementById('stock').value = libro.stock ?? '';
-  document.getElementById('precio').value = libro.precio ?? '';
-  document.getElementById('caratulaRuta').value = libro.caratula || '';
-  const categoriaSel = document.getElementById('categoriaLibroId');
-  if (categoriaSel) categoriaSel.value = libro.categoriaId ? String(libro.categoriaId) : '';
-  const proveedorSel = document.getElementById('proveedorLibroId');
-  if (proveedorSel) proveedorSel.value = libro.proveedorId ? String(libro.proveedorId) : '';
-  document.getElementById('titulo').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  document.getElementById('titulo').focus();
-}
 
 </script>
 </body>

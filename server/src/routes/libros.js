@@ -9,7 +9,7 @@ const { sql } = db;
 const router = express.Router();
 
 const SELECT_BASE =
-  'SELECT L.Id, L.Titulo, L.Autor, L.Saga, L.Estado, L.Stock, L.Precio, L.CaratulaUrl, L.ProveedorId, L.CategoriaId, ' +
+  'SELECT L.Id, L.Titulo, L.Autor, L.Saga, L.EstadoCatalogo, L.Estado, L.Stock, L.Precio, L.CaratulaUrl, L.ProveedorId, L.CategoriaId, ' +
   'P.Nombre AS ProveedorNombre, C.Nombre AS CategoriaNombre ' +
   'FROM dbo.Libros L ' +
   'LEFT JOIN dbo.Proveedores P ON P.Id = L.ProveedorId ' +
@@ -74,6 +74,7 @@ function mapRow(row) {
     titulo: row.Titulo,
     autor: row.Autor || '',
     estado: row.Estado,
+    estadoCatalogo: row.EstadoCatalogo || 'disponible',
     stock: row.Stock,
     precio: row.Precio != null ? Number(row.Precio) : 0,
     caratula: row.CaratulaUrl || '',
@@ -237,6 +238,125 @@ router.post('/', async (req, res) => {
       });
     }
     return res.status(500).json({ error: 'No se pudo crear el libro.' });
+  }
+});
+
+// PUT /api/libros/:id — actualizar libro existente (mismo cuerpo que POST)
+router.put('/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: 'Id de libro no válido.' });
+    }
+
+    const body = req.body || {};
+    const titulo = (body.titulo != null && String(body.titulo).trim()) || '';
+    if (!titulo) {
+      return res.status(400).json({ error: 'El título es obligatorio.' });
+    }
+
+    const autor = body.autor != null ? String(body.autor).trim() : null;
+    const sagaRaw = body.saga != null ? String(body.saga).trim() : '';
+    const saga = sagaRaw ? sagaRaw.slice(0, 200) : null;
+    let estadoCatalogo = (body.estado != null && String(body.estado).trim()) || 'disponible';
+    if (estadoCatalogo === 'agotado') estadoCatalogo = 'disponible';
+    if (estadoCatalogo !== 'disponible' && estadoCatalogo !== 'venta') {
+      estadoCatalogo = 'disponible';
+    }
+    const stock = Number(body.stock);
+    const stockOk = Number.isInteger(stock) && stock >= 0 ? stock : 0;
+    const precio = body.precio != null ? Number(body.precio) : 0;
+    const precioOk = Number.isFinite(precio) && precio >= 0 ? precio : 0;
+
+    const carNorm = normalizarCaratulaUrl(body.caratula != null ? body.caratula : '');
+    if (carNorm.error) {
+      return res.status(400).json({ error: carNorm.error });
+    }
+    let caratulaUrl = carNorm.url;
+
+    let proveedorId = null;
+    if (body.proveedorId != null && body.proveedorId !== '') {
+      const pid = Number(body.proveedorId);
+      if (!Number.isInteger(pid) || pid <= 0) {
+        return res.status(400).json({ error: 'proveedorId no válido.' });
+      }
+      proveedorId = pid;
+    }
+
+    let categoriaId = null;
+    if (body.categoriaId != null && body.categoriaId !== '') {
+      const cid = parseInt(String(body.categoriaId), 10);
+      if (!Number.isFinite(cid) || cid < 1) {
+        return res.status(400).json({ error: 'categoriaId no válido.' });
+      }
+      categoriaId = cid;
+    }
+
+    const pool = await db.getPool();
+
+    if (categoriaId != null) {
+      const chkCat = await pool.request().input('Cid', sql.Int, categoriaId).query(
+        'SELECT 1 AS Ok FROM dbo.Categorias WHERE Id = @Cid',
+      );
+      if (!chkCat.recordset || !chkCat.recordset[0]) {
+        return res.status(400).json({ error: 'La categoría indicada no existe.' });
+      }
+    }
+
+    if (proveedorId != null) {
+      const chk = await pool.request().input('Pid', sql.Int, proveedorId).query(
+        'SELECT 1 AS Ok FROM dbo.Proveedores WHERE Id = @Pid',
+      );
+      if (!chk.recordset || !chk.recordset[0]) {
+        return res.status(400).json({ error: 'El proveedor indicado no existe.' });
+      }
+    }
+
+    const request = pool.request();
+    request.input('Id', sql.Int, id);
+    request.input('Titulo', sql.NVarChar(300), titulo);
+    request.input('Autor', sql.NVarChar(200), autor || null);
+    request.input('Saga', sql.NVarChar(200), saga);
+    request.input('EstadoCatalogo', sql.NVarChar(50), estadoCatalogo);
+    request.input('Stock', sql.Int, stockOk);
+    request.input('Precio', sql.Decimal(18, 2), precioOk);
+    request.input('CaratulaUrl', sql.NVarChar(500), caratulaUrl || null);
+    request.input('ProveedorId', sql.Int, proveedorId);
+    request.input('CategoriaId', sql.Int, categoriaId);
+
+    const upd = await request.query(
+      'UPDATE dbo.Libros SET Titulo=@Titulo, Autor=@Autor, Saga=@Saga, EstadoCatalogo=@EstadoCatalogo, ' +
+        'Stock=@Stock, Precio=@Precio, CaratulaUrl=@CaratulaUrl, ProveedorId=@ProveedorId, CategoriaId=@CategoriaId, ' +
+        'FechaActualizacion=SYSUTCDATETIME() WHERE Id=@Id',
+    );
+
+    const ra = upd.rowsAffected;
+    const affected = Array.isArray(ra) ? ra[0] : ra;
+    if (!affected) {
+      return res.status(404).json({ error: 'Libro no encontrado.' });
+    }
+
+    const sel = await pool.request().input('Id', sql.Int, id).query(SELECT_BASE + 'WHERE L.Id = @Id');
+    const row = sel.recordset && sel.recordset[0];
+    return res.json({ book: mapRow(row) });
+  } catch (err) {
+    console.error('Error en PUT /api/libros/:id:', err);
+    if (err && err.message && err.message.includes('FK_Libros_Proveedor')) {
+      return res.status(400).json({ error: 'Proveedor no válido.' });
+    }
+    if (err && err.message && /Invalid column name 'Saga'/i.test(err.message)) {
+      return res.status(500).json({
+        error:
+          'Falta la columna Saga en Libros. Ejecuta server/scripts/migrate-libros-saga.sql en la base Booknest.',
+      });
+    }
+    if (err && err.message && /Invalid column name 'FechaActualizacion'/i.test(err.message)) {
+      return res.status(500).json({
+        error:
+          'El esquema de Libros no tiene FechaActualizacion. Ejecuta migrate-evolucion-booknest.sql o actualiza la tabla.',
+      });
+    }
+    return res.status(500).json({ error: 'No se pudo actualizar el libro.' });
   }
 });
 
