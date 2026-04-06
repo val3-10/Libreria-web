@@ -86,13 +86,13 @@
         <select id="filtroCategoria" class="filtro-select" onchange="aplicarFiltros()">
           <option value="">Todas</option>
         </select>
-
-        <label class="filtro-label" style="margin-top:10px;">Estado:</label>
-        <select id="filtroEstado" class="filtro-select" onchange="aplicarFiltros()">
-          <option value="">Todos</option>
-          <option value="disponible">Disponible</option>
-          <option value="venta">En venta</option>
-        </select>
+       <label class="filtro-label" style="margin-top:10px;">Estado:</label>
+      <select id="filtroEstado" class="filtro-select" onchange="aplicarFiltros()">
+        <option value="">Todos</option>
+        <option value="disponible">Disponible</option>
+        <option value="agotado">Agotado</option>
+        <option value="descontinuado">Descontinuado</option>
+      </select>
 
         <button class="btn-limpiar-filtros" onclick="limpiarFiltros()">
           <i class="fi fi-rr-cross-small"></i> Limpiar filtros
@@ -191,7 +191,17 @@
 
   </div>
   <!-- /.main-content -->
-
+<!-- MODAL CONFIRMACIÓN GENÉRICA -->
+<div id="modalConfirm" class="modal">
+  <div class="modal-contenido">
+    <h3 id="modalConfirmTitulo"></h3>
+    <p id="modalConfirmParrafo"></p>
+    <div class="modal-botones">
+      <button id="modalConfirmSi"></button>
+      <button id="modalConfirmNo"></button>
+    </div>
+  </div>
+</div>
   </div>
   <!-- /.layout -->
 
@@ -1193,6 +1203,11 @@ function renderCartaLibroHTML(libro) {
     if (!panel) return;
     panel.classList.toggle('visible');
   }
+  // Al salir el mouse del sidebar, cerrar paneles automáticamente
+document.querySelector('.sidebar')?.addEventListener('mouseleave', () => {
+  document.getElementById('filtrosPanel')?.classList.remove('visible');
+  document.getElementById('buscadorPanel')?.classList.remove('visible');
+});
 
   function abrirModal(tipo, i) {
     accionPendiente = tipo;
@@ -1409,25 +1424,38 @@ function renderCartaLibroHTML(libro) {
     mostrarCarrito();
   }
 
-  async function vaciarCarrito() {
-    if (!confirm('¿Vaciar todo el carrito?')) return;
-    for (const item of [...carrito]) {
-      const libroId = item.libroId ?? (libros.find(l => l.titulo === item.titulo) || {}).id;
-      if (usuarioActivo?.id && libroId) {
-        try {
-          await fetch(`${API_BASE}/api/carrito/eliminar`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuarioId: usuarioActivo.id, libroId }),
-          });
-        } catch (e) { console.error(e); }
-      }
+ async function vaciarCarrito() {
+  const confirmado = await new Promise(resolve => {
+    const modal = document.getElementById('modalConfirm');
+    document.getElementById('modalConfirmTitulo').textContent = '¿Vaciar carrito?';
+    document.getElementById('modalConfirmParrafo').textContent = 'Se eliminarán todos los libros del carrito.';
+    const btnSi = document.getElementById('modalConfirmSi');
+    const btnNo = document.getElementById('modalConfirmNo');
+    btnSi.textContent = 'Sí, vaciar';
+    btnNo.textContent = 'Cancelar';
+    modal.style.display = 'flex';
+    btnSi.onclick = () => { modal.style.display = 'none'; resolve(true); };
+    btnNo.onclick = () => { modal.style.display = 'none'; resolve(false); };
+  });
+
+  if (!confirmado) return;
+  for (const item of [...carrito]) {
+    const libroId = item.libroId ?? (libros.find(l => l.titulo === item.titulo) || {}).id;
+    if (usuarioActivo?.id && libroId) {
+      try {
+        await fetch(`${API_BASE}/api/carrito/eliminar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ usuarioId: usuarioActivo.id, libroId }),
+        });
+      } catch (e) { console.error(e); }
     }
-    carrito = [];
-    guardarDatos();
-    mostrarCarrito();
-    mostrarMensaje('success', 'Carrito vaciado');
   }
+  carrito = [];
+  guardarDatos();
+  mostrarCarrito();
+  mostrarMensaje('success', 'Carrito vaciado');
+}
 
   async function eliminarDelCarrito(i) {
     if (i < 0 || i >= carrito.length) return;
@@ -1742,3 +1770,6 @@ function renderCartaLibroHTML(libro) {
 </script>
 </body>
 </html>
+
+
+

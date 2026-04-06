@@ -79,14 +79,13 @@
         <select id="filtroCategoria" class="filtro-select" onchange="aplicarFiltros()">
           <option value="">Todas</option>
         </select>
-
         <label class="filtro-label" style="margin-top:10px;">Estado:</label>
         <select id="filtroEstado" class="filtro-select" onchange="aplicarFiltros()">
           <option value="">Todos</option>
           <option value="disponible">Disponible</option>
-          <option value="venta">En venta</option>
+          <option value="agotado">Agotado</option>
+          <option value="descontinuado">Descontinuado</option>
         </select>
-
         <button class="btn-limpiar-filtros" onclick="limpiarFiltros()">
           <i class="fi fi-rr-cross-small"></i> Limpiar filtros
         </button>
