@@ -77,6 +77,16 @@ const SQL_PROMEDIO_VENTAS_MES = `
   FROM VentasPorMes;
 `;
 
+const SQL_VENTAS_POR_MES = `
+  SELECT
+    DATEFROMPARTS(YEAR(v.Fecha), MONTH(v.Fecha), 1) AS mes,
+    COUNT(v.Id) AS numVentas,
+    CAST(SUM(v.Total) AS DECIMAL(18,2)) AS totalMes
+  FROM dbo.Ventas v
+  GROUP BY DATEFROMPARTS(YEAR(v.Fecha), MONTH(v.Fecha), 1)
+  ORDER BY mes DESC;
+`;
+
 const SQL_CLIENTES_SIN_COMPRAS_EXCEPT = `
   SELECT u.Id AS usuarioId, u.Nombre AS nombre, u.Correo AS correo, u.Usuario AS usuarioLogin
   FROM dbo.Usuarios u
@@ -169,6 +179,19 @@ function mapPromedioVentasMesRow(r) {
     promedioVentasMes: r.promedioVentasMes != null ? Number(r.promedioVentasMes) : 0,
     promedioMontoMes: r.promedioMontoMes != null ? Number(r.promedioMontoMes) : 0,
     mesesConVentas: r.mesesConVentas != null ? Number(r.mesesConVentas) : 0,
+  };
+}
+
+function mapVentaPorMesRow(r) {
+  const mesDate = r.mes ? new Date(r.mes) : null;
+  const yyyy = mesDate && Number.isFinite(mesDate.getTime()) ? mesDate.getUTCFullYear() : null;
+  const mm = mesDate && Number.isFinite(mesDate.getTime()) ? String(mesDate.getUTCMonth() + 1).padStart(2, '0') : null;
+  const mesLabel = yyyy && mm ? `${yyyy}-${mm}` : null;
+  return {
+    mes: r.mes || null,
+    mesLabel: mesLabel || 'N/A',
+    numVentas: r.numVentas != null ? Number(r.numVentas) : 0,
+    totalMes: r.totalMes != null ? Number(r.totalMes) : 0,
   };
 }
 
@@ -272,6 +295,14 @@ router.get('/resumen', async (_req, res) => {
       console.warn('reportes promedio ventas por mes:', e.message);
     }
 
+    let ventasPorMes = [];
+    try {
+      const porMesResult = await pool.request().query(SQL_VENTAS_POR_MES);
+      ventasPorMes = (porMesResult.recordset || []).map(mapVentaPorMesRow);
+    } catch (e) {
+      console.warn('reportes ventas por mes:', e.message);
+    }
+
     let librosAgotados = [];
     try {
       const agotadosResult = await pool.request().query(SQL_LIBROS_AGOTADOS);
@@ -287,6 +318,7 @@ router.get('/resumen', async (_req, res) => {
       clientesSinCompras,
       contactosUnificados,
       promedioVentasPorMes,
+      ventasPorMes,
       librosAgotados,
     });
   } catch (err) {
