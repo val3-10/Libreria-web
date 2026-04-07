@@ -39,7 +39,7 @@ Estructura relevante:
 | `server/src/routes/carrito.js` | Carrito por usuario (`dbo.Carrito`): agregar, cantidad, vaciar, eliminar línea |
 | `server/src/routes/favoritos.js` | Favoritos por usuario en BD |
 | `server/src/routes/ventas.js` | Listado de ventas y checkout (`dbo.Ventas`, stock en `dbo.Libros`) |
-| `server/src/routes/reportes.js` | Reportes admin: resumen, EXCEPT e INTERSECT |
+| `server/src/routes/reportes.js` | Reportes admin: resumen, promedio mensual, libros agotados, EXCEPT e INTERSECT |
 | `server/scripts/create-database.sql` | DDL único: crea base y estructura completa (`Documento`, `Categorias`, `Proveedores`, `Usuarios`, `Libros`, `Ventas`, `VentaDetalle`, `Carrito`, `Favoritos`) |
 | `server/scripts/insert.sql` | DML único: catálogos, proveedores, libros semilla y usuario admin de prueba (`admin@booknest.com` / `Abc123`) |
 
@@ -324,6 +324,7 @@ La columna **Llamada desde** indica qué página HTML (u otra pieza del cliente)
 | **GET** | `/api/ventas` | `server/src/routes/ventas.js` | `admin.html` (todas las ventas); `usuario.html` con `?usuarioId=<id>` (historial del cliente) |
 | **POST** | `/api/ventas/checkout` | `server/src/routes/ventas.js` | `cliente.html` (finalizar compra) |
 | **GET** | `/api/reportes/resumen` | `server/src/routes/reportes.js` | `admin.html` |
+| **GET** | `/api/reportes/libros-agotados` | `server/src/routes/reportes.js` | *No en HTML actual* (endpoint disponible para consumo directo) |
 | **GET** | `/api/reportes/clientes-sin-compras-except` | `server/src/routes/reportes.js` | `admin.html` |
 | **GET** | `/api/reportes/libros-vendidos-y-favoritos` | `server/src/routes/reportes.js` | `admin.html` |
 
@@ -401,8 +402,9 @@ Los textos siguientes corresponden a las consultas que usa el código en `server
 
 | Ruta | SQL |
 |------|-----|
-| **GET** `/resumen` | Constantes en código: **top clientes** — `SELECT TOP 10 … SUM(v.Total) … FROM dbo.Ventas v INNER JOIN dbo.Usuarios u … GROUP BY u.Id, u.Nombre, u.Correo ORDER BY totalCompras DESC`. **Detalle ventas** — `SELECT LibroId, Cantidad, Subtotal FROM dbo.VentaDetalle`. **Libros meta** — `SELECT Id, Titulo, Autor, ProveedorId FROM dbo.Libros WHERE Id IN (...)`. **Proveedor top** — `SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid`. **Clientes sin compras** — `LEFT JOIN dbo.Ventas v ... GROUP BY ... HAVING COUNT(v.Id) < 1`. **Contactos** — `SELECT N'Cliente' AS tipo, u.Nombre, u.Correo … FROM dbo.Usuarios u … UNION ALL SELECT N'Proveedor', p.Nombre, COALESCE(p.Contacto, N'—') FROM dbo.Proveedores p` (**UNION ALL**, no `UNION`). |
+| **GET** `/resumen` | Constantes en código: **top clientes** — `SELECT TOP 10 … SUM(v.Total) … FROM dbo.Ventas v INNER JOIN dbo.Usuarios u … GROUP BY u.Id, u.Nombre, u.Correo ORDER BY totalCompras DESC`. **Detalle ventas** — `SELECT LibroId, Cantidad, Subtotal FROM dbo.VentaDetalle`. **Libros meta** — `SELECT Id, Titulo, Autor, ProveedorId FROM dbo.Libros WHERE Id IN (...)`. **Proveedor top** — `SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid`. **Clientes sin compras** — `LEFT JOIN dbo.Ventas v ... GROUP BY ... HAVING COUNT(v.Id) < 1`. **Contactos** — `SELECT N'Cliente' AS tipo, u.Nombre, u.Correo … FROM dbo.Usuarios u … UNION ALL SELECT N'Proveedor', p.Nombre, COALESCE(p.Contacto, N'—') FROM dbo.Proveedores p` (**UNION ALL**, no `UNION`). **Promedio mensual** — `WITH VentasPorMes AS (...) SELECT AVG(numVentas), AVG(totalMes), COUNT(1)`. **Libros agotados** — `SELECT Id, Titulo, Autor, Stock FROM dbo.Libros WHERE ISNULL(Stock, 0) <= 0`. |
 | **GET** `/clientes-sin-compras-except` | Devuelve clientes activos sin ventas usando `EXCEPT` entre (clientes activos) y (clientes con al menos una venta). |
 | **GET** `/libros-vendidos-y-favoritos` | Devuelve libros que están en la intersección entre vendidos y favoritos usando `INTERSECT` (`VentaDetalle.LibroId` ∩ `Favoritos.LibroId`). |
+| **GET** `/libros-agotados` | Devuelve los libros con stock agotado (`ISNULL(Stock, 0) <= 0`) ordenados por título. |
 
 Para el texto exacto de cada constante (`SQL_TOP_CLIENTES`, `SQL_UNION_CONTACTOS`, etc.) abre `server/src/routes/reportes.js`.
