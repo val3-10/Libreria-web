@@ -52,7 +52,7 @@ Definido en `server/scripts/create-database.sql` (SQL Server).
 | **Documento** | Catálogo de tipos de documento de identidad (código + nombre). `Usuarios.DocumentoId` referencia aquí; el número va en `Usuarios.NumeroDocumento`. |
 | **Categorias** | Categorías de libros (nombre único). `Libros.CategoriaId` es opcional (FK). |
 | **Usuarios** | Clientes y empleados (correo y usuario únicos, rol, credenciales). |
-| **Libros** | Catálogo con columna calculada **`Estado`**: si `Stock <= 0` es `agotado`, si no es `disponible`. Campo opcional **`Saga`** (serie o saga). |
+| **Libros** | Catálogo con columna **`Estado`** mantenida por trigger (`trg_Libros_EstadoPorStock`): si `Stock <= 0` queda `agotado`, si no `disponible`. Campo opcional **`Saga`** (serie o saga). |
 | **Ventas** | Cabecera de venta ligada solo a `UsuarioId` (nombre y correo del cliente vía `JOIN` a `Usuarios`, sin columnas duplicadas). |
 | **VentaDetalle** | Líneas de cada venta (`VentaId`, `LibroId`, `Titulo`, `Cantidad`, `PrecioUnitario`, `Subtotal`), una fila por ítem vendido. |
 | **Carrito** | Líneas de carrito por usuario; restricción única `(UsuarioId, LibroId)`. |
@@ -254,7 +254,7 @@ Comprobaciones útiles:
 
    - **Titulo** (obligatorio)
    - **Autor** (opcional)
-   - **Estado** es columna calculada por `Stock` (`agotado` o `disponible`)
+   - **Estado** se mantiene automáticamente por trigger según `Stock` (`agotado` o `disponible`)
    - **Stock**, **Precio**
    - **CaratulaUrl** — ruta relativa a la web (ej. `img/BookNest.png`) o URL absoluta; si es `NULL`, el front usa una imagen por defecto.
 
@@ -324,7 +324,7 @@ La columna **Llamada desde** indica qué página HTML (u otra pieza del cliente)
 | **GET** | `/api/ventas` | `server/src/routes/ventas.js` | `admin.html` (todas las ventas); `usuario.html` con `?usuarioId=<id>` (historial del cliente) |
 | **POST** | `/api/ventas/checkout` | `server/src/routes/ventas.js` | `cliente.html` (finalizar compra) |
 | **GET** | `/api/reportes/resumen` | `server/src/routes/reportes.js` | `admin.html` |
-| **GET** | `/api/reportes/libros-agotados` | `server/src/routes/reportes.js` | *No en HTML actual* (endpoint disponible para consumo directo) |
+| **GET** | `/api/reportes/libros-agotados` | `server/src/routes/reportes.js` | Disponible para consumo directo (en `admin.html` se muestra vía `/api/reportes/resumen`) |
 | **GET** | `/api/reportes/clientes-sin-compras-except` | `server/src/routes/reportes.js` | `admin.html` |
 | **GET** | `/api/reportes/libros-vendidos-y-favoritos` | `server/src/routes/reportes.js` | `admin.html` |
 
@@ -402,7 +402,7 @@ Los textos siguientes corresponden a las consultas que usa el código en `server
 
 | Ruta | SQL |
 |------|-----|
-| **GET** `/resumen` | Constantes en código: **top clientes** — `SELECT TOP 10 … SUM(v.Total) … FROM dbo.Ventas v INNER JOIN dbo.Usuarios u … GROUP BY u.Id, u.Nombre, u.Correo ORDER BY totalCompras DESC`. **Detalle ventas** — `SELECT LibroId, Cantidad, Subtotal FROM dbo.VentaDetalle`. **Libros meta** — `SELECT Id, Titulo, Autor, ProveedorId FROM dbo.Libros WHERE Id IN (...)`. **Proveedor top** — `SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid`. **Clientes sin compras** — `LEFT JOIN dbo.Ventas v ... GROUP BY ... HAVING COUNT(v.Id) < 1`. **Contactos** — `SELECT N'Cliente' AS tipo, u.Nombre, u.Correo … FROM dbo.Usuarios u … UNION ALL SELECT N'Proveedor', p.Nombre, COALESCE(p.Contacto, N'—') FROM dbo.Proveedores p` (**UNION ALL**, no `UNION`). **Promedio mensual** — `WITH VentasPorMes AS (...) SELECT AVG(numVentas), AVG(totalMes), COUNT(1)`. **Libros agotados** — `SELECT Id, Titulo, Autor, Stock FROM dbo.Libros WHERE ISNULL(Stock, 0) <= 0`. |
+| **GET** `/resumen` | Constantes en código: **top clientes** — `SELECT TOP 10 … SUM(v.Total) … FROM dbo.Ventas v INNER JOIN dbo.Usuarios u … GROUP BY u.Id, u.Nombre, u.Correo ORDER BY totalCompras DESC`. **Detalle ventas** — `SELECT LibroId, Cantidad, Subtotal FROM dbo.VentaDetalle`. **Libros meta** — `SELECT Id, Titulo, Autor, ProveedorId FROM dbo.Libros WHERE Id IN (...)`. **Proveedor top** — `SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid`. **Clientes sin compras** — `LEFT JOIN dbo.Ventas v ... GROUP BY ... HAVING COUNT(v.Id) < 1`. **Contactos** — `SELECT N'Cliente' AS tipo, u.Nombre, u.Correo … FROM dbo.Usuarios u … UNION ALL SELECT N'Proveedor', p.Nombre, COALESCE(p.Contacto, N'—') FROM dbo.Proveedores p` (**UNION ALL**, no `UNION`). **Promedio mensual** — `WITH VentasPorMes AS (...) SELECT AVG(numVentas), AVG(totalMes), COUNT(1)`. **Detalle por mes** — `SELECT DATEFROMPARTS(YEAR(v.Fecha), MONTH(v.Fecha), 1) AS mes, COUNT(v.Id), SUM(v.Total) ... GROUP BY ... ORDER BY mes DESC`. **Libros agotados** — `SELECT Id, Titulo, Autor, Stock FROM dbo.Libros WHERE ISNULL(Stock, 0) <= 0`. |
 | **GET** `/clientes-sin-compras-except` | Devuelve clientes activos sin ventas usando `EXCEPT` entre (clientes activos) y (clientes con al menos una venta). |
 | **GET** `/libros-vendidos-y-favoritos` | Devuelve libros que están en la intersección entre vendidos y favoritos usando `INTERSECT` (`VentaDetalle.LibroId` ∩ `Favoritos.LibroId`). |
 | **GET** `/libros-agotados` | Devuelve los libros con stock agotado (`ISNULL(Stock, 0) <= 0`) ordenados por título. |
