@@ -77,13 +77,31 @@ BEGIN
     CategoriaId INT NULL,
     FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
     FechaActualizacion DATETIME2 NULL,
-    Estado AS (
-      CASE WHEN Stock <= 0 THEN CONVERT(NVARCHAR(50), N'agotado') ELSE CONVERT(NVARCHAR(50), N'disponible') END
-    ) PERSISTED,
+    Estado NVARCHAR(50) NOT NULL DEFAULT N'disponible',
     CONSTRAINT FK_Libros_Proveedor FOREIGN KEY (ProveedorId) REFERENCES dbo.Proveedores(Id),
     CONSTRAINT FK_Libros_Categoria FOREIGN KEY (CategoriaId) REFERENCES dbo.Categorias(Id)
   );
 END
+GO
+
+CREATE OR ALTER TRIGGER dbo.trg_Libros_EstadoPorStock
+ON dbo.Libros
+AFTER INSERT, UPDATE
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  UPDATE L
+  SET Estado = CASE WHEN L.Stock <= 0 THEN N'agotado' ELSE N'disponible' END
+  FROM dbo.Libros L
+  INNER JOIN inserted i ON i.Id = L.Id;
+END
+GO
+
+UPDATE dbo.Libros
+SET Estado = CASE WHEN Stock <= 0 THEN N'agotado' ELSE N'disponible' END
+WHERE Estado <> CASE WHEN Stock <= 0 THEN N'agotado' ELSE N'disponible' END
+   OR Estado IS NULL;
 GO
 
 IF OBJECT_ID('dbo.Ventas', 'U') IS NULL
