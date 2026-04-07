@@ -74,7 +74,7 @@ async function start() {
     console.log('  GET /api/libros       - Catálogo de libros (BD)');
     console.log('  GET /api/proveedores  - Proveedores (BD)');
     console.log('  GET /api/categorias   - Categorías de libros (BD)');
-    console.log('  GET /api/ventas          - Listado de ventas (BD)');
+    console.log('  GET /api/ventas          - Listado de ventas (BD); ?usuarioId= solo ese cliente');
     console.log('  POST /api/ventas/checkout - Registrar venta y stock');
   });
 }

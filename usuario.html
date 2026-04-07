@@ -155,6 +155,7 @@
 
     <div id="seccion-historial" class="seccion" style="display: none;">
       <h2>Mi historial</h2>
+      <p style="color:#4b5563;font-size:0.9rem;margin-bottom:12px;">Compras registradas en la base de datos (mismas que en ventas).</p>
       <table id="tablaHistorial">
         <thead>
           <tr>
@@ -165,7 +166,6 @@
         </thead>
         <tbody></tbody>
       </table>
-      <button type="button" class="usuario-btn-secundario" onclick="borrarHistorial()">Borrar historial</button>
     </div>
 
     <div id="seccion-facturas" class="seccion" style="display: none;">
@@ -173,7 +173,7 @@
       <table id="tablaFacturasCliente">
         <thead>
           <tr>
-            <th>ID</th>
+            <th>No. Factura</th>
             <th>Fecha</th>
             <th>Total</th>
             <th>Acciones</th>
@@ -281,25 +281,67 @@
     }
   }
 
-  function mostrarHistorial() {
-    const tbody = document.querySelector('#tablaHistorial tbody');
-    const historial = JSON.parse(localStorage.getItem(`historial_${usuarioActivo.usuario}`)) || [];
-    tbody.innerHTML =
-      historial.length === 0
-        ? '<tr><td colspan="3">Aún no tienes movimientos en el historial local.</td></tr>'
-        : historial
-            .map(
-              (item) =>
-                `<tr><td>${escapeHtml(item.libro || item.titulo || '—')}</td><td>${escapeHtml(item.tipo || item.accion || '—')}</td><td>${escapeHtml(item.fecha || '—')}</td></tr>`,
-            )
-            .join('');
+  function fmtFechaVenta(fecha) {
+    if (fecha == null || fecha === '') return '—';
+    try {
+      const d = new Date(fecha);
+      if (Number.isNaN(d.getTime())) return escapeHtml(String(fecha));
+      return escapeHtml(d.toLocaleString('es-CO'));
+    } catch {
+      return escapeHtml(String(fecha));
+    }
   }
 
-  function borrarHistorial() {
-    if (!confirm('¿Borrar el historial guardado en este navegador?')) return;
-    localStorage.removeItem(`historial_${usuarioActivo.usuario}`);
-    mostrarHistorial();
-    mostrarMensaje('success', 'Historial local borrado.');
+  async function mostrarHistorial() {
+    const tbody = document.querySelector('#tablaHistorial tbody');
+    if (!tbody) return;
+    if (!usuarioActivo.id) {
+      tbody.innerHTML =
+        '<tr><td colspan="3">No hay id de usuario en la sesión. Vuelve a iniciar sesión.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '<tr><td colspan="3">Cargando historial…</td></tr>';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/ventas?usuarioId=${encodeURIComponent(usuarioActivo.id)}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'No se pudo cargar el historial.');
+      }
+      const ventas = Array.isArray(data.ventas) ? data.ventas : [];
+      const filas = [];
+      ventas.forEach((v) => {
+        const fechaStr = fmtFechaVenta(v.fecha);
+        const detalle = Array.isArray(v.detalle) ? v.detalle : [];
+        if (detalle.length === 0) {
+          filas.push({
+            titulo: `Venta #${v.id != null ? v.id : '—'}`,
+            accion: 'Compra',
+            fecha: fechaStr,
+          });
+        } else {
+          detalle.forEach((line) => {
+            const titulo = line.titulo != null ? String(line.titulo) : '—';
+            filas.push({ titulo, accion: 'Compra', fecha: fechaStr });
+          });
+        }
+      });
+
+      tbody.innerHTML =
+        filas.length === 0
+          ? '<tr><td colspan="3">Aún no tienes compras registradas.</td></tr>'
+          : filas
+              .map(
+                (item) =>
+                  `<tr><td>${escapeHtml(item.titulo)}</td><td>${escapeHtml(item.accion)}</td><td>${item.fecha}</td></tr>`,
+              )
+              .join('');
+    } catch (e) {
+      console.error(e);
+      tbody.innerHTML = `<tr><td colspan="3">${escapeHtml(e.message || 'Error al cargar el historial.')}</td></tr>`;
+      mostrarMensaje('error', e.message || 'Error al cargar el historial.');
+    }
   }
 
   function fmtMoney(n) {

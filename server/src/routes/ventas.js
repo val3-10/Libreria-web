@@ -8,11 +8,13 @@ const db = require('../config/database');
 const { sql } = db;
 const router = express.Router();
 
-// GET /api/ventas — listado para administración (JOIN Usuarios)
-router.get('/', async (_req, res) => {
+// GET /api/ventas — listado (JOIN Usuarios). Opcional: ?usuarioId=n solo ventas de ese cliente (perfil).
+router.get('/', async (req, res) => {
   try {
     const pool = await db.getPool();
-    const result = await pool.request().query(`
+    const request = pool.request();
+    const rawUid = req.query && req.query.usuarioId;
+    let sqlText = `
       SELECT
         v.Id,
         v.UsuarioId,
@@ -23,8 +25,17 @@ router.get('/', async (_req, res) => {
         u.Correo AS ClienteCorreo
       FROM dbo.Ventas v
       INNER JOIN dbo.Usuarios u ON u.Id = v.UsuarioId
-      ORDER BY v.Fecha DESC, v.Id DESC
-    `);
+    `;
+    if (rawUid != null && String(rawUid).trim() !== '') {
+      const uid = Number(rawUid);
+      if (!Number.isInteger(uid) || uid <= 0) {
+        return res.status(400).json({ error: 'usuarioId inválido.' });
+      }
+      request.input('Uid', sql.Int, uid);
+      sqlText += ' WHERE v.UsuarioId = @Uid ';
+    }
+    sqlText += ' ORDER BY v.Fecha DESC, v.Id DESC';
+    const result = await request.query(sqlText);
 
     const ventas = (result.recordset || []).map((row) => {
       let detalle = [];

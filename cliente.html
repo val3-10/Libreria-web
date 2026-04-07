@@ -296,7 +296,6 @@
   }
 
   let carrito = usuarioActivo ? leerArrayLocalStorage(`carrito_${usuarioActivo.usuario}`) : [];
-  let historialCliente = usuarioActivo ? leerArrayLocalStorage(`historial_${usuarioActivo.usuario}`) : [];
   let favoritos = usuarioActivo ? leerArrayLocalStorage(`favoritos_${usuarioActivo.usuario}`) : [];
 
   let accionPendiente = null;
@@ -625,7 +624,6 @@
   function guardarDatos() {
     if (usuarioActivo) {
       localStorage.setItem(`carrito_${usuarioActivo.usuario}`, JSON.stringify(carrito));
-      localStorage.setItem(`historial_${usuarioActivo.usuario}`, JSON.stringify(historialCliente));
       localStorage.setItem(`favoritos_${usuarioActivo.usuario}`, JSON.stringify(favoritos));
     }
   }
@@ -1784,8 +1782,6 @@ document.querySelector('.sidebar')?.addEventListener('mouseleave', () => {
       compraPendiente = null;
     }
 
-    guardarDatos();
-
     const tipoTarjeta = tipoTarjetaDesdeDigitos(tarjetaRaw) || '—';
     const ultimos4 = tarjetaRaw.slice(-4);
 
@@ -1804,14 +1800,11 @@ document.querySelector('.sidebar')?.addEventListener('mouseleave', () => {
     facturas.push(nuevaFactura);
     localStorage.setItem(`facturas_${usuarioActivo.usuario}`, JSON.stringify(facturas));
 
-    detalleFactura.forEach((item) => {
-      historialCliente.push({ fecha, libro: item.titulo, tipo: 'Compra', estado: 'Completada' });
-    });
-    localStorage.setItem(`historial_${usuarioActivo.usuario}`, JSON.stringify(historialCliente));
-
     let facturasGlobales = JSON.parse(localStorage.getItem('facturas')) || [];
     facturasGlobales.push(nuevaFactura);
     localStorage.setItem('facturas', JSON.stringify(facturasGlobales));
+
+    guardarDatos();
 
     actualizarVistaActual();
     mostrarCarrito();

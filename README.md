@@ -7,21 +7,21 @@ Sitio estático (HTML, CSS, JS) más una API en Node.js que habla con **SQL Serv
 ```mermaid
 flowchart LR
   subgraph cliente[Navegador]
-    HTML[HTML / CSS / JS]
+    HTML["HTML (index, login, register, cliente, usuario, admin)"]
   end
   subgraph servidor[Servidor Node.js]
     Express[Express]
-    Rutas[routes: auth, libros]
+    Rutas["routes: auth, libros, proveedores, categorias, carrito, favoritos, ventas, reportes"]
     DBMod[config/database.js]
   end
   SQL[(SQL Server - Booknest)]
-  HTML -->|fetch JSON| Express
+  HTML -->|"fetch JSON (API_BASE)"| Express
   Express --> Rutas
   Rutas --> DBMod
   DBMod -->|mssql| SQL
 ```
 
-- **Frontend:** páginas en la raíz del repo (`index.html`, `login.html`, etc.). El catálogo público pide los libros a `GET /api/libros`.
+- **Frontend:** páginas HTML en la raíz del repo; la URL base de la API es `window.API_BASE`, definida en `config.js` (por defecto `http://localhost:3000`). Las llamadas van a `/api/...` (ver sección [API: rutas, archivos y uso en el frontend](#api-rutas-archivos-y-uso-en-el-frontend)).
 - **Backend:** carpeta `server/` — **Express** escucha en el puerto configurado (por defecto **3000**), usa **CORS** y **JSON** en el body.
 - **Datos:** el paquete **mssql** abre un pool contra SQL Server; las consultas viven en `server/src/config/database.js` y en cada archivo de rutas.
 
@@ -29,10 +29,17 @@ Estructura relevante:
 
 | Ruta en disco | Rol |
 |---------------|-----|
-| `server/src/index.js` | Arranque, middleware global, montaje de rutas bajo `/api/...` |
+| `config.js` (raíz del repo) | Define `window.API_BASE` para que todas las páginas apunten al mismo host/puerto de la API |
+| `server/src/index.js` | Arranque, middleware global, montaje de routers bajo `/api/...`, `GET /api/health`, `GET /api/ping-db` |
 | `server/src/config/database.js` | Conexión y helpers (`getPool`, `query`, `healthCheck`) |
-| `server/src/routes/auth.js` | Login, registro, cambio de contraseña |
-| `server/src/routes/libros.js` | Catálogo de libros (lectura desde `dbo.Libros`) |
+| `server/src/routes/auth.js` | Login, registro, registro admin, cambio de contraseña, baja de cuenta |
+| `server/src/routes/libros.js` | Catálogo CRUD y upsert (`MERGE`) sobre `dbo.Libros` |
+| `server/src/routes/proveedores.js` | CRUD de `dbo.Proveedores` |
+| `server/src/routes/categorias.js` | Listado de `dbo.Categorias` |
+| `server/src/routes/carrito.js` | Carrito por usuario (`dbo.Carrito`): agregar, cantidad, vaciar, eliminar línea |
+| `server/src/routes/favoritos.js` | Favoritos por usuario en BD |
+| `server/src/routes/ventas.js` | Listado de ventas y checkout (`dbo.Ventas`, stock en `dbo.Libros`) |
+| `server/src/routes/reportes.js` | Resumen para panel admin (clientes + proveedores) |
 | `server/scripts/create-database.sql` | Esquema inicial (tablas `Usuarios`, `Libros`, `Documento`, `Categorias`, etc.) |
 | `server/scripts/migrate-evolucion-booknest.sql` | Migración desde esquemas antiguos (ventas, categorías, `Estado` calculado desde `EstadoCatalogo` y `Stock`) |
 | `server/scripts/migrate-categorias-ampliar.sql` | Añade categorías literarias extra si la BD solo tenía las 6 iniciales |
@@ -239,7 +246,8 @@ Comprobaciones útiles:
 
 ## Ingresar un nuevo libro
 
-Hoy el catálogo **solo lee** la tabla `dbo.Libros`; no hay pantalla de administración conectada a un `POST` de alta. Para añadir un libro debes **insertar una fila en SQL Server**.
+- **Desde la web (recomendado):** en `admin.html`, el formulario de libros llama a **`POST /api/libros`** (upsert por **MERGE** en SQL: con `id` en el cuerpo actualiza; sin `id` o por título+autor inserta o fusiona según `libros.js`).
+- **Directo en SQL Server:** inserta una fila en `dbo.Libros` si prefieres no usar el panel.
 
 1. Conéctate a la base **Booknest**.
 2. Ejecuta un `INSERT` respetando las columnas de la tabla (definidas en `create-database.sql`):
@@ -265,24 +273,132 @@ No hace falta indicar **Id** (es `IDENTITY`). Tras insertar, recarga `index.html
 
 ## Cómo están creadas las APIs
 
-Las APIs son **rutas HTTP de Express** registradas en `server/src/index.js`:
-
-- `app.use('/api/auth', require('./routes/auth'));`
-- `app.use('/api/libros', require('./routes/libros'));`
-- `app.use('/api/categorias', require('./routes/categorias'));`
-
 Cada módulo en `server/src/routes/` exporta un `Router` de Express:
 
-1. Se define el método y la ruta relativa (por ejemplo `router.post('/login', ...)` queda en `/api/auth/login`).
+1. Se define el método y la ruta **relativa** al prefijo (por ejemplo `router.post('/login', ...)` con prefijo `/api/auth` queda en **`POST /api/auth/login`**).
 2. El handler es `async`: obtiene el pool con `await db.getPool()`, arma el `request` de **mssql**, enlaza parámetros con `.input()` para evitar inyección SQL y ejecuta `query()`.
 3. La respuesta al cliente es **JSON** (`res.json(...)`) o códigos HTTP de error (`res.status(400).json({ error: '...' })`).
 
-La ruta de **libros** (`libros.js`) expone **GET /** (listado y `?q=`), **POST /** (un solo **MERGE** en SQL: resuelve Id por `id` del JSON o por **título y autor**; si hay fila, actualiza; si no, inserta). **PUT /:id** y **DELETE /:id** siguen disponibles; la respuesta de actualización puede incluir **`merged: true`**.
+### Montaje en `server/src/index.js` (backend)
 
-**Categorías** (`categorias.js`): **GET /** devuelve `{ categorias: [{ id, nombre }] }` desde `dbo.Categorias` (orden por nombre). El formulario de alta de libros en `admin.html` usa este listado en lugar de un desplegable fijo de “género”.
+```js
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/libros', require('./routes/libros'));
+app.use('/api/proveedores', require('./routes/proveedores'));
+app.use('/api/categorias', require('./routes/categorias'));
+app.use('/api/carrito', require('./routes/carrito'));
+app.use('/api/favoritos', require('./routes/favoritos'));
+app.use('/api/ventas', require('./routes/ventas'));
+app.use('/api/reportes', require('./routes/reportes'));
+// Además: GET /api/health y GET /api/ping-db definidos en el mismo index.js
+```
 
-Las rutas de **auth** (`auth.js`) cubren registro, login contra la tabla `Usuarios`, registro administrativo y cambio de contraseña, siempre vía SQL parametrizado.
+### API: rutas, archivos y uso en el frontend
 
-**Ventas** (`ventas.js`): **GET /** lista ventas con cliente (`JOIN` a `Usuarios`) y `detalle` parseado desde JSON; **POST /checkout** registra la venta y descuenta stock. El panel **Ventas** en `admin.html` usa solo la API (no `localStorage`).
+La columna **Llamada desde** indica qué página HTML (u otra pieza del cliente) usa `fetch` contra esa ruta. **Base URL:** `window.API_BASE` (`config.js`, por defecto `http://localhost:3000`). Rutas marcadas como *no en HTML* existen en el backend y pueden usarse con Postman, curl o futuros clientes.
 
-Si en el futuro quieres dar de alta libros desde la web, el patrón sería el mismo: nuevo `router.post(...)` en `libros.js` (o router dedicado), `INSERT` parametrizado y proteger el endpoint (por sesión o rol) según tu modelo de seguridad.
+| Método | Ruta | Archivo (backend) | Llamada desde (frontend) |
+|--------|------|-------------------|---------------------------|
+| **GET** | `/api/health` | `server/src/index.js` | Diagnóstico manual / README |
+| **GET** | `/api/ping-db` | `server/src/index.js` | Diagnóstico manual / README |
+| **POST** | `/api/auth/login` | `server/src/routes/auth.js` | `login.html` |
+| **POST** | `/api/auth/register` | `server/src/routes/auth.js` | `register.html` |
+| **POST** | `/api/auth/register-admin` | `server/src/routes/auth.js` | `register-admin.html` |
+| **POST** | `/api/auth/change-password` | `server/src/routes/auth.js` | `usuario.html` |
+| **POST** | `/api/auth/deactivate-account` | `server/src/routes/auth.js` | `usuario.html` |
+| **GET** | `/api/libros` | `server/src/routes/libros.js` | `index.html`, `cliente.html`, `admin.html` (catálogo; query opcional `?q=` búsqueda título/autor) |
+| **POST** | `/api/libros` | `server/src/routes/libros.js` | `admin.html` (alta/edición por **MERGE**; cuerpo con `id` para actualizar) |
+| **PUT** | `/api/libros/:id` | `server/src/routes/libros.js` | *No en HTML actual* (alternativa al POST MERGE) |
+| **DELETE** | `/api/libros/:id` | `server/src/routes/libros.js` | `admin.html` |
+| **GET** | `/api/proveedores` | `server/src/routes/proveedores.js` | `admin.html` |
+| **POST** | `/api/proveedores` | `server/src/routes/proveedores.js` | `admin.html` |
+| **PUT** | `/api/proveedores/:id` | `server/src/routes/proveedores.js` | `admin.html` |
+| **DELETE** | `/api/proveedores/:id` | `server/src/routes/proveedores.js` | `admin.html` |
+| **GET** | `/api/categorias` | `server/src/routes/categorias.js` | `admin.html` |
+| **POST** | `/api/carrito/agregar` | `server/src/routes/carrito.js` | `index.html`, `cliente.html` |
+| **POST** | `/api/carrito/cantidad` | `server/src/routes/carrito.js` | `cliente.html` |
+| **POST** | `/api/carrito/vaciar` | `server/src/routes/carrito.js` | `cliente.html` |
+| **POST** | `/api/carrito/eliminar` | `server/src/routes/carrito.js` | `cliente.html` |
+| **GET** | `/api/favoritos/:usuarioId` | `server/src/routes/favoritos.js` | `cliente.html` |
+| **POST** | `/api/favoritos/toggle` | `server/src/routes/favoritos.js` | `cliente.html` |
+| **GET** | `/api/ventas` | `server/src/routes/ventas.js` | `admin.html` (todas las ventas); `usuario.html` con `?usuarioId=<id>` (historial del cliente) |
+| **POST** | `/api/ventas/checkout` | `server/src/routes/ventas.js` | `cliente.html` (finalizar compra) |
+| **GET** | `/api/reportes/resumen` | `server/src/routes/reportes.js` | `admin.html` |
+
+**Notas de seguridad y datos:** `GET /api/ventas?usuarioId=` y `GET /api/favoritos/:usuarioId` confían en el id enviado por el cliente (adecuado para demo; en producción ligar el id a la sesión o JWT). El panel **Ventas** en `admin.html` y el **historial** en `usuario.html` leen ventas desde la BD, no desde `localStorage`. Las **facturas** en `usuario.html` siguen pudiendo depender de datos locales (`facturas_*`) según la implementación actual del HTML.
+
+### SQL ejecutado (resumen por ruta)
+
+Los textos siguientes corresponden a las consultas que usa el código en `server/src/` (parámetros `@...` vía `mssql`; no se concatena SQL con datos del usuario). Si una ruta ejecuta varias sentencias, aparecen en orden lógico.
+
+#### `server/src/index.js`
+
+| Ruta | SQL |
+|------|-----|
+| **GET** `/api/health` | `SELECT 1 AS ok` (vía `db.healthCheck()` en `config/database.js`). |
+| **GET** `/api/ping-db` | `SELECT @@VERSION AS version`. |
+
+#### `server/src/routes/auth.js`
+
+| Ruta | SQL |
+|------|-----|
+| **POST** `/login` | `SELECT TOP 1 Id, Nombre, Correo, Usuario, Rol, Activo FROM dbo.Usuarios WHERE Correo = @Correo AND PasswordHash = @PasswordHash AND Activo = 1` |
+| **POST** `/register` | Duplicados: `SELECT TOP 1 Correo, Usuario FROM Usuarios WHERE Correo = @correo OR Usuario = @usuario`. Opcional: `SELECT TOP 1 Id FROM dbo.Documento WHERE Nombre = @t OR Codigo = @t`. Insert: `INSERT INTO Usuarios (Nombre, DocumentoId, NumeroDocumento, Correo, Telefono, Direccion, FechaNacimiento, Usuario, PasswordHash, Rol, Activo) VALUES (...)` con `Rol = 'Cliente'`. |
+| **POST** `/register-admin` | Misma validación de duplicados e `INSERT` que register, con `Rol` desde el cuerpo. |
+| **POST** `/change-password` | `SELECT TOP 1 Id, Correo, Usuario, Activo FROM dbo.Usuarios WHERE Correo = @Correo AND PasswordHash = @PasswordHash AND Activo = 1` luego `UPDATE dbo.Usuarios SET PasswordHash = @PasswordHash, FechaActualizacion = SYSUTCDATETIME() WHERE Id = @Id`. |
+| **POST** `/deactivate-account` | `SELECT TOP 1 Id, Rol FROM dbo.Usuarios WHERE Correo = @Correo AND PasswordHash = @PasswordHash AND Activo = 1`; si procede: `DELETE FROM dbo.Carrito WHERE UsuarioId = @UsuarioId`; `UPDATE dbo.Usuarios SET Activo = 0, FechaActualizacion = SYSUTCDATETIME() WHERE Id = @Id`. |
+
+#### `server/src/routes/libros.js`
+
+| Ruta | SQL |
+|------|-----|
+| **GET** `/` | `SELECT L.Id, L.Titulo, …, P.Nombre AS ProveedorNombre, C.Nombre AS CategoriaNombre FROM dbo.Libros L LEFT JOIN dbo.Proveedores P … LEFT JOIN dbo.Categorias C …` + `ORDER BY L.Titulo`. Con `?q=`: añade `WHERE L.Titulo LIKE @q1 OR L.Autor LIKE @q2`. |
+| **POST** `/` | Validaciones: `SELECT 1 FROM dbo.Categorias WHERE Id = @Cid`, `SELECT 1 FROM dbo.Proveedores WHERE Id = @Pid` si aplica. **Upsert:** un `MERGE dbo.Libros AS T USING (<subconsulta con UpsertId y columnas del libro>) AS S ON S.UpsertId IS NOT NULL AND T.Id = S.UpsertId WHEN MATCHED THEN UPDATE SET … WHEN NOT MATCHED BY TARGET THEN INSERT … OUTPUT $action, INSERTED.Id` (detalle en `upsertLibroPostUnaConsulta`; `UpsertId` resuelve por `body.id` o por título+autor). Tras el MERGE: mismo `SELECT` de listado con `WHERE L.Id = @Id`. |
+| **PUT** `/:id` | Comprueba categoría/proveedor/libro: `SELECT 1 … FROM dbo.Categorias` / `dbo.Proveedores` / `dbo.Libros WHERE Id = @Id`. **Update:** `MERGE dbo.Libros AS T USING (SELECT @Id AS Id, @Titulo AS Titulo, …) AS S ON T.Id = S.Id WHEN MATCHED THEN UPDATE SET …` (+ `FechaActualizacion` si existe columna). Luego `SELECT` con joins como en GET y `WHERE L.Id = @Id`. |
+| **DELETE** `/:id` | `DELETE FROM dbo.Carrito WHERE LibroId = @LibroId`; `DELETE FROM dbo.Prestamos WHERE LibroId = @LibroId` (si las tablas existen); `DELETE FROM dbo.Libros WHERE Id = @Id`. |
+
+#### `server/src/routes/proveedores.js`
+
+| Ruta | SQL |
+|------|-----|
+| **GET** `/` | `SELECT Id, Nombre, Contacto, FechaCreacion FROM dbo.Proveedores ORDER BY Nombre`. |
+| **POST** `/` | `INSERT INTO dbo.Proveedores (Nombre, Contacto) OUTPUT INSERTED.Id, … VALUES (@Nombre, @Contacto)`. |
+| **PUT** `/:id` | `UPDATE dbo.Proveedores SET Nombre = @Nombre, Contacto = @Contacto WHERE Id = @Id` luego `SELECT Id, Nombre, Contacto, FechaCreacion FROM dbo.Proveedores WHERE Id = @Id`. |
+| **DELETE** `/:id` | `SELECT COUNT(*) AS C FROM dbo.Libros WHERE ProveedorId = @Id`; si 0: `DELETE FROM dbo.Proveedores WHERE Id = @Id`. |
+
+#### `server/src/routes/categorias.js`
+
+| Ruta | SQL |
+|------|-----|
+| **GET** `/` | `SELECT Id, Nombre FROM dbo.Categorias ORDER BY Nombre`. |
+
+#### `server/src/routes/carrito.js`
+
+| Ruta | SQL |
+|------|-----|
+| **POST** `/agregar` | `IF EXISTS (SELECT 1 FROM dbo.Carrito WHERE UsuarioId = @UsuarioId AND LibroId = @LibroId) UPDATE … SET Cantidad = Cantidad + @Cantidad, FechaActualizacion = … ELSE INSERT INTO dbo.Carrito (UsuarioId, LibroId, Cantidad) VALUES (…)`. |
+| **POST** `/cantidad` | Si `cantidad = 0`: `DELETE FROM dbo.Carrito WHERE UsuarioId = @UsuarioId AND LibroId = @LibroId`. Si no: upsert similar a agregar fijando `Cantidad = @Cantidad` (con o sin `FechaActualizacion` según esquema). |
+| **POST** `/vaciar` | `DELETE FROM dbo.Carrito WHERE UsuarioId = @UsuarioId`. |
+| **POST** `/eliminar` | `DELETE FROM dbo.Carrito WHERE UsuarioId = @UsuarioId AND LibroId = @LibroId`. |
+
+#### `server/src/routes/favoritos.js`
+
+| Ruta | SQL |
+|------|-----|
+| **POST** `/toggle` | `SELECT 1 AS ok FROM dbo.Favoritos WHERE UsuarioId = @UsuarioId AND LibroId = @LibroId`; si existe → `DELETE FROM dbo.Favoritos WHERE …`; si no → `INSERT INTO dbo.Favoritos (UsuarioId, LibroId) VALUES (…)`. |
+| **GET** `/:usuarioId` | `SELECT F.LibroId, L.Titulo FROM dbo.Favoritos F INNER JOIN dbo.Libros L ON L.Id = F.LibroId WHERE F.UsuarioId = @UsuarioId ORDER BY L.Titulo`. |
+
+#### `server/src/routes/ventas.js`
+
+| Ruta | SQL |
+|------|-----|
+| **GET** `/` | `SELECT v.Id, v.UsuarioId, v.Fecha, v.Total, v.Detalle, u.Nombre AS ClienteNombre, u.Correo AS ClienteCorreo FROM dbo.Ventas v INNER JOIN dbo.Usuarios u ON u.Id = v.UsuarioId` + opcional `WHERE v.UsuarioId = @Uid` + `ORDER BY v.Fecha DESC, v.Id DESC`. |
+| **POST** `/checkout` | Transacción: `SELECT TOP 1 Id, Nombre, Correo FROM dbo.Usuarios WHERE Id = @Uid AND Activo = 1`. Por ítem: `SELECT TOP 1 Id, Titulo, Stock, Precio FROM dbo.Libros WITH (UPDLOCK, ROWLOCK) WHERE Id = @Id`; `UPDATE dbo.Libros SET Stock = Stock - @Qty, FechaActualizacion = SYSUTCDATETIME() WHERE Id = @Id AND Stock >= @Qty`. `INSERT INTO dbo.Ventas (UsuarioId, Total, Detalle) OUTPUT INSERTED.Id … VALUES (@UsuarioId, @Total, @Detalle)` (`Detalle` = JSON de líneas). Por libro vendido: `DELETE FROM dbo.Carrito WHERE UsuarioId = @UsuarioId AND LibroId = @LibroId` (si existe tabla). Tras commit: `SELECT Id, Stock FROM dbo.Libros WHERE Id IN (@id0, @id1, …)` para devolver stocks actualizados. |
+
+#### `server/src/routes/reportes.js`
+
+| Ruta | SQL |
+|------|-----|
+| **GET** `/resumen` | Constantes en código: **top clientes** — `SELECT TOP 10 … SUM(v.Total) … FROM dbo.Ventas v INNER JOIN dbo.Usuarios u … GROUP BY u.Id, u.Nombre, u.Correo ORDER BY totalCompras DESC`. **Detalle ventas** — `SELECT Detalle FROM dbo.Ventas WHERE Detalle IS NOT NULL AND …` (agregación de unidades por `libroId` en Node). **Libros meta** — `SELECT Id, Titulo, Autor, ProveedorId FROM dbo.Libros WHERE Id IN (…)`. **Proveedor top** — `SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid`. **Clientes sin compras** — `SELECT u.Id, … FROM dbo.Usuarios u WHERE u.Activo = 1 AND … NOT EXISTS (SELECT 1 FROM dbo.Ventas v WHERE v.UsuarioId = u.Id) …`. **Contactos** — `SELECT N'Cliente' AS tipo, u.Nombre, u.Correo … FROM dbo.Usuarios u … UNION ALL SELECT N'Proveedor', p.Nombre, COALESCE(p.Contacto, N'—') FROM dbo.Proveedores p` (**UNION ALL**, no `UNION`). |
+
+Para el texto exacto de cada constante (`SQL_TOP_CLIENTES`, `SQL_UNION_CONTACTOS`, etc.) abre `server/src/routes/reportes.js`.
