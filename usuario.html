@@ -165,7 +165,7 @@
         </thead>
         <tbody></tbody>
       </table>
-      <button type="button" class="usuario-btn-secundario" onclick="borrarHistorial()">Borrar historial local</button>
+      <button type="button" class="usuario-btn-secundario" onclick="borrarHistorial()">Borrar historial</button>
     </div>
 
     <div id="seccion-facturas" class="seccion" style="display: none;">
@@ -210,7 +210,6 @@
     <h4 style="text-align: right; margin-top: 10px;">Total: $<span id="facturaTotal">0.00</span></h4>
     <div style="display: flex; justify-content: space-between; margin-top: 15px; flex-wrap: wrap; gap: 10px;">
       <button type="button" onclick="cerrarModalFactura()">Cerrar</button>
-      <button type="button" onclick="eliminarFactura()">Eliminar factura (solo local)</button>
     </div>
   </div>
 </div>
@@ -365,17 +364,6 @@
     document.getElementById('modalFactura').style.display = 'none';
   }
 
-  function eliminarFactura() {
-    const indice = parseInt(document.getElementById('facturaCliente').getAttribute('data-id'), 10);
-    const facturas = JSON.parse(localStorage.getItem(`facturas_${usuarioActivo.usuario}`)) || [];
-    if (indice < 0 || Number.isNaN(indice) || !facturas[indice]) return;
-    if (!confirm('¿Eliminar esta factura solo de este navegador?')) return;
-    facturas.splice(indice, 1);
-    localStorage.setItem(`facturas_${usuarioActivo.usuario}`, JSON.stringify(facturas));
-    cerrarModalFactura();
-    mostrarFacturas();
-    mostrarMensaje('success', 'Factura eliminada del almacenamiento local.');
-  }
 
   function mostrarSeccion(seccion) {
     document.querySelectorAll('.main-content .seccion').forEach((s) => {
@@ -400,7 +388,7 @@
   }
 
   async function eliminarCuenta() {
-    if (!confirm('¿Dar de baja tu cuenta en el servidor? No podrás iniciar sesión de nuevo con estos datos.')) return;
+    if (!confirm('¿Quieres eliminar tu cuenta en el servidor? No podrás iniciar sesión de nuevo con estos datos.')) return;
     const password = prompt('Confirma tu contraseña actual:');
     if (password == null || password === '') {
       mostrarMensaje('error', 'Se necesita la contraseña para continuar.');
@@ -417,7 +405,7 @@
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'No se pudo dar de baja la cuenta');
+      if (!res.ok) throw new Error(data.error || 'No se pudo eliminar la cuenta');
 
       localStorage.removeItem('usuarioActivo');
       localStorage.removeItem('rol');
