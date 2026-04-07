@@ -207,11 +207,7 @@
         // Guardar el usuario en el localStorage del navegador
         localStorage.setItem('usuarioActivo', JSON.stringify({
           ...usuario,
-
-          // Inicializar historial de compras
-          historial: [],
-
-          // Inicializar carrito
+          // Historial de compras: GET /api/ventas?usuarioId=… en usuario.html (BD), no localStorage
           carrito: [],
         }));
 
