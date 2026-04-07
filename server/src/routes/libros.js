@@ -13,7 +13,7 @@ const { sql } = db;
 const router = express.Router();
 
 const SELECT_BASE =
-  'SELECT L.Id, L.Titulo, L.Autor, L.Saga, L.EstadoCatalogo, L.Estado, L.Stock, L.Precio, L.CaratulaUrl, L.ProveedorId, L.CategoriaId, ' +
+  'SELECT L.Id, L.Titulo, L.Autor, L.Saga, L.Estado, L.Stock, L.Precio, L.CaratulaUrl, L.ProveedorId, L.CategoriaId, ' +
   'P.Nombre AS ProveedorNombre, C.Nombre AS CategoriaNombre ' +
   'FROM dbo.Libros L ' +
   'LEFT JOIN dbo.Proveedores P ON P.Id = L.ProveedorId ' +
@@ -78,7 +78,6 @@ function mapRow(row) {
     titulo: row.Titulo,
     autor: row.Autor || '',
     estado: row.Estado,
-    estadoCatalogo: row.EstadoCatalogo || 'disponible',
     stock: row.Stock,
     precio: row.Precio != null ? Number(row.Precio) : 0,
     caratula: row.CaratulaUrl || '',
@@ -92,12 +91,12 @@ function mapRow(row) {
 
 /** Origen (USING) del MERGE de actualización: una fila con el Id objetivo y los campos a escribir. */
 const MERGE_USING_LIBRO =
-  'SELECT @Id AS Id, @Titulo AS Titulo, @Autor AS Autor, @Saga AS Saga, @EstadoCatalogo AS EstadoCatalogo, ' +
+  'SELECT @Id AS Id, @Titulo AS Titulo, @Autor AS Autor, @Saga AS Saga, ' +
   '@Stock AS Stock, @Precio AS Precio, @CaratulaUrl AS CaratulaUrl, @ProveedorId AS ProveedorId, @CategoriaId AS CategoriaId';
 
 /** Columnas del destino T que se asignan desde S en el WHEN MATCHED (UPDATE). */
 const MERGE_UPDATE_SET =
-  'T.Titulo = S.Titulo, T.Autor = S.Autor, T.Saga = S.Saga, T.EstadoCatalogo = S.EstadoCatalogo, ' +
+  'T.Titulo = S.Titulo, T.Autor = S.Autor, T.Saga = S.Saga, ' +
   'T.Stock = S.Stock, T.Precio = S.Precio, T.CaratulaUrl = S.CaratulaUrl, T.ProveedorId = S.ProveedorId, T.CategoriaId = S.CategoriaId';
 
 /**
@@ -110,15 +109,14 @@ const MERGE_USING_POST_UPSERT =
   '(SELECT TOP 1 Id FROM dbo.Libros WHERE @BodyId IS NOT NULL AND Id = @BodyId), ' +
   '(SELECT TOP 1 Id FROM dbo.Libros WHERE Titulo = @Titulo AND (Autor = @Autor OR (Autor IS NULL AND @Autor IS NULL)))' +
   ') AS UpsertId, ' +
-  '@Titulo AS Titulo, @Autor AS Autor, @Saga AS Saga, @EstadoCatalogo AS EstadoCatalogo, ' +
+  '@Titulo AS Titulo, @Autor AS Autor, @Saga AS Saga, ' +
   '@Stock AS Stock, @Precio AS Precio, @CaratulaUrl AS CaratulaUrl, @ProveedorId AS ProveedorId, @CategoriaId AS CategoriaId';
 
-function bindLibroPayload(req, libroId, { titulo, autor, saga, estadoCatalogo, stockOk, precioOk, caratulaUrl, proveedorId, categoriaId }) {
+function bindLibroPayload(req, libroId, { titulo, autor, saga, stockOk, precioOk, caratulaUrl, proveedorId, categoriaId }) {
   req.input('Id', sql.Int, libroId);
   req.input('Titulo', sql.NVarChar(300), titulo);
   req.input('Autor', sql.NVarChar(200), autor || null);
   req.input('Saga', sql.NVarChar(200), saga);
-  req.input('EstadoCatalogo', sql.NVarChar(50), estadoCatalogo);
   req.input('Stock', sql.Int, stockOk);
   req.input('Precio', sql.Decimal(18, 2), precioOk);
   req.input('CaratulaUrl', sql.NVarChar(500), caratulaUrl || null);
@@ -126,12 +124,11 @@ function bindLibroPayload(req, libroId, { titulo, autor, saga, estadoCatalogo, s
   req.input('CategoriaId', sql.Int, categoriaId);
 }
 
-function bindUpsertPostParams(req, bodyIdParam, { titulo, autor, saga, estadoCatalogo, stockOk, precioOk, caratulaUrl, proveedorId, categoriaId }) {
+function bindUpsertPostParams(req, bodyIdParam, { titulo, autor, saga, stockOk, precioOk, caratulaUrl, proveedorId, categoriaId }) {
   req.input('BodyId', sql.Int, bodyIdParam);
   req.input('Titulo', sql.NVarChar(300), titulo);
   req.input('Autor', sql.NVarChar(200), autor || null);
   req.input('Saga', sql.NVarChar(200), saga);
-  req.input('EstadoCatalogo', sql.NVarChar(50), estadoCatalogo);
   req.input('Stock', sql.Int, stockOk);
   req.input('Precio', sql.Decimal(18, 2), precioOk);
   req.input('CaratulaUrl', sql.NVarChar(500), caratulaUrl || null);
@@ -163,8 +160,8 @@ async function upsertLibroPostUnaConsulta(pool, bodyId, payload) {
       'WHEN MATCHED THEN UPDATE SET ' +
       updateBranch +
       'WHEN NOT MATCHED BY TARGET THEN ' +
-      'INSERT (Titulo, Autor, Saga, EstadoCatalogo, Stock, Precio, CaratulaUrl, ProveedorId, CategoriaId) ' +
-      'VALUES (S.Titulo, S.Autor, S.Saga, S.EstadoCatalogo, S.Stock, S.Precio, S.CaratulaUrl, S.ProveedorId, S.CategoriaId) ' +
+      'INSERT (Titulo, Autor, Saga, Stock, Precio, CaratulaUrl, ProveedorId, CategoriaId) ' +
+      'VALUES (S.Titulo, S.Autor, S.Saga, S.Stock, S.Precio, S.CaratulaUrl, S.ProveedorId, S.CategoriaId) ' +
       'OUTPUT $action AS MergeAction, INSERTED.Id AS Id;'
     );
   };
@@ -204,14 +201,13 @@ async function upsertLibroPostUnaConsulta(pool, bodyId, payload) {
 async function actualizarLibroPorId(
   pool,
   libroId,
-  { titulo, autor, saga, estadoCatalogo, stockOk, precioOk, caratulaUrl, proveedorId, categoriaId },
+  { titulo, autor, saga, stockOk, precioOk, caratulaUrl, proveedorId, categoriaId },
 ) {
   const reqUp = pool.request();
   bindLibroPayload(reqUp, libroId, {
     titulo,
     autor,
     saga,
-    estadoCatalogo,
     stockOk,
     precioOk,
     caratulaUrl,
@@ -237,7 +233,6 @@ async function actualizarLibroPorId(
         titulo,
         autor,
         saga,
-        estadoCatalogo,
         stockOk,
         precioOk,
         caratulaUrl,
@@ -308,11 +303,6 @@ router.post('/', async (req, res) => {
     const autor = body.autor != null ? String(body.autor).trim() : null;
     const sagaRaw = body.saga != null ? String(body.saga).trim() : '';
     const saga = sagaRaw ? sagaRaw.slice(0, 200) : null;
-    let estadoCatalogo = (body.estado != null && String(body.estado).trim()) || 'disponible';
-    if (estadoCatalogo === 'agotado') estadoCatalogo = 'disponible';
-    if (estadoCatalogo !== 'disponible' && estadoCatalogo !== 'venta') {
-      estadoCatalogo = 'disponible';
-    }
     const stock = Number(body.stock);
     const stockOk = Number.isInteger(stock) && stock >= 0 ? stock : 0;
     const precio = body.precio != null ? Number(body.precio) : 0;
@@ -366,7 +356,6 @@ router.post('/', async (req, res) => {
       titulo,
       autor,
       saga,
-      estadoCatalogo,
       stockOk,
       precioOk,
       caratulaUrl,
@@ -402,12 +391,6 @@ router.post('/', async (req, res) => {
           'Falta la tabla Categorias o la columna CategoriaId. Ejecuta server/scripts/migrate-evolucion-booknest.sql en Booknest.',
       });
     }
-    if (err && err.message && err.message.includes('EstadoCatalogo')) {
-      return res.status(500).json({
-        error:
-          'El esquema de Libros no tiene EstadoCatalogo/Estado calculado. Ejecuta migrate-evolucion-booknest.sql o crea la BD con create-database.sql.',
-      });
-    }
     if (err && err.message && /Invalid column name 'Saga'/i.test(err.message)) {
       return res.status(500).json({
         error:
@@ -438,11 +421,6 @@ router.put('/:id', async (req, res) => {
     const autor = body.autor != null ? String(body.autor).trim() : null;
     const sagaRaw = body.saga != null ? String(body.saga).trim() : '';
     const saga = sagaRaw ? sagaRaw.slice(0, 200) : null;
-    let estadoCatalogo = (body.estado != null && String(body.estado).trim()) || 'disponible';
-    if (estadoCatalogo === 'agotado') estadoCatalogo = 'disponible';
-    if (estadoCatalogo !== 'disponible' && estadoCatalogo !== 'venta') {
-      estadoCatalogo = 'disponible';
-    }
     const stock = Number(body.stock);
     const stockOk = Number.isInteger(stock) && stock >= 0 ? stock : 0;
     const precio = body.precio != null ? Number(body.precio) : 0;
@@ -500,7 +478,6 @@ router.put('/:id', async (req, res) => {
       titulo,
       autor,
       saga,
-      estadoCatalogo,
       stockOk,
       precioOk,
       caratulaUrl,
