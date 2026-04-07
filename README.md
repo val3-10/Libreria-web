@@ -401,4 +401,34 @@ Los textos siguientes corresponden a las consultas que usa el código en `server
 |------|-----|
 | **GET** `/resumen` | Constantes en código: **top clientes** — `SELECT TOP 10 … SUM(v.Total) … FROM dbo.Ventas v INNER JOIN dbo.Usuarios u … GROUP BY u.Id, u.Nombre, u.Correo ORDER BY totalCompras DESC`. **Detalle ventas** — `SELECT LibroId, Cantidad, Subtotal FROM dbo.VentaDetalle`. **Libros meta** — `SELECT Id, Titulo, Autor, ProveedorId FROM dbo.Libros WHERE Id IN (...)`. **Proveedor top** — `SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid`. **Clientes sin compras** — `LEFT JOIN dbo.Ventas v ... GROUP BY ... HAVING COUNT(v.Id) < 1`. **Contactos** — `SELECT N'Cliente' AS tipo, u.Nombre, u.Correo … FROM dbo.Usuarios u … UNION ALL SELECT N'Proveedor', p.Nombre, COALESCE(p.Contacto, N'—') FROM dbo.Proveedores p` (**UNION ALL**, no `UNION`). |
 
+### Reportes sugeridos con `EXCEPT` / `INTERSECT`
+
+No están expuestos como endpoint actualmente, pero son útiles para análisis en SQL:
+
+- **Clientes activos sin compras (`EXCEPT`)**
+  ```sql
+  SELECT u.Id, u.Nombre, u.Correo, u.Usuario
+  FROM dbo.Usuarios u
+  WHERE u.Activo = 1
+    AND COALESCE(LOWER(LTRIM(RTRIM(u.Rol))), N'cliente') NOT IN (N'admin', N'administrador', N'empleado')
+  EXCEPT
+  SELECT u.Id, u.Nombre, u.Correo, u.Usuario
+  FROM dbo.Usuarios u
+  INNER JOIN dbo.Ventas v ON v.UsuarioId = u.Id
+  WHERE u.Activo = 1
+    AND COALESCE(LOWER(LTRIM(RTRIM(u.Rol))), N'cliente') NOT IN (N'admin', N'administrador', N'empleado');
+  ```
+
+- **Libros vendidos y además marcados como favoritos (`INTERSECT`)**
+  ```sql
+  SELECT L.Id AS libroId, L.Titulo
+  FROM dbo.Libros L
+  WHERE L.Id IN (
+    SELECT vd.LibroId FROM dbo.VentaDetalle vd
+    INTERSECT
+    SELECT f.LibroId FROM dbo.Favoritos f
+  )
+  ORDER BY L.Titulo;
+  ```
+
 Para el texto exacto de cada constante (`SQL_TOP_CLIENTES`, `SQL_UNION_CONTACTOS`, etc.) abre `server/src/routes/reportes.js`.
