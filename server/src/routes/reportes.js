@@ -101,6 +101,17 @@ const SQL_LIBROS_VENDIDOS_Y_FAVORITOS_INTERSECT = `
   ORDER BY L.Titulo
 `;
 
+const SQL_LIBROS_AGOTADOS = `
+  SELECT
+    L.Id AS libroId,
+    L.Titulo AS titulo,
+    L.Autor AS autor,
+    L.Stock AS stock
+  FROM dbo.Libros L
+  WHERE ISNULL(L.Stock, 0) <= 0
+  ORDER BY L.Titulo;
+`;
+
 /** Agrega ventas por libro desde tabla normalizada dbo.VentaDetalle. */
 function agregarVentasPorLibroDesdeFilas(detalles) {
   const porLibro = new Map();
@@ -158,6 +169,15 @@ function mapPromedioVentasMesRow(r) {
     promedioVentasMes: r.promedioVentasMes != null ? Number(r.promedioVentasMes) : 0,
     promedioMontoMes: r.promedioMontoMes != null ? Number(r.promedioMontoMes) : 0,
     mesesConVentas: r.mesesConVentas != null ? Number(r.mesesConVentas) : 0,
+  };
+}
+
+function mapLibroAgotadoRow(r) {
+  return {
+    libroId: r.libroId,
+    titulo: r.titulo,
+    autor: r.autor,
+    stock: r.stock != null ? Number(r.stock) : 0,
   };
 }
 
@@ -252,6 +272,14 @@ router.get('/resumen', async (_req, res) => {
       console.warn('reportes promedio ventas por mes:', e.message);
     }
 
+    let librosAgotados = [];
+    try {
+      const agotadosResult = await pool.request().query(SQL_LIBROS_AGOTADOS);
+      librosAgotados = (agotadosResult.recordset || []).map(mapLibroAgotadoRow);
+    } catch (e) {
+      console.warn('reportes libros agotados:', e.message);
+    }
+
     return res.json({
       topClientes,
       librosMasVendidos,
@@ -259,6 +287,7 @@ router.get('/resumen', async (_req, res) => {
       clientesSinCompras,
       contactosUnificados,
       promedioVentasPorMes,
+      librosAgotados,
     });
   } catch (err) {
     console.error('Error en GET /api/reportes/resumen:', err);
@@ -289,6 +318,19 @@ router.get('/libros-vendidos-y-favoritos', async (_req, res) => {
   } catch (err) {
     console.error('Error en GET /api/reportes/libros-vendidos-y-favoritos:', err);
     return res.status(500).json({ error: err.message || 'No se pudo obtener el reporte INTERSECT.' });
+  }
+});
+
+// GET /api/reportes/libros-agotados
+router.get('/libros-agotados', async (_req, res) => {
+  try {
+    const pool = await db.getPool();
+    const result = await pool.request().query(SQL_LIBROS_AGOTADOS);
+    const libros = (result.recordset || []).map(mapLibroAgotadoRow);
+    return res.json({ libros });
+  } catch (err) {
+    console.error('Error en GET /api/reportes/libros-agotados:', err);
+    return res.status(500).json({ error: err.message || 'No se pudo obtener el reporte de libros agotados.' });
   }
 });
 
