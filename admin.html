@@ -329,6 +329,29 @@ header h1 {
       </thead>
       <tbody></tbody>
     </table>
+
+    <h3>Clientes sin compras (EXCEPT)</h3>
+    <table id="tablaSinComprasExcept">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Usuario</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Libros vendidos y favoritos (INTERSECT)</h3>
+    <table id="tablaVendidosFavoritos">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Título</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
 </div>
 
@@ -471,11 +494,15 @@ header h1 {
     const tbCli = document.querySelector("#tablaTopClientes tbody");
     const tbLib = document.querySelector("#tablaLibrosVendidos tbody");
     const tbSin = document.querySelector("#tablaSinCompras tbody");
+    const tbSinExcept = document.querySelector("#tablaSinComprasExcept tbody");
+    const tbInter = document.querySelector("#tablaVendidosFavoritos tbody");
     const bloqueProv = document.getElementById("bloqueMayorProveedor");
     if (tbUnion) tbUnion.innerHTML = '<tr><td colspan="3">Cargando…</td></tr>';
     if (tbCli) tbCli.innerHTML = '<tr><td colspan="5">Cargando…</td></tr>';
     if (tbLib) tbLib.innerHTML = '<tr><td colspan="5">Cargando…</td></tr>';
     if (tbSin) tbSin.innerHTML = '<tr><td colspan="3">Cargando…</td></tr>';
+    if (tbSinExcept) tbSinExcept.innerHTML = '<tr><td colspan="3">Cargando…</td></tr>';
+    if (tbInter) tbInter.innerHTML = '<tr><td colspan="2">Cargando…</td></tr>';
     if (bloqueProv) bloqueProv.innerHTML = '<p class="reporte-vacio">Cargando…</p>';
 
     try {
@@ -522,7 +549,7 @@ header h1 {
         tbLib.innerHTML = "";
         if (libros.length === 0) {
           tbLib.innerHTML =
-            '<tr><td colspan="5" style="text-align:center;">Sin líneas en ventas o detalle vacío. Revisa <code>Ventas.Detalle</code> en la BD.</td></tr>';
+            '<tr><td colspan="5" style="text-align:center;">Sin líneas en ventas o detalle vacío.</td></tr>';
         } else {
           libros.forEach((L, i) => {
             tbLib.innerHTML += `<tr>
@@ -566,6 +593,55 @@ header h1 {
           });
         }
       }
+
+      // Reporte EXCEPT
+      try {
+        const resEx = await fetch(`${API_BASE}/api/reportes/clientes-sin-compras-except`);
+        const dataEx = await resEx.json().catch(() => ({}));
+        if (!resEx.ok) throw new Error(dataEx.error || 'No se pudo cargar reporte EXCEPT');
+        const rowsEx = Array.isArray(dataEx.clientes) ? dataEx.clientes : [];
+        if (tbSinExcept) {
+          tbSinExcept.innerHTML = "";
+          if (rowsEx.length === 0) {
+            tbSinExcept.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin datos</td></tr>';
+          } else {
+            rowsEx.forEach((u) => {
+              tbSinExcept.innerHTML += `<tr>
+                <td>${escapeHtml(u.nombre)}</td>
+                <td>${escapeHtml(u.correo)}</td>
+                <td>${escapeHtml(u.usuarioLogin || "—")}</td>
+              </tr>`;
+            });
+          }
+        }
+      } catch (eEx) {
+        console.warn(eEx);
+        if (tbSinExcept) tbSinExcept.innerHTML = '<tr><td colspan="3">Error</td></tr>';
+      }
+
+      // Reporte INTERSECT
+      try {
+        const resInt = await fetch(`${API_BASE}/api/reportes/libros-vendidos-y-favoritos`);
+        const dataInt = await resInt.json().catch(() => ({}));
+        if (!resInt.ok) throw new Error(dataInt.error || 'No se pudo cargar reporte INTERSECT');
+        const rowsInt = Array.isArray(dataInt.libros) ? dataInt.libros : [];
+        if (tbInter) {
+          tbInter.innerHTML = "";
+          if (rowsInt.length === 0) {
+            tbInter.innerHTML = '<tr><td colspan="2" style="text-align:center;">Sin coincidencias</td></tr>';
+          } else {
+            rowsInt.forEach((r, i) => {
+              tbInter.innerHTML += `<tr>
+                <td>${i + 1}</td>
+                <td>${escapeHtml(r.titulo)}</td>
+              </tr>`;
+            });
+          }
+        }
+      } catch (eInt) {
+        console.warn(eInt);
+        if (tbInter) tbInter.innerHTML = '<tr><td colspan="2">Error</td></tr>';
+      }
     } catch (e) {
       console.error(e);
       mostrarMensaje("error", e.message || "Error al cargar indicadores");
@@ -573,6 +649,8 @@ header h1 {
       if (tbCli) tbCli.innerHTML = '<tr><td colspan="5">Error</td></tr>';
       if (tbLib) tbLib.innerHTML = '<tr><td colspan="5">Error</td></tr>';
       if (tbSin) tbSin.innerHTML = '<tr><td colspan="3">Error</td></tr>';
+      if (tbSinExcept) tbSinExcept.innerHTML = '<tr><td colspan="3">Error</td></tr>';
+      if (tbInter) tbInter.innerHTML = '<tr><td colspan="2">Error</td></tr>';
       if (bloqueProv) bloqueProv.innerHTML = '<p class="reporte-vacio">Error al cargar.</p>';
     }
   }
