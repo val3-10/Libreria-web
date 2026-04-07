@@ -60,7 +60,6 @@ Definido en `server/scripts/create-database.sql` (SQL Server).
 | **Libros** | Catálogo con `EstadoCatalogo` (`disponible` / `venta`) y columna calculada **`Estado`**: si `Stock <= 0` es `agotado`, si no coincide con `EstadoCatalogo`. Campo opcional **`Saga`** (serie o saga). |
 | **Ventas** | Cabecera de venta ligada solo a `UsuarioId` (nombre y correo del cliente vía `JOIN` a `Usuarios`, sin columnas duplicadas). |
 | **VentaDetalle** | Líneas de cada venta (`VentaId`, `LibroId`, `Titulo`, `Cantidad`, `PrecioUnitario`, `Subtotal`), una fila por ítem vendido. |
-| **Prestamos** | Préstamo de un libro a un usuario (fechas, estado, cantidad). |
 | **Carrito** | Líneas de carrito por usuario; restricción única `(UsuarioId, LibroId)`. |
 | **Favoritos** | Relación usuario-libro para el corazón en catálogo (`PK (UsuarioId, LibroId)`). |
 | **Proveedores** | Catálogo de proveedores; `Libros.ProveedorId` referencia esta tabla. |
@@ -72,8 +71,6 @@ Definido en `server/scripts/create-database.sql` (SQL Server).
 - **Usuarios (1) — (0..N) Ventas**: `Ventas.UsuarioId` → `Usuarios.Id` (obligatorio en el esquema actual; el checkout exige usuario autenticado).
 - **Ventas (1) — (1..N) VentaDetalle**: `VentaDetalle.VentaId` → `Ventas.Id`.
 - **Libros (1) — (0..N) VentaDetalle**: `VentaDetalle.LibroId` → `Libros.Id`.
-- **Usuarios (1) — (0..N) Prestamos**: `Prestamos.UsuarioId` → `Usuarios.Id` (nullable en DDL).
-- **Libros (1) — (0..N) Prestamos**: `Prestamos.LibroId` → `Libros.Id` (nullable en DDL).
 - **Usuarios (1) — (1..N) Carrito**: `Carrito.UsuarioId` NOT NULL.
 - **Libros (1) — (1..N) Carrito**: `Carrito.LibroId` NOT NULL; única por usuario + libro.
 - **Usuarios (1) — (0..N) Favoritos** y **Libros (1) — (0..N) Favoritos**: PK compuesta `(UsuarioId, LibroId)`.
@@ -85,10 +82,8 @@ erDiagram
   Usuarios ||--o{ Ventas : "realiza"
   Ventas ||--|{ VentaDetalle : "detalla"
   Libros ||--o{ VentaDetalle : "detalle de venta"
-  Usuarios ||--o{ Prestamos : "tiene"
   Usuarios ||--o{ Carrito : "posee"
   Usuarios ||--o{ Favoritos : "marca"
-  Libros ||--o{ Prestamos : "en préstamo"
   Libros ||--o{ Carrito : "en carrito"
   Libros ||--o{ Favoritos : "favorito"
   Proveedores ||--o{ Libros : "suministra"
@@ -155,17 +150,6 @@ erDiagram
     datetime2 FechaCreacion
   }
 
-  Prestamos {
-    int Id PK
-    int UsuarioId FK
-    int LibroId FK
-    int Cantidad
-    datetime2 FechaInicio
-    datetime2 FechaDevolucion
-    nvarchar Estado
-    datetime2 FechaCreacion
-  }
-
   Carrito {
     int Id PK
     int UsuarioId FK
@@ -188,10 +172,6 @@ erDiagram
     datetime2 FechaCreacion
   }
 ```
-
-**Notas:** El detalle de venta ahora vive en `dbo.VentaDetalle` (normalizado). `Ventas.Detalle` se conserva como compatibilidad para datos históricos/migración. **Categoría** del libro: `dbo.Categorias` + `Libros.CategoriaId`. Bases creadas antes de estos cambios deben ejecutar `migrate-evolucion-booknest.sql`; para ventas antiguas, ejecutar además `migrate-venta-detalle.sql`. Si ya migraste pero solo tienes seis categorías, ejecuta `migrate-categorias-ampliar.sql` para alinear el catálogo con el formulario del admin.
-
-Variables de entorno del servidor: archivo `server/.env` (servidor, usuario, contraseña, base `Booknest`, puerto, opciones de cifrado). Ver comentarios en `database.js`.
 
 ## Carpetas y archivos del servidor: para qué sirven
 
@@ -382,7 +362,7 @@ Los textos siguientes corresponden a las consultas que usa el código en `server
 | **GET** `/` | `SELECT L.Id, L.Titulo, …, P.Nombre AS ProveedorNombre, C.Nombre AS CategoriaNombre FROM dbo.Libros L LEFT JOIN dbo.Proveedores P … LEFT JOIN dbo.Categorias C …` + `ORDER BY L.Titulo`. Con `?q=`: añade `WHERE L.Titulo LIKE @q1 OR L.Autor LIKE @q2`. |
 | **POST** `/` | Validaciones: `SELECT 1 FROM dbo.Categorias WHERE Id = @Cid`, `SELECT 1 FROM dbo.Proveedores WHERE Id = @Pid` si aplica. **Upsert:** un `MERGE dbo.Libros AS T USING (<subconsulta con UpsertId y columnas del libro>) AS S ON S.UpsertId IS NOT NULL AND T.Id = S.UpsertId WHEN MATCHED THEN UPDATE SET … WHEN NOT MATCHED BY TARGET THEN INSERT … OUTPUT $action, INSERTED.Id` (detalle en `upsertLibroPostUnaConsulta`; `UpsertId` resuelve por `body.id` o por título+autor). Tras el MERGE: mismo `SELECT` de listado con `WHERE L.Id = @Id`. |
 | **PUT** `/:id` | Comprueba categoría/proveedor/libro: `SELECT 1 … FROM dbo.Categorias` / `dbo.Proveedores` / `dbo.Libros WHERE Id = @Id`. **Update:** `MERGE dbo.Libros AS T USING (SELECT @Id AS Id, @Titulo AS Titulo, …) AS S ON T.Id = S.Id WHEN MATCHED THEN UPDATE SET …` (+ `FechaActualizacion` si existe columna). Luego `SELECT` con joins como en GET y `WHERE L.Id = @Id`. |
-| **DELETE** `/:id` | `DELETE FROM dbo.Carrito WHERE LibroId = @LibroId`; `DELETE FROM dbo.Prestamos WHERE LibroId = @LibroId` (si las tablas existen); `DELETE FROM dbo.Libros WHERE Id = @Id`. |
+| **DELETE** `/:id` | `DELETE FROM dbo.Carrito WHERE LibroId = @LibroId`; `DELETE FROM dbo.Libros WHERE Id = @Id` (puede limpiar tablas relacionadas si existen). |
 
 #### `server/src/routes/proveedores.js`
 

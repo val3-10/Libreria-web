@@ -338,8 +338,6 @@ header h1 {
   let libros = [];
   /** Id del libro en edición (PUT); redundante al hidden #libroEditId para no perder el modo edición. */
   let libroEditandoId = null;
-  /** EstadoCatalogo al editar (disponible/venta); altas nuevas usan 'disponible'. */
-  let libroEstadoCatalogo = 'disponible';
   /** Ventas desde dbo.Ventas (GET /api/ventas) */
   let ventasBd = [];
   let proveedores = [];
@@ -697,7 +695,6 @@ header h1 {
 
   function cancelarEdicionLibro() {
     libroEditandoId = null;
-    libroEstadoCatalogo = 'disponible';
     document.getElementById('libroEditId').value = '';
     const btnG = document.getElementById('btnGuardarLibro');
     if (btnG) delete btnG.dataset.libroId;
@@ -735,7 +732,6 @@ header h1 {
     if (hid) hid.value = String(libroEditandoId);
     const btnG = document.getElementById('btnGuardarLibro');
     if (btnG) btnG.dataset.libroId = String(libroEditandoId);
-    libroEstadoCatalogo = libro.estadoCatalogo === 'venta' ? 'venta' : 'disponible';
 
     mostrarSeccion('libros');
     document.getElementById('titulo').value = libro.titulo || '';
@@ -761,7 +757,6 @@ header h1 {
     const saga = document.getElementById("saga").value.trim();
     const editIdPre = resolverIdEdicionLibro();
     const esEdicionPre = editIdPre != null;
-    const estado = esEdicionPre ? libroEstadoCatalogo : 'disponible';
     const stockInput = document.getElementById("stock").value.trim();
     const precioInput = document.getElementById("precio").value.trim();
     const proveedorSel = document.getElementById("proveedorLibroId");
@@ -814,7 +809,6 @@ header h1 {
         titulo,
         autor,
         saga,
-        estado,
         stock,
         precio,
         caratula: caratulaUrl || null,
@@ -838,7 +832,6 @@ header h1 {
     }
 
     libroEditandoId = null;
-    libroEstadoCatalogo = 'disponible';
     if (libroEditIdEl) libroEditIdEl.value = "";
     const btnGuardarFin = document.getElementById('btnGuardarLibro');
     if (btnGuardarFin) delete btnGuardarFin.dataset.libroId;
