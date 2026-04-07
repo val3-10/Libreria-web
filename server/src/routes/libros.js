@@ -100,6 +100,19 @@ const MERGE_UPDATE_SET =
   'T.Titulo = S.Titulo, T.Autor = S.Autor, T.Saga = S.Saga, T.EstadoCatalogo = S.EstadoCatalogo, ' +
   'T.Stock = S.Stock, T.Precio = S.Precio, T.CaratulaUrl = S.CaratulaUrl, T.ProveedorId = S.ProveedorId, T.CategoriaId = S.CategoriaId';
 
+/**
+ * Origen del MERGE POST: UpsertId = id del body (@BodyId) o fila existente por título+autor.
+ * Parámetros: bindUpsertPostParams (BodyId, Titulo, Autor, Saga, …).
+ */
+const MERGE_USING_POST_UPSERT =
+  'SELECT ' +
+  'COALESCE(' +
+  '(SELECT TOP 1 Id FROM dbo.Libros WHERE @BodyId IS NOT NULL AND Id = @BodyId), ' +
+  '(SELECT TOP 1 Id FROM dbo.Libros WHERE Titulo = @Titulo AND (Autor = @Autor OR (Autor IS NULL AND @Autor IS NULL)))' +
+  ') AS UpsertId, ' +
+  '@Titulo AS Titulo, @Autor AS Autor, @Saga AS Saga, @EstadoCatalogo AS EstadoCatalogo, ' +
+  '@Stock AS Stock, @Precio AS Precio, @CaratulaUrl AS CaratulaUrl, @ProveedorId AS ProveedorId, @CategoriaId AS CategoriaId';
+
 function bindLibroPayload(req, libroId, { titulo, autor, saga, estadoCatalogo, stockOk, precioOk, caratulaUrl, proveedorId, categoriaId }) {
   req.input('Id', sql.Int, libroId);
   req.input('Titulo', sql.NVarChar(300), titulo);
