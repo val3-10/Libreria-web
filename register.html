@@ -10,7 +10,7 @@
 <body class="register-body">
   <div class="registro-box">
     <h2>Crear cuenta nueva</h2>
-    <form onsubmit="return register()">
+    <form id="form-register" onsubmit="onRegister(event)">
       <label for="nombre">Nombre completo:</label>
       <input type="text" id="nombre" placeholder="Juan Pérez" required>
 
@@ -152,6 +152,11 @@
       return null;
     }
 
+    function onRegister(event) {
+      event.preventDefault();
+      void register();
+    }
+
     async function register() {
       const nombre = document.getElementById("nombre").value.trim();
       const tipo_documento = document.getElementById("tipo_documento").value.trim();
@@ -165,10 +170,10 @@
       const confirmar = document.getElementById("confirm-password").value;
       const terminos = document.getElementById("terminos").checked;
 
-      if (!correo.endsWith("@booknest.com")) { alert("Solo @booknest.com"); return false; }
-      const errorPass = validarSeguridadPassword(password); if (errorPass) { alert(errorPass); return false; }
-      if (password !== confirmar) { alert("Contraseñas no coinciden"); return false; }
-      if (!terminos) { alert("Debes aceptar los términos"); return false; }
+      if (!correo.endsWith("@booknest.com")) { alert("Solo @booknest.com"); return; }
+      const errorPass = validarSeguridadPassword(password); if (errorPass) { alert(errorPass); return; }
+      if (password !== confirmar) { alert("Contraseñas no coinciden"); return; }
+      if (!terminos) { alert("Debes aceptar los términos"); return; }
 
       try {
         // Frontend → API: enviamos los datos del formulario al backend (POST).
@@ -194,16 +199,16 @@
 
         if (!response.ok) {
           alert(data.error || 'No se pudo crear la cuenta. Inténtalo de nuevo.');
-          return false;
+          return;
         }
 
-        alert(data.message || "Cuenta creada exitosamente");
+        const msg = data.message || 'Tu cuenta ha sido creada correctamente.';
+        alert(`${msg}\n\nYa puedes iniciar sesión con tu correo y contraseña.`);
         window.location.href = "login.html";
       } catch (err) {
         console.error(err);
         alert("No se pudo contactar con el servidor. Verifica que el backend esté encendido.");
       }
-      return false;
     }
   </script>
 </body>
