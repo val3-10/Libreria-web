@@ -22,7 +22,7 @@ flowchart LR
 ```
 
 - **Frontend:** páginas HTML en la raíz del repo; la URL base de la API es `window.API_BASE`, definida en `config.js` (por defecto `http://localhost:3000`). Las llamadas van a `/api/...` (ver sección [API: rutas, archivos y uso en el frontend](#api-rutas-archivos-y-uso-en-el-frontend)).
-- **Backend:** carpeta `server/` — **Express** escucha en el puerto configurado (por defecto **3000**), usa **CORS** y **JSON** en el body.
+- **Backend:** carpeta `server/` — **Express** escucha en el puerto configurado (por defecto **3000**).
 - **Datos:** el paquete **mssql** abre un pool contra SQL Server; las consultas viven en `server/src/config/database.js` y en cada archivo de rutas.
 
 Estructura relevante:
