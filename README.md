@@ -403,9 +403,8 @@ Los textos siguientes corresponden a las consultas que usa el código en `server
 
 ### Reportes sugeridos con `EXCEPT` / `INTERSECT`
 
-No están expuestos como endpoint actualmente, pero son útiles para análisis en SQL:
-
 - **Clientes activos sin compras (`EXCEPT`)**
+  Devuelve usuarios cliente activos que **no aparecen** en ninguna venta. Es útil para campañas de reactivación, onboarding y seguimiento comercial.
   ```sql
   SELECT u.Id, u.Nombre, u.Correo, u.Usuario
   FROM dbo.Usuarios u
@@ -420,6 +419,7 @@ No están expuestos como endpoint actualmente, pero son útiles para análisis e
   ```
 
 - **Libros vendidos y además marcados como favoritos (`INTERSECT`)**
+  Devuelve libros que están en la **intersección** entre lo vendido y lo favorito. Sirve para detectar títulos con alta afinidad comercial (gustan y además se compran).
   ```sql
   SELECT L.Id AS libroId, L.Titulo
   FROM dbo.Libros L
