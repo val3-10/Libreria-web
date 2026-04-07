@@ -146,6 +146,24 @@ BEGIN
 END
 GO
 
+-- Detalle de ventas (normalizado): una fila por ítem vendido
+IF OBJECT_ID('dbo.VentaDetalle', 'U') IS NULL
+BEGIN
+  CREATE TABLE dbo.VentaDetalle (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    VentaId INT NOT NULL,
+    LibroId INT NOT NULL,
+    Titulo NVARCHAR(300) NOT NULL,
+    Cantidad INT NOT NULL DEFAULT 1,
+    PrecioUnitario DECIMAL(18,2) NOT NULL DEFAULT 0,
+    Subtotal DECIMAL(18,2) NOT NULL DEFAULT 0,
+    FechaCreacion DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT FK_VentaDetalle_Venta FOREIGN KEY (VentaId) REFERENCES dbo.Ventas(Id),
+    CONSTRAINT FK_VentaDetalle_Libro FOREIGN KEY (LibroId) REFERENCES dbo.Libros(Id)
+  );
+END
+GO
+
 -- Préstamos
 IF OBJECT_ID('dbo.Prestamos', 'U') IS NULL
 BEGIN

@@ -27,6 +27,11 @@ const SQL_VENTAS_DETALLE = `
   SELECT Detalle FROM dbo.Ventas WHERE Detalle IS NOT NULL AND LTRIM(RTRIM(CAST(Detalle AS NVARCHAR(MAX)))) <> N''
 `;
 
+const SQL_VENTA_DETALLE_FILAS = `
+  SELECT LibroId, Cantidad, Subtotal
+  FROM dbo.VentaDetalle
+`;
+
 const SQL_CLIENTES_SIN_COMPRAS = `
   SELECT u.Id AS usuarioId, u.Nombre AS nombre, u.Correo AS correo, u.Usuario AS usuarioLogin
   FROM dbo.Usuarios u
@@ -94,6 +99,24 @@ function agregarVentasPorLibro(ventasConDetalle) {
   return porLibro;
 }
 
+/** Agrega ventas por libro desde tabla normalizada dbo.VentaDetalle. */
+function agregarVentasPorLibroDesdeFilas(detalles) {
+  const porLibro = new Map();
+  for (const row of detalles) {
+    const libroId = Number(row.LibroId);
+    if (!Number.isInteger(libroId) || libroId <= 0) continue;
+    const cantidad = Number(row.Cantidad);
+    const subtotal = Number(row.Subtotal);
+    const qty = Number.isFinite(cantidad) && cantidad > 0 ? Math.floor(cantidad) : 0;
+    const sub = Number.isFinite(subtotal) && subtotal >= 0 ? subtotal : 0;
+    const cur = porLibro.get(libroId) || { unidades: 0, subtotal: 0 };
+    cur.unidades += qty;
+    cur.subtotal += sub;
+    porLibro.set(libroId, cur);
+  }
+  return porLibro;
+}
+
 function mapTopClienteRow(r) {
   return {
     usuarioId: r.usuarioId,
@@ -133,8 +156,19 @@ router.get('/resumen', async (_req, res) => {
     let librosMasVendidos = [];
     let mayorProveedor = null;
     try {
-      const ventasDetResult = await pool.request().query(SQL_VENTAS_DETALLE);
-      const porLibro = agregarVentasPorLibro(ventasDetResult.recordset || []);
+      let porLibro = new Map();
+      try {
+        const detalleRows = await pool.request().query(SQL_VENTA_DETALLE_FILAS);
+        porLibro = agregarVentasPorLibroDesdeFilas(detalleRows.recordset || []);
+      } catch (eDet) {
+        if (!eDet || !eDet.message || !/Invalid object name 'dbo\.VentaDetalle'/i.test(eDet.message)) {
+          throw eDet;
+        }
+      }
+      if (porLibro.size === 0) {
+        const ventasDetResult = await pool.request().query(SQL_VENTAS_DETALLE);
+        porLibro = agregarVentasPorLibro(ventasDetResult.recordset || []);
+      }
       const idsLibro = [...porLibro.keys()];
       if (idsLibro.length > 0) {
         const ph = idsLibro.map((_, i) => `@id${i}`).join(', ');

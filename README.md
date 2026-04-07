@@ -44,6 +44,7 @@ Estructura relevante:
 | `server/scripts/migrate-evolucion-booknest.sql` | Migración desde esquemas antiguos (ventas, categorías, `Estado` calculado desde `EstadoCatalogo` y `Stock`) |
 | `server/scripts/migrate-categorias-ampliar.sql` | Añade categorías literarias extra si la BD solo tenía las 6 iniciales |
 | `server/scripts/migrate-libros-saga.sql` | Añade columna opcional `Saga` (serie) en `dbo.Libros` |
+| `server/scripts/migrate-venta-detalle.sql` | Crea `dbo.VentaDetalle` y migra ventas históricas desde `Ventas.Detalle` (JSON) |
 | `server/scripts/insert.sql` | Ejemplo de datos de prueba para `Libros` |
 | `server/scripts/insert-admin-usuario.sql` | Usuario admin de prueba (`admin@booknest.com` / `Abc123`) si no existe |
 
@@ -57,9 +58,11 @@ Definido en `server/scripts/create-database.sql` (SQL Server).
 | **Categorias** | Categorías de libros (nombre único). `Libros.CategoriaId` es opcional (FK). |
 | **Usuarios** | Clientes y empleados (correo y usuario únicos, rol, credenciales). |
 | **Libros** | Catálogo con `EstadoCatalogo` (`disponible` / `venta`) y columna calculada **`Estado`**: si `Stock <= 0` es `agotado`, si no coincide con `EstadoCatalogo`. Campo opcional **`Saga`** (serie o saga). |
-| **Ventas** | Cabecera de venta ligada solo a `UsuarioId` (nombre y correo del cliente vía `JOIN` a `Usuarios`, sin columnas duplicadas). El desglose sigue en `Detalle` (JSON en texto). |
+| **Ventas** | Cabecera de venta ligada solo a `UsuarioId` (nombre y correo del cliente vía `JOIN` a `Usuarios`, sin columnas duplicadas). |
+| **VentaDetalle** | Líneas de cada venta (`VentaId`, `LibroId`, `Titulo`, `Cantidad`, `PrecioUnitario`, `Subtotal`), una fila por ítem vendido. |
 | **Prestamos** | Préstamo de un libro a un usuario (fechas, estado, cantidad). |
 | **Carrito** | Líneas de carrito por usuario; restricción única `(UsuarioId, LibroId)`. |
+| **Favoritos** | Relación usuario-libro para el corazón en catálogo (`PK (UsuarioId, LibroId)`). |
 | **Proveedores** | Catálogo de proveedores; `Libros.ProveedorId` referencia esta tabla. |
 
 **Relaciones:**
@@ -67,20 +70,27 @@ Definido en `server/scripts/create-database.sql` (SQL Server).
 - **Documento (1) — (0..N) Usuarios**: `Usuarios.DocumentoId` → `Documento.Id` (opcional).
 - **Categorias (1) — (0..N) Libros**: `Libros.CategoriaId` → `Categorias.Id` (opcional).
 - **Usuarios (1) — (0..N) Ventas**: `Ventas.UsuarioId` → `Usuarios.Id` (obligatorio en el esquema actual; el checkout exige usuario autenticado).
+- **Ventas (1) — (1..N) VentaDetalle**: `VentaDetalle.VentaId` → `Ventas.Id`.
+- **Libros (1) — (0..N) VentaDetalle**: `VentaDetalle.LibroId` → `Libros.Id`.
 - **Usuarios (1) — (0..N) Prestamos**: `Prestamos.UsuarioId` → `Usuarios.Id` (nullable en DDL).
 - **Libros (1) — (0..N) Prestamos**: `Prestamos.LibroId` → `Libros.Id` (nullable en DDL).
 - **Usuarios (1) — (1..N) Carrito**: `Carrito.UsuarioId` NOT NULL.
 - **Libros (1) — (1..N) Carrito**: `Carrito.LibroId` NOT NULL; única por usuario + libro.
+- **Usuarios (1) — (0..N) Favoritos** y **Libros (1) — (0..N) Favoritos**: PK compuesta `(UsuarioId, LibroId)`.
 
 ```mermaid
 erDiagram
   Documento ||--o{ Usuarios : "tipo de identidad"
   Categorias ||--o{ Libros : "clasifica"
   Usuarios ||--o{ Ventas : "realiza"
+  Ventas ||--|{ VentaDetalle : "detalla"
+  Libros ||--o{ VentaDetalle : "detalle de venta"
   Usuarios ||--o{ Prestamos : "tiene"
   Usuarios ||--o{ Carrito : "posee"
+  Usuarios ||--o{ Favoritos : "marca"
   Libros ||--o{ Prestamos : "en préstamo"
   Libros ||--o{ Carrito : "en carrito"
+  Libros ||--o{ Favoritos : "favorito"
   Proveedores ||--o{ Libros : "suministra"
 
   Documento {
@@ -134,6 +144,17 @@ erDiagram
     nvarchar Detalle
   }
 
+  VentaDetalle {
+    int Id PK
+    int VentaId FK
+    int LibroId FK
+    nvarchar Titulo
+    int Cantidad
+    decimal PrecioUnitario
+    decimal Subtotal
+    datetime2 FechaCreacion
+  }
+
   Prestamos {
     int Id PK
     int UsuarioId FK
@@ -154,6 +175,12 @@ erDiagram
     datetime2 FechaActualizacion
   }
 
+  Favoritos {
+    int UsuarioId PK,FK
+    int LibroId PK,FK
+    datetime2 FechaCreacion
+  }
+
   Proveedores {
     int Id PK
     nvarchar Nombre
@@ -162,7 +189,7 @@ erDiagram
   }
 ```
 
-**Notas:** No hay tabla de líneas de venta: el desglose va en `Ventas.Detalle` (`NVARCHAR(MAX)`, JSON). **Categoría** del libro: `dbo.Categorias` + `Libros.CategoriaId`. Bases creadas antes de estos cambios deben ejecutar `migrate-evolucion-booknest.sql`. Si ya migraste pero solo tienes seis categorías, ejecuta `migrate-categorias-ampliar.sql` para alinear el catálogo con el formulario del admin.
+**Notas:** El detalle de venta ahora vive en `dbo.VentaDetalle` (normalizado). `Ventas.Detalle` se conserva como compatibilidad para datos históricos/migración. **Categoría** del libro: `dbo.Categorias` + `Libros.CategoriaId`. Bases creadas antes de estos cambios deben ejecutar `migrate-evolucion-booknest.sql`; para ventas antiguas, ejecutar además `migrate-venta-detalle.sql`. Si ya migraste pero solo tienes seis categorías, ejecuta `migrate-categorias-ampliar.sql` para alinear el catálogo con el formulario del admin.
 
 Variables de entorno del servidor: archivo `server/.env` (servidor, usuario, contraseña, base `Booknest`, puerto, opciones de cifrado). Ver comentarios en `database.js`.
 
@@ -392,13 +419,13 @@ Los textos siguientes corresponden a las consultas que usa el código en `server
 
 | Ruta | SQL |
 |------|-----|
-| **GET** `/` | `SELECT v.Id, v.UsuarioId, v.Fecha, v.Total, v.Detalle, u.Nombre AS ClienteNombre, u.Correo AS ClienteCorreo FROM dbo.Ventas v INNER JOIN dbo.Usuarios u ON u.Id = v.UsuarioId` + opcional `WHERE v.UsuarioId = @Uid` + `ORDER BY v.Fecha DESC, v.Id DESC`. |
-| **POST** `/checkout` | Transacción: `SELECT TOP 1 Id, Nombre, Correo FROM dbo.Usuarios WHERE Id = @Uid AND Activo = 1`. Por ítem: `SELECT TOP 1 Id, Titulo, Stock, Precio FROM dbo.Libros WITH (UPDLOCK, ROWLOCK) WHERE Id = @Id`; `UPDATE dbo.Libros SET Stock = Stock - @Qty, FechaActualizacion = SYSUTCDATETIME() WHERE Id = @Id AND Stock >= @Qty`. `INSERT INTO dbo.Ventas (UsuarioId, Total, Detalle) OUTPUT INSERTED.Id … VALUES (@UsuarioId, @Total, @Detalle)` (`Detalle` = JSON de líneas). Por libro vendido: `DELETE FROM dbo.Carrito WHERE UsuarioId = @UsuarioId AND LibroId = @LibroId` (si existe tabla). Tras commit: `SELECT Id, Stock FROM dbo.Libros WHERE Id IN (@id0, @id1, …)` para devolver stocks actualizados. |
+| **GET** `/` | `SELECT v.Id, v.UsuarioId, v.Fecha, v.Total, v.Detalle, u.Nombre AS ClienteNombre, u.Correo AS ClienteCorreo FROM dbo.Ventas v INNER JOIN dbo.Usuarios u ON u.Id = v.UsuarioId` + opcional `WHERE v.UsuarioId = @Uid` + `ORDER BY v.Fecha DESC, v.Id DESC`; luego intenta `SELECT VentaId, LibroId, Titulo, Cantidad, PrecioUnitario, Subtotal FROM dbo.VentaDetalle WHERE VentaId IN (...)` (fallback a parsear `Ventas.Detalle` si no existe tabla o no hay filas). |
+| **POST** `/checkout` | Transacción: `SELECT TOP 1 Id, Nombre, Correo FROM dbo.Usuarios WHERE Id = @Uid AND Activo = 1`. Por ítem: `SELECT TOP 1 Id, Titulo, Stock, Precio FROM dbo.Libros WITH (UPDLOCK, ROWLOCK) WHERE Id = @Id`; `UPDATE dbo.Libros SET Stock = Stock - @Qty, FechaActualizacion = SYSUTCDATETIME() WHERE Id = @Id AND Stock >= @Qty`. `INSERT INTO dbo.Ventas (UsuarioId, Total, Detalle) OUTPUT INSERTED.Id ... VALUES (@UsuarioId, @Total, @Detalle)` y por cada línea `INSERT INTO dbo.VentaDetalle (VentaId, LibroId, Titulo, Cantidad, PrecioUnitario, Subtotal) VALUES (...)`. Por libro vendido: `DELETE FROM dbo.Carrito WHERE UsuarioId = @UsuarioId AND LibroId = @LibroId` (si existe tabla). Tras commit: `SELECT Id, Stock FROM dbo.Libros WHERE Id IN (@id0, @id1, ...)` para devolver stocks actualizados. |
 
 #### `server/src/routes/reportes.js`
 
 | Ruta | SQL |
 |------|-----|
-| **GET** `/resumen` | Constantes en código: **top clientes** — `SELECT TOP 10 … SUM(v.Total) … FROM dbo.Ventas v INNER JOIN dbo.Usuarios u … GROUP BY u.Id, u.Nombre, u.Correo ORDER BY totalCompras DESC`. **Detalle ventas** — `SELECT Detalle FROM dbo.Ventas WHERE Detalle IS NOT NULL AND …` (agregación de unidades por `libroId` en Node). **Libros meta** — `SELECT Id, Titulo, Autor, ProveedorId FROM dbo.Libros WHERE Id IN (…)`. **Proveedor top** — `SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid`. **Clientes sin compras** — `SELECT u.Id, … FROM dbo.Usuarios u WHERE u.Activo = 1 AND … NOT EXISTS (SELECT 1 FROM dbo.Ventas v WHERE v.UsuarioId = u.Id) …`. **Contactos** — `SELECT N'Cliente' AS tipo, u.Nombre, u.Correo … FROM dbo.Usuarios u … UNION ALL SELECT N'Proveedor', p.Nombre, COALESCE(p.Contacto, N'—') FROM dbo.Proveedores p` (**UNION ALL**, no `UNION`). |
+| **GET** `/resumen` | Constantes en código: **top clientes** — `SELECT TOP 10 … SUM(v.Total) … FROM dbo.Ventas v INNER JOIN dbo.Usuarios u … GROUP BY u.Id, u.Nombre, u.Correo ORDER BY totalCompras DESC`. **Detalle ventas (preferido)** — `SELECT LibroId, Cantidad, Subtotal FROM dbo.VentaDetalle`; fallback legacy: `SELECT Detalle FROM dbo.Ventas WHERE Detalle IS NOT NULL AND …` (JSON). **Libros meta** — `SELECT Id, Titulo, Autor, ProveedorId FROM dbo.Libros WHERE Id IN (...)`. **Proveedor top** — `SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid`. **Clientes sin compras** — `SELECT u.Id, … FROM dbo.Usuarios u WHERE u.Activo = 1 AND … NOT EXISTS (SELECT 1 FROM dbo.Ventas v WHERE v.UsuarioId = u.Id) …`. **Contactos** — `SELECT N'Cliente' AS tipo, u.Nombre, u.Correo … FROM dbo.Usuarios u … UNION ALL SELECT N'Proveedor', p.Nombre, COALESCE(p.Contacto, N'—') FROM dbo.Proveedores p` (**UNION ALL**, no `UNION`). |
 
 Para el texto exacto de cada constante (`SQL_TOP_CLIENTES`, `SQL_UNION_CONTACTOS`, etc.) abre `server/src/routes/reportes.js`.
