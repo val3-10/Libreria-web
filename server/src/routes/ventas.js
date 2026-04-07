@@ -8,6 +8,16 @@ const db = require('../config/database');
 const { sql } = db;
 const router = express.Router();
 
+function parseDetalleJson(detalleRaw) {
+  if (!detalleRaw) return [];
+  try {
+    const parsed = JSON.parse(detalleRaw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 // GET /api/ventas — listado (JOIN Usuarios). Opcional: ?usuarioId=n solo ventas de ese cliente (perfil).
 router.get('/', async (req, res) => {
   try {
@@ -36,27 +46,48 @@ router.get('/', async (req, res) => {
     }
     sqlText += ' ORDER BY v.Fecha DESC, v.Id DESC';
     const result = await request.query(sqlText);
+    const rows = result.recordset || [];
+    const byVentaId = new Map(rows.map((r) => [r.Id, parseDetalleJson(r.Detalle)]));
 
-    const ventas = (result.recordset || []).map((row) => {
-      let detalle = [];
-      if (row.Detalle) {
-        try {
-          const parsed = JSON.parse(row.Detalle);
-          detalle = Array.isArray(parsed) ? parsed : [];
-        } catch {
-          detalle = [];
+    try {
+      if (rows.length > 0) {
+        const reqDet = pool.request();
+        const placeholders = rows.map((r, i) => {
+          reqDet.input(`v${i}`, sql.Int, r.Id);
+          return `@v${i}`;
+        });
+        const detSql =
+          'SELECT VentaId, LibroId, Titulo, Cantidad, PrecioUnitario, Subtotal ' +
+          `FROM dbo.VentaDetalle WHERE VentaId IN (${placeholders.join(', ')}) ` +
+          'ORDER BY VentaId, Id';
+        const detRes = await reqDet.query(detSql);
+        for (const d of detRes.recordset || []) {
+          const arr = byVentaId.get(d.VentaId) || [];
+          arr.push({
+            libroId: d.LibroId,
+            titulo: d.Titulo,
+            cantidad: d.Cantidad,
+            precio: d.PrecioUnitario != null ? Number(d.PrecioUnitario) : 0,
+            subtotal: d.Subtotal != null ? Number(d.Subtotal) : 0,
+          });
+          byVentaId.set(d.VentaId, arr);
         }
       }
-      return {
-        id: row.Id,
-        usuarioId: row.UsuarioId,
-        fecha: row.Fecha,
-        total: row.Total != null ? Number(row.Total) : 0,
-        clienteNombre: row.ClienteNombre || '',
-        clienteCorreo: row.ClienteCorreo || '',
-        detalle,
-      };
-    });
+    } catch (e) {
+      if (!e || !e.message || !/Invalid object name 'dbo\.VentaDetalle'/i.test(e.message)) {
+        throw e;
+      }
+    }
+
+    const ventas = rows.map((row) => ({
+      id: row.Id,
+      usuarioId: row.UsuarioId,
+      fecha: row.Fecha,
+      total: row.Total != null ? Number(row.Total) : 0,
+      clienteNombre: row.ClienteNombre || '',
+      clienteCorreo: row.ClienteCorreo || '',
+      detalle: byVentaId.get(row.Id) || [],
+    }));
 
     return res.json({ ventas });
   } catch (err) {
@@ -157,12 +188,10 @@ router.post('/checkout', async (req, res) => {
       });
     }
 
-    const detalleJson = JSON.stringify(detalleLineas);
-
     const reqIns = new sql.Request(transaction);
     reqIns.input('UsuarioId', sql.Int, userId);
     reqIns.input('Total', sql.Decimal(18, 2), total);
-    reqIns.input('Detalle', sql.NVarChar(sql.MAX), detalleJson);
+    reqIns.input('Detalle', sql.NVarChar(sql.MAX), JSON.stringify(detalleLineas));
 
     const ins = await reqIns.query(
       'INSERT INTO dbo.Ventas (UsuarioId, Total, Detalle) ' +
@@ -171,6 +200,26 @@ router.post('/checkout', async (req, res) => {
     );
 
     const ventaId = ins.recordset && ins.recordset[0] && ins.recordset[0].Id;
+
+    try {
+      for (const line of detalleLineas) {
+        const reqDet = new sql.Request(transaction);
+        reqDet.input('VentaId', sql.Int, ventaId);
+        reqDet.input('LibroId', sql.Int, line.libroId);
+        reqDet.input('Titulo', sql.NVarChar(300), line.titulo || '');
+        reqDet.input('Cantidad', sql.Int, line.cantidad);
+        reqDet.input('PrecioUnitario', sql.Decimal(18, 2), line.precio);
+        reqDet.input('Subtotal', sql.Decimal(18, 2), line.subtotal);
+        await reqDet.query(
+          'INSERT INTO dbo.VentaDetalle (VentaId, LibroId, Titulo, Cantidad, PrecioUnitario, Subtotal) ' +
+            'VALUES (@VentaId, @LibroId, @Titulo, @Cantidad, @PrecioUnitario, @Subtotal)',
+        );
+      }
+    } catch (e) {
+      if (!e || !e.message || !/Invalid object name 'dbo\.VentaDetalle'/i.test(e.message)) {
+        throw e;
+      }
+    }
 
     for (const { libroId } of normalized) {
       const reqDel = new sql.Request(transaction);
