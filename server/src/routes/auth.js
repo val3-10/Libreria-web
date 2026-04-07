@@ -39,6 +39,19 @@ function emailNorm(s) {
     .toLowerCase();
 }
 
+function resolveRegisterDbError(err, adminMode = false) {
+  const msg = String((err && err.message) || '');
+  if (/CK_Usuarios_FechaNacimiento|FechaNacimiento/i.test(msg)) {
+    return 'La fecha de nacimiento no es válida. Debe ser hoy o una fecha anterior.';
+  }
+  if (/CK_Libros_Precio|Precio/i.test(msg)) {
+    return 'El valor enviado no cumple las reglas de validación de la base de datos. Verifica los datos e inténtalo de nuevo.';
+  }
+  return adminMode
+    ? 'Error interno al registrar el usuario administrativo.'
+    : 'Error interno al registrar el usuario.';
+}
+
 /** Resuelve tipo de documento (texto del formulario) al Id de dbo.Documento */
 async function resolveDocumentoId(pool, tipoDocumento) {
   if (!tipoDocumento || !String(tipoDocumento).trim()) return null;
@@ -173,7 +186,7 @@ router.post('/register', async (req, res) => {
     return res.status(201).json({ message: 'Cuenta creada correctamente.' });
   } catch (err) {
     console.error('Error en /api/auth/register:', err);
-    return res.status(500).json({ error: 'Error interno al registrar el usuario.' });
+    return res.status(500).json({ error: resolveRegisterDbError(err, false) });
   }
 });
 
@@ -247,7 +260,7 @@ router.post('/register-admin', async (req, res) => {
     return res.status(201).json({ message: 'Cuenta administrativa creada correctamente.' });
   } catch (err) {
     console.error('Error en /api/auth/register-admin:', err);
-    return res.status(500).json({ error: 'Error interno al registrar el usuario administrativo.' });
+    return res.status(500).json({ error: resolveRegisterDbError(err, true) });
   }
 });
 
