@@ -31,9 +31,11 @@ const SQL_VENTA_DETALLE_FILAS = `
 const SQL_CLIENTES_SIN_COMPRAS = `
   SELECT u.Id AS usuarioId, u.Nombre AS nombre, u.Correo AS correo, u.Usuario AS usuarioLogin
   FROM dbo.Usuarios u
+  LEFT JOIN dbo.Ventas v ON v.UsuarioId = u.Id
   WHERE u.Activo = 1
     AND COALESCE(LOWER(LTRIM(RTRIM(u.Rol))), N'cliente') NOT IN (N'admin', N'administrador', N'empleado')
-    AND NOT EXISTS (SELECT 1 FROM dbo.Ventas v WHERE v.UsuarioId = u.Id)
+  GROUP BY u.Id, u.Nombre, u.Correo, u.Usuario
+  HAVING COUNT(v.Id) < 1
   ORDER BY u.Nombre;
 `;
 

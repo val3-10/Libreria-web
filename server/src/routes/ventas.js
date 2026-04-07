@@ -147,6 +147,14 @@ router.post('/checkout', async (req, res) => {
     for (const { libroId, cantidad } of normalized) {
       const reqSel = new sql.Request(transaction);
       reqSel.input('Id', sql.Int, libroId);
+      // Lock de concurrencia sobre la fila del libro durante el checkout:
+      // - UPDLOCK: reserva intención de actualización y evita que otra transacción
+      //   lea/actualice el mismo stock como si estuviera libre.
+      // - ROWLOCK: sugiere bloqueo a nivel de fila (no página/tabla) para reducir
+      //   contención cuando se venden libros distintos al mismo tiempo.
+      // Ejemplo: dos clientes intentan comprar el mismo libro (stock=1).
+      // Con este lock, solo una transacción avanza; la otra espera y luego falla
+      // por stock insuficiente, evitando sobreventa.
       const sel = await reqSel.query(
         'SELECT TOP 1 Id, Titulo, Stock, Precio FROM dbo.Libros WITH (UPDLOCK, ROWLOCK) WHERE Id = @Id',
       );
