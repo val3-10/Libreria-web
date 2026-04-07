@@ -1550,22 +1550,32 @@ document.querySelector('.sidebar')?.addEventListener('mouseleave', () => {
   });
 
   if (!confirmado) return;
-  for (const item of [...carrito]) {
-    const libroId = item.libroId ?? (libros.find(l => l.titulo === item.titulo) || {}).id;
-    if (usuarioActivo?.id && libroId) {
-      try {
-        await fetch(`${API_BASE}/api/carrito/eliminar`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ usuarioId: usuarioActivo.id, libroId }),
-        });
-      } catch (e) { console.error(e); }
+  let errorApi = false;
+  if (usuarioActivo?.id) {
+    try {
+      const res = await fetch(`${API_BASE}/api/carrito/vaciar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuarioId: usuarioActivo.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        errorApi = true;
+        console.error(data.error || res.status);
+        mostrarMensaje('error', data.error || 'No se pudo vaciar el carrito en el servidor.');
+      }
+    } catch (e) {
+      errorApi = true;
+      console.error(e);
+      mostrarMensaje('error', 'No se pudo contactar el servidor para vaciar el carrito.');
     }
   }
   carrito = [];
   guardarDatos();
   mostrarCarrito();
-  mostrarMensaje('success', 'Carrito vaciado');
+  if (!errorApi) {
+    mostrarMensaje('success', 'Carrito vaciado');
+  }
 }
 
   async function eliminarDelCarrito(i) {

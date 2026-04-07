@@ -54,14 +54,14 @@ router.post('/login', async (req, res) => {
     const pool = await db.getPool();
     const request = pool.request();
 
-    request.input('correo', sql.NVarChar, correo);
-    request.input('password', sql.NVarChar, password);
+    // Misma convención que change-password / deactivate: PasswordHash almacena texto plano (ver insert-admin-usuario.sql).
+    request.input('Correo', sql.NVarChar, correo);
+    request.input('PasswordHash', sql.NVarChar, password);
 
-    // Consulta SQL a la tabla Usuarios: buscar un usuario con ese correo y contraseña
     const result = await request.query(
       'SELECT TOP 1 Id, Nombre, Correo, Usuario, Rol, Activo ' +
-        'FROM Usuarios ' +
-        'WHERE Correo = @correo AND PasswordHash = @password AND Activo = 1',
+        'FROM dbo.Usuarios ' +
+        'WHERE Correo = @Correo AND PasswordHash = @PasswordHash AND Activo = 1',
     );
 
     const user = result.recordset && result.recordset[0];
@@ -274,7 +274,7 @@ router.post('/change-password', async (req, res) => {
 
     const selectResult = await reqSelect.query(
       'SELECT TOP 1 Id, Correo, Usuario, Activo ' +
-        'FROM Usuarios ' +
+        'FROM dbo.Usuarios ' +
         'WHERE Correo = @Correo AND PasswordHash = @PasswordHash AND Activo = 1',
     );
 
@@ -284,13 +284,12 @@ router.post('/change-password', async (req, res) => {
       return res.status(401).json({ error: 'Correo o contraseña actual incorrectos.' });
     }
 
-    // Actualizar la contraseña del usuario.
     const reqUpdate = pool.request();
     reqUpdate.input('Id', sql.Int, user.Id);
     reqUpdate.input('PasswordHash', sql.NVarChar, passwordNueva);
 
     await reqUpdate.query(
-      'UPDATE Usuarios ' +
+      'UPDATE dbo.Usuarios ' +
         'SET PasswordHash = @PasswordHash, FechaActualizacion = SYSUTCDATETIME() ' +
         'WHERE Id = @Id',
     );
@@ -322,7 +321,7 @@ router.post('/deactivate-account', async (req, res) => {
     reqSelect.input('PasswordHash', sql.NVarChar, password);
 
     const selectResult = await reqSelect.query(
-      'SELECT TOP 1 Id, Rol FROM Usuarios ' +
+      'SELECT TOP 1 Id, Rol FROM dbo.Usuarios ' +
         'WHERE Correo = @Correo AND PasswordHash = @PasswordHash AND Activo = 1',
     );
 
@@ -345,7 +344,7 @@ router.post('/deactivate-account', async (req, res) => {
     const reqUpd = pool.request();
     reqUpd.input('Id', sql.Int, user.Id);
     await reqUpd.query(
-      'UPDATE Usuarios SET Activo = 0, FechaActualizacion = SYSUTCDATETIME() WHERE Id = @Id',
+      'UPDATE dbo.Usuarios SET Activo = 0, FechaActualizacion = SYSUTCDATETIME() WHERE Id = @Id',
     );
 
     return res.json({ message: 'Cuenta desactivada correctamente.' });

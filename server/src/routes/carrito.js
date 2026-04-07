@@ -133,6 +133,33 @@ router.post('/cantidad', async (req, res) => {
   }
 });
 
+// POST /api/carrito/vaciar — elimina todas las filas del carrito de ese usuario en dbo.Carrito
+router.post('/vaciar', async (req, res) => {
+  try {
+    const { usuarioId } = req.body || {};
+    const userId = Number(usuarioId);
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(400).json({ error: 'usuarioId es obligatorio y debe ser válido.' });
+    }
+
+    const pool = await db.getPool();
+    const result = await pool
+      .request()
+      .input('UsuarioId', sql.Int, userId)
+      .query('DELETE FROM dbo.Carrito WHERE UsuarioId = @UsuarioId');
+
+    const affected = result.rowsAffected && result.rowsAffected[0];
+    return res.json({
+      message: 'Carrito vaciado en base de datos.',
+      filasEliminadas: typeof affected === 'number' ? affected : 0,
+    });
+  } catch (err) {
+    console.error('Error en POST /api/carrito/vaciar:', err);
+    return res.status(500).json({ error: 'No se pudo vaciar el carrito en base de datos.' });
+  }
+});
+
 // POST /api/carrito/eliminar  — quita una línea (UsuarioId + LibroId) de dbo.Carrito
 router.post('/eliminar', async (req, res) => {
   try {
