@@ -61,6 +61,21 @@ const SQL_UNION_CONTACTOS = `
 `;
 
 const SQL_PROVEEDOR_POR_ID = 'SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid';
+const SQL_PROMEDIO_VENTAS_MES = `
+  WITH VentasPorMes AS (
+    SELECT
+      DATEFROMPARTS(YEAR(v.Fecha), MONTH(v.Fecha), 1) AS mes,
+      COUNT(v.Id) AS numVentas,
+      CAST(SUM(v.Total) AS DECIMAL(18,2)) AS totalMes
+    FROM dbo.Ventas v
+    GROUP BY DATEFROMPARTS(YEAR(v.Fecha), MONTH(v.Fecha), 1)
+  )
+  SELECT
+    CAST(AVG(CAST(numVentas AS DECIMAL(18,2))) AS DECIMAL(18,2)) AS promedioVentasMes,
+    CAST(AVG(totalMes) AS DECIMAL(18,2)) AS promedioMontoMes,
+    COUNT(1) AS mesesConVentas
+  FROM VentasPorMes;
+`;
 
 const SQL_CLIENTES_SIN_COMPRAS_EXCEPT = `
   SELECT u.Id AS usuarioId, u.Nombre AS nombre, u.Correo AS correo, u.Usuario AS usuarioLogin
@@ -135,6 +150,14 @@ function mapLibroSimpleRow(r) {
   return {
     libroId: r.libroId,
     titulo: r.titulo,
+  };
+}
+
+function mapPromedioVentasMesRow(r) {
+  return {
+    promedioVentasMes: r.promedioVentasMes != null ? Number(r.promedioVentasMes) : 0,
+    promedioMontoMes: r.promedioMontoMes != null ? Number(r.promedioMontoMes) : 0,
+    mesesConVentas: r.mesesConVentas != null ? Number(r.mesesConVentas) : 0,
   };
 }
 
@@ -220,12 +243,22 @@ router.get('/resumen', async (_req, res) => {
       console.warn('reportes UNION contactos:', e.message);
     }
 
+    let promedioVentasPorMes = { promedioVentasMes: 0, promedioMontoMes: 0, mesesConVentas: 0 };
+    try {
+      const promResult = await pool.request().query(SQL_PROMEDIO_VENTAS_MES);
+      const row = promResult.recordset && promResult.recordset[0];
+      if (row) promedioVentasPorMes = mapPromedioVentasMesRow(row);
+    } catch (e) {
+      console.warn('reportes promedio ventas por mes:', e.message);
+    }
+
     return res.json({
       topClientes,
       librosMasVendidos,
       mayorProveedor,
       clientesSinCompras,
       contactosUnificados,
+      promedioVentasPorMes,
     });
   } catch (err) {
     console.error('Error en GET /api/reportes/resumen:', err);

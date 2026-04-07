@@ -318,6 +318,11 @@ header h1 {
       <p class="reporte-vacio">Cargando…</p>
     </div>
 
+    <h3>Promedio de ventas por mes</h3>
+    <div id="bloquePromedioVentasMes" class="reporte-mayor-proveedor">
+      <p class="reporte-vacio">Cargando…</p>
+    </div>
+
     <h3>Clientes registrados sin ninguna compra</h3>
     <table id="tablaSinCompras">
       <thead>
@@ -497,6 +502,7 @@ header h1 {
     const tbSinExcept = document.querySelector("#tablaSinComprasExcept tbody");
     const tbInter = document.querySelector("#tablaVendidosFavoritos tbody");
     const bloqueProv = document.getElementById("bloqueMayorProveedor");
+    const bloquePromMes = document.getElementById("bloquePromedioVentasMes");
     if (tbUnion) tbUnion.innerHTML = '<tr><td colspan="3">Cargando…</td></tr>';
     if (tbCli) tbCli.innerHTML = '<tr><td colspan="5">Cargando…</td></tr>';
     if (tbLib) tbLib.innerHTML = '<tr><td colspan="5">Cargando…</td></tr>';
@@ -504,6 +510,7 @@ header h1 {
     if (tbSinExcept) tbSinExcept.innerHTML = '<tr><td colspan="3">Cargando…</td></tr>';
     if (tbInter) tbInter.innerHTML = '<tr><td colspan="2">Cargando…</td></tr>';
     if (bloqueProv) bloqueProv.innerHTML = '<p class="reporte-vacio">Cargando…</p>';
+    if (bloquePromMes) bloquePromMes.innerHTML = '<p class="reporte-vacio">Cargando…</p>';
 
     try {
       const res = await fetch(`${API_BASE}/api/reportes/resumen`);
@@ -573,6 +580,22 @@ header h1 {
             <p><strong>${escapeHtml(mp.nombre)}</strong></p>
             <p>Unidades vendidas : ${mp.unidadesVendidas}</p>
             <p>Subtotal: $${Number(mp.ingresosAtribuidos).toLocaleString("es-CO")}</p>
+          `;
+        }
+      }
+
+      if (bloquePromMes) {
+        const pm = data.promedioVentasPorMes || {};
+        const meses = Number(pm.mesesConVentas) || 0;
+        if (meses <= 0) {
+          bloquePromMes.innerHTML = '<p class="reporte-vacio">Aún no hay ventas para calcular promedio mensual.</p>';
+        } else {
+          const promVentas = Number(pm.promedioVentasMes) || 0;
+          const promMonto = Number(pm.promedioMontoMes) || 0;
+          bloquePromMes.innerHTML = `
+            <p><strong>Promedio de ventas/mes:</strong> ${promVentas.toLocaleString("es-CO", { maximumFractionDigits: 2 })}</p>
+            <p><strong>Promedio de monto/mes:</strong> $${promMonto.toLocaleString("es-CO", { maximumFractionDigits: 2 })}</p>
+            <p><strong>Meses con ventas analizados:</strong> ${meses}</p>
           `;
         }
       }
@@ -652,6 +675,7 @@ header h1 {
       if (tbSinExcept) tbSinExcept.innerHTML = '<tr><td colspan="3">Error</td></tr>';
       if (tbInter) tbInter.innerHTML = '<tr><td colspan="2">Error</td></tr>';
       if (bloqueProv) bloqueProv.innerHTML = '<p class="reporte-vacio">Error al cargar.</p>';
+      if (bloquePromMes) bloquePromMes.innerHTML = '<p class="reporte-vacio">Error al cargar.</p>';
     }
   }
 

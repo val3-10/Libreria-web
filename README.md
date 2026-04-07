@@ -39,7 +39,7 @@ Estructura relevante:
 | `server/src/routes/carrito.js` | Carrito por usuario (`dbo.Carrito`): agregar, cantidad, vaciar, eliminar línea |
 | `server/src/routes/favoritos.js` | Favoritos por usuario en BD |
 | `server/src/routes/ventas.js` | Listado de ventas y checkout (`dbo.Ventas`, stock en `dbo.Libros`) |
-| `server/src/routes/reportes.js` | Resumen para panel admin (clientes + proveedores) |
+| `server/src/routes/reportes.js` | Reportes admin: resumen, EXCEPT e INTERSECT |
 | `server/scripts/create-database.sql` | DDL único: crea base y estructura completa (`Documento`, `Categorias`, `Proveedores`, `Usuarios`, `Libros`, `Ventas`, `VentaDetalle`, `Carrito`, `Favoritos`) |
 | `server/scripts/insert.sql` | DML único: catálogos, proveedores, libros semilla y usuario admin de prueba (`admin@booknest.com` / `Abc123`) |
 
@@ -324,6 +324,8 @@ La columna **Llamada desde** indica qué página HTML (u otra pieza del cliente)
 | **GET** | `/api/ventas` | `server/src/routes/ventas.js` | `admin.html` (todas las ventas); `usuario.html` con `?usuarioId=<id>` (historial del cliente) |
 | **POST** | `/api/ventas/checkout` | `server/src/routes/ventas.js` | `cliente.html` (finalizar compra) |
 | **GET** | `/api/reportes/resumen` | `server/src/routes/reportes.js` | `admin.html` |
+| **GET** | `/api/reportes/clientes-sin-compras-except` | `server/src/routes/reportes.js` | `admin.html` |
+| **GET** | `/api/reportes/libros-vendidos-y-favoritos` | `server/src/routes/reportes.js` | `admin.html` |
 
 **Notas de seguridad y datos:** `GET /api/ventas?usuarioId=` y `GET /api/favoritos/:usuarioId` confían en el id enviado por el cliente (adecuado para demo; en producción ligar el id a la sesión o JWT). El panel **Ventas** en `admin.html` y el **historial** en `usuario.html` leen ventas desde la BD, no desde `localStorage`. Las **facturas** en `usuario.html` siguen pudiendo depender de datos locales (`facturas_*`) según la implementación actual del HTML.
 
@@ -400,35 +402,7 @@ Los textos siguientes corresponden a las consultas que usa el código en `server
 | Ruta | SQL |
 |------|-----|
 | **GET** `/resumen` | Constantes en código: **top clientes** — `SELECT TOP 10 … SUM(v.Total) … FROM dbo.Ventas v INNER JOIN dbo.Usuarios u … GROUP BY u.Id, u.Nombre, u.Correo ORDER BY totalCompras DESC`. **Detalle ventas** — `SELECT LibroId, Cantidad, Subtotal FROM dbo.VentaDetalle`. **Libros meta** — `SELECT Id, Titulo, Autor, ProveedorId FROM dbo.Libros WHERE Id IN (...)`. **Proveedor top** — `SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid`. **Clientes sin compras** — `LEFT JOIN dbo.Ventas v ... GROUP BY ... HAVING COUNT(v.Id) < 1`. **Contactos** — `SELECT N'Cliente' AS tipo, u.Nombre, u.Correo … FROM dbo.Usuarios u … UNION ALL SELECT N'Proveedor', p.Nombre, COALESCE(p.Contacto, N'—') FROM dbo.Proveedores p` (**UNION ALL**, no `UNION`). |
-
-### Reportes sugeridos con `EXCEPT` / `INTERSECT`
-
-- **Clientes activos sin compras (`EXCEPT`)**
-  Devuelve usuarios cliente activos que **no aparecen** en ninguna venta. Es útil para campañas de reactivación, onboarding y seguimiento comercial.
-  ```sql
-  SELECT u.Id, u.Nombre, u.Correo, u.Usuario
-  FROM dbo.Usuarios u
-  WHERE u.Activo = 1
-    AND COALESCE(LOWER(LTRIM(RTRIM(u.Rol))), N'cliente') NOT IN (N'admin', N'administrador', N'empleado')
-  EXCEPT
-  SELECT u.Id, u.Nombre, u.Correo, u.Usuario
-  FROM dbo.Usuarios u
-  INNER JOIN dbo.Ventas v ON v.UsuarioId = u.Id
-  WHERE u.Activo = 1
-    AND COALESCE(LOWER(LTRIM(RTRIM(u.Rol))), N'cliente') NOT IN (N'admin', N'administrador', N'empleado');
-  ```
-
-- **Libros vendidos y además marcados como favoritos (`INTERSECT`)**
-  Devuelve libros que están en la **intersección** entre lo vendido y lo favorito. Sirve para detectar títulos con alta afinidad comercial (gustan y además se compran).
-  ```sql
-  SELECT L.Id AS libroId, L.Titulo
-  FROM dbo.Libros L
-  WHERE L.Id IN (
-    SELECT vd.LibroId FROM dbo.VentaDetalle vd
-    INTERSECT
-    SELECT f.LibroId FROM dbo.Favoritos f
-  )
-  ORDER BY L.Titulo;
-  ```
+| **GET** `/clientes-sin-compras-except` | Devuelve clientes activos sin ventas usando `EXCEPT` entre (clientes activos) y (clientes con al menos una venta). |
+| **GET** `/libros-vendidos-y-favoritos` | Devuelve libros que están en la intersección entre vendidos y favoritos usando `INTERSECT` (`VentaDetalle.LibroId` ∩ `Favoritos.LibroId`). |
 
 Para el texto exacto de cada constante (`SQL_TOP_CLIENTES`, `SQL_UNION_CONTACTOS`, etc.) abre `server/src/routes/reportes.js`.
