@@ -165,19 +165,19 @@ header h1 {
     <input type="hidden" id="libroEditId" value="">
     <input type="text" id="titulo" placeholder="Título">
     <input type="text" id="autor" placeholder="Autor">
-    <input type="text" id="saga" placeholder="Saga/Serie (opcional)">
+    <input type="text" id="saga" placeholder="Saga (opcional)">
     <label for="categoriaLibroId">Categoría</label>
     <select id="categoriaLibroId">
-      <option value="">— Sin categoría —</option>
+      <option value="">Sin categoría</option>
     </select>
     <label for="proveedorLibroId">Proveedor</label>
     <select id="proveedorLibroId">
-      <option value="">— Sin proveedor —</option>
+      <option value="">Sin proveedor</option>
     </select>
     <input type="number" id="stock" placeholder="Stock" min="0">
-    <input type="number" id="precio" placeholder="Precio (en $)" min="0">
-    <label for="caratulaRuta">Nombre o ruta de carátula</label>
-    <input type="text" id="caratulaRuta" maxlength="500" placeholder="Ej. milibro.jpg (solo .jpg; se guarda en caratulas/)">
+    <input type="number" id="precio" placeholder="Precio" min="0">
+    <label for="caratulaRuta">Nombre carátula</label>
+    <input type="text" id="caratulaRuta" maxlength="500" placeholder="Ruta de caratula.jpg">
     <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:8px;">
       <button type="button" id="btnGuardarLibro" onclick="agregarLibro()">Guardar en base de datos</button>
       <button type="button" id="btnCancelarEdicionLibro" onclick="cancelarEdicionLibro()" style="display:none;">Cancelar edición</button>
@@ -204,7 +204,7 @@ header h1 {
   <!-- SECCIÓN: REGISTRO DE VENTAS -->
   <div id="ventas" class="seccion" style="display:none;">
     <h2>Registro de ventas</h2>
-    <p style="font-size:0.9rem; color:#555; margin-bottom:12px;">Listado desde la base de datos (<code>dbo.Ventas</code>). Se recarga al entrar en esta sección.</p>
+    <p style="font-size:0.9rem; color:#555; margin-bottom:12px;"></p>
     <table id="tablaVentas">
       <thead>
         <tr>
@@ -267,15 +267,12 @@ header h1 {
 
   <!-- SECCIÓN: INDICADORES (reportes desde API / base de datos) -->
   <div id="reportes" class="seccion" style="display:none;">
-    <h2>Indicadores</h2>
+    <h2>Lista de clientes y proveedores</h2>
     <p style="font-size:0.95rem; color:#444; max-width:720px; margin-bottom:18px;">
-      Datos calculados desde ventas registradas en la base (<code>dbo.Ventas</code>). Actualiza al entrar en esta sección.
+     
     </p>
 
-    <h3>Directorio unificado (SQL <code>UNION ALL</code>)</h3>
     <p style="font-size:0.88rem; color:#555; max-width:720px; margin:-8px 0 10px;">
-      Una sola consulta combina filas de <strong>clientes</strong> (usuarios no administradores) y <strong>proveedores</strong>
-      con las mismas columnas: <code>tipo</code>, <code>nombre</code>, <code>contacto</code>. <code>UNION ALL</code> conserva todas las filas (no elimina duplicados como <code>UNION</code>).
     </p>
     <table id="tablaUnionContactos">
       <thead>
@@ -288,7 +285,7 @@ header h1 {
       <tbody></tbody>
     </table>
 
-    <h3>Top 10 clientes (por total comprado)</h3>
+    <h3>Top 10 clientes</h3>
     <table id="tablaTopClientes">
       <thead>
         <tr>
@@ -302,7 +299,7 @@ header h1 {
       <tbody></tbody>
     </table>
 
-    <h3>Libros más comprados (unidades)</h3>
+    <h3>Libros más comprados</h3>
     <table id="tablaLibrosVendidos">
       <thead>
         <tr>
@@ -316,7 +313,7 @@ header h1 {
       <tbody></tbody>
     </table>
 
-    <h3>Mayor proveedor (por unidades vendidas de sus libros)</h3>
+    <h3>Mayor proveedor</h3>
     <div id="bloqueMayorProveedor" class="reporte-mayor-proveedor">
       <p class="reporte-vacio">Cargando…</p>
     </div>
@@ -548,9 +545,9 @@ header h1 {
             '<p class="reporte-vacio">No hay datos: los libros vendidos deben tener <strong>proveedor</strong> asignado y existir ventas.</p>';
         } else {
           bloqueProv.innerHTML = `
-            <p><strong>${escapeHtml(mp.nombre)}</strong> (Id ${mp.proveedorId})</p>
-            <p>Unidades vendidas (libros suyos): ${mp.unidadesVendidas}</p>
-            <p>Subtotal atribuido: $${Number(mp.ingresosAtribuidos).toLocaleString("es-CO")}</p>
+            <p><strong>${escapeHtml(mp.nombre)}</strong></p>
+            <p>Unidades vendidas : ${mp.unidadesVendidas}</p>
+            <p>Subtotal: $${Number(mp.ingresosAtribuidos).toLocaleString("es-CO")}</p>
           `;
         }
       }
@@ -629,7 +626,7 @@ header h1 {
     const sel = document.getElementById('categoriaLibroId');
     if (!sel) return;
     const prev = sel.value;
-    sel.innerHTML = '<option value="">— Sin categoría —</option>';
+    sel.innerHTML = '<option value="">Sin categoría</option>';
     categorias.forEach((c) => {
       const id = c.id != null ? c.id : c.Id;
       const nombre = c.nombre != null ? c.nombre : c.Nombre != null ? String(c.Nombre) : '';
@@ -662,7 +659,7 @@ header h1 {
     const sel = document.getElementById('proveedorLibroId');
     if (!sel) return;
     const prev = sel.value;
-    sel.innerHTML = '<option value="">— Sin proveedor —</option>';
+    sel.innerHTML = '<option value="">Sin proveedor</option>';
     proveedores.forEach((p) => {
       const o = document.createElement('option');
       o.value = String(p.id);
