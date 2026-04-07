@@ -162,6 +162,17 @@
       return null;
     }
 
+    function hoyIso() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    const fechaInput = document.getElementById("fecha");
+    if (fechaInput) fechaInput.max = hoyIso();
+
     async function register(event) {
       event.preventDefault();
       
@@ -181,6 +192,11 @@
 
       if (!correo.endsWith("@booknest.com")) {
         alert("Solo se permiten correos con el dominio @booknest.com");
+        return;
+      }
+
+      if (fecha && fecha > hoyIso()) {
+        alert("La fecha de nacimiento no puede ser futura.");
         return;
       }
 

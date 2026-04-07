@@ -157,6 +157,17 @@
       void register();
     }
 
+    function hoyIso() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    const fechaInput = document.getElementById("fecha");
+    if (fechaInput) fechaInput.max = hoyIso();
+
     async function register() {
       const nombre = document.getElementById("nombre").value.trim();
       const tipo_documento = document.getElementById("tipo_documento").value.trim();
@@ -171,6 +182,7 @@
       const terminos = document.getElementById("terminos").checked;
 
       if (!correo.endsWith("@booknest.com")) { alert("Solo @booknest.com"); return; }
+      if (fecha && fecha > hoyIso()) { alert("La fecha de nacimiento no puede ser futura."); return; }
       const errorPass = validarSeguridadPassword(password); if (errorPass) { alert(errorPass); return; }
       if (password !== confirmar) { alert("Contraseñas no coinciden"); return; }
       if (!terminos) { alert("Debes aceptar los términos"); return; }

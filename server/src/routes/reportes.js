@@ -1,5 +1,5 @@
 /**
- * Indicadores para administración: ventas desde dbo.Ventas (Detalle en JSON).
+ * Indicadores para administración: ventas normalizadas en dbo.VentaDetalle.
  * Incluye un listado con UNION ALL (clientes + proveedores, mismas columnas).
  * Los SELECT siguen el mismo patrón que categorías/proveedores: query + map sobre recordset.
  */
@@ -23,16 +23,19 @@ const SQL_TOP_CLIENTES = `
   ORDER BY totalCompras DESC;
 `;
 
-const SQL_VENTAS_DETALLE = `
-  SELECT Detalle FROM dbo.Ventas WHERE Detalle IS NOT NULL AND LTRIM(RTRIM(CAST(Detalle AS NVARCHAR(MAX)))) <> N''
+const SQL_VENTA_DETALLE_FILAS = `
+  SELECT LibroId, Cantidad, Subtotal
+  FROM dbo.VentaDetalle
 `;
 
 const SQL_CLIENTES_SIN_COMPRAS = `
   SELECT u.Id AS usuarioId, u.Nombre AS nombre, u.Correo AS correo, u.Usuario AS usuarioLogin
   FROM dbo.Usuarios u
+  LEFT JOIN dbo.Ventas v ON v.UsuarioId = u.Id
   WHERE u.Activo = 1
     AND COALESCE(LOWER(LTRIM(RTRIM(u.Rol))), N'cliente') NOT IN (N'admin', N'administrador', N'empleado')
-    AND NOT EXISTS (SELECT 1 FROM dbo.Ventas v WHERE v.UsuarioId = u.Id)
+  GROUP BY u.Id, u.Nombre, u.Correo, u.Usuario
+  HAVING COUNT(v.Id) < 1
   ORDER BY u.Nombre;
 `;
 
@@ -58,38 +61,81 @@ const SQL_UNION_CONTACTOS = `
 `;
 
 const SQL_PROVEEDOR_POR_ID = 'SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid';
+const SQL_PROMEDIO_VENTAS_MES = `
+  WITH VentasPorMes AS (
+    SELECT
+      DATEFROMPARTS(YEAR(v.Fecha), MONTH(v.Fecha), 1) AS mes,
+      COUNT(v.Id) AS numVentas,
+      CAST(SUM(v.Total) AS DECIMAL(18,2)) AS totalMes
+    FROM dbo.Ventas v
+    GROUP BY DATEFROMPARTS(YEAR(v.Fecha), MONTH(v.Fecha), 1)
+  )
+  SELECT
+    CAST(AVG(CAST(numVentas AS DECIMAL(18,2))) AS DECIMAL(18,2)) AS promedioVentasMes,
+    CAST(AVG(totalMes) AS DECIMAL(18,2)) AS promedioMontoMes,
+    COUNT(1) AS mesesConVentas
+  FROM VentasPorMes;
+`;
 
-/** Lee el JSON de Detalle (array de líneas) sin OPENJSON en SQL. */
-function lineasDesdeDetalle(detalle) {
-  if (detalle == null || detalle === '') return [];
-  const s = typeof detalle === 'string' ? detalle : String(detalle);
-  try {
-    const arr = JSON.parse(s);
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-}
+const SQL_VENTAS_POR_MES = `
+  SELECT
+    DATEFROMPARTS(YEAR(v.Fecha), MONTH(v.Fecha), 1) AS mes,
+    COUNT(v.Id) AS numVentas,
+    CAST(SUM(v.Total) AS DECIMAL(18,2)) AS totalMes
+  FROM dbo.Ventas v
+  GROUP BY DATEFROMPARTS(YEAR(v.Fecha), MONTH(v.Fecha), 1)
+  ORDER BY mes DESC;
+`;
 
-/**
- * Suma cantidad y subtotal por libroId a partir de las filas de Ventas (solo columna Detalle).
- * @returns {Map<number, { unidades: number, subtotal: number }>}
- */
-function agregarVentasPorLibro(ventasConDetalle) {
+const SQL_CLIENTES_SIN_COMPRAS_EXCEPT = `
+  SELECT u.Id AS usuarioId, u.Nombre AS nombre, u.Correo AS correo, u.Usuario AS usuarioLogin
+  FROM dbo.Usuarios u
+  WHERE u.Activo = 1
+    AND COALESCE(LOWER(LTRIM(RTRIM(u.Rol))), N'cliente') NOT IN (N'admin', N'administrador', N'empleado')
+  EXCEPT
+  SELECT u.Id AS usuarioId, u.Nombre AS nombre, u.Correo AS correo, u.Usuario AS usuarioLogin
+  FROM dbo.Usuarios u
+  INNER JOIN dbo.Ventas v ON v.UsuarioId = u.Id
+  WHERE u.Activo = 1
+    AND COALESCE(LOWER(LTRIM(RTRIM(u.Rol))), N'cliente') NOT IN (N'admin', N'administrador', N'empleado')
+`;
+
+const SQL_LIBROS_VENDIDOS_Y_FAVORITOS_INTERSECT = `
+  SELECT L.Id AS libroId, L.Titulo AS titulo
+  FROM dbo.Libros L
+  WHERE L.Id IN (
+    SELECT vd.LibroId FROM dbo.VentaDetalle vd
+    INTERSECT
+    SELECT f.LibroId FROM dbo.Favoritos f
+  )
+  ORDER BY L.Titulo
+`;
+
+const SQL_LIBROS_AGOTADOS = `
+  SELECT
+    L.Id AS libroId,
+    L.Titulo AS titulo,
+    L.Autor AS autor,
+    L.Stock AS stock
+  FROM dbo.Libros L
+  WHERE ISNULL(L.Stock, 0) <= 0
+  ORDER BY L.Titulo;
+`;
+
+/** Agrega ventas por libro desde tabla normalizada dbo.VentaDetalle. */
+function agregarVentasPorLibroDesdeFilas(detalles) {
   const porLibro = new Map();
-  for (const row of ventasConDetalle) {
-    for (const line of lineasDesdeDetalle(row.Detalle)) {
-      const libroId = Number(line.libroId);
-      if (!Number.isInteger(libroId) || libroId <= 0) continue;
-      const cantidad = Number(line.cantidad);
-      const sub = Number(line.subtotal);
-      const qty = Number.isFinite(cantidad) && cantidad > 0 ? Math.floor(cantidad) : 0;
-      const subtotal = Number.isFinite(sub) && sub >= 0 ? sub : 0;
-      const cur = porLibro.get(libroId) || { unidades: 0, subtotal: 0 };
-      cur.unidades += qty;
-      cur.subtotal += subtotal;
-      porLibro.set(libroId, cur);
-    }
+  for (const row of detalles) {
+    const libroId = Number(row.LibroId);
+    if (!Number.isInteger(libroId) || libroId <= 0) continue;
+    const cantidad = Number(row.Cantidad);
+    const subtotal = Number(row.Subtotal);
+    const qty = Number.isFinite(cantidad) && cantidad > 0 ? Math.floor(cantidad) : 0;
+    const sub = Number.isFinite(subtotal) && subtotal >= 0 ? subtotal : 0;
+    const cur = porLibro.get(libroId) || { unidades: 0, subtotal: 0 };
+    cur.unidades += qty;
+    cur.subtotal += sub;
+    porLibro.set(libroId, cur);
   }
   return porLibro;
 }
@@ -121,6 +167,43 @@ function mapContactoUnionRow(r) {
   };
 }
 
+function mapLibroSimpleRow(r) {
+  return {
+    libroId: r.libroId,
+    titulo: r.titulo,
+  };
+}
+
+function mapPromedioVentasMesRow(r) {
+  return {
+    promedioVentasMes: r.promedioVentasMes != null ? Number(r.promedioVentasMes) : 0,
+    promedioMontoMes: r.promedioMontoMes != null ? Number(r.promedioMontoMes) : 0,
+    mesesConVentas: r.mesesConVentas != null ? Number(r.mesesConVentas) : 0,
+  };
+}
+
+function mapVentaPorMesRow(r) {
+  const mesDate = r.mes ? new Date(r.mes) : null;
+  const yyyy = mesDate && Number.isFinite(mesDate.getTime()) ? mesDate.getUTCFullYear() : null;
+  const mm = mesDate && Number.isFinite(mesDate.getTime()) ? String(mesDate.getUTCMonth() + 1).padStart(2, '0') : null;
+  const mesLabel = yyyy && mm ? `${yyyy}-${mm}` : null;
+  return {
+    mes: r.mes || null,
+    mesLabel: mesLabel || 'N/A',
+    numVentas: r.numVentas != null ? Number(r.numVentas) : 0,
+    totalMes: r.totalMes != null ? Number(r.totalMes) : 0,
+  };
+}
+
+function mapLibroAgotadoRow(r) {
+  return {
+    libroId: r.libroId,
+    titulo: r.titulo,
+    autor: r.autor,
+    stock: r.stock != null ? Number(r.stock) : 0,
+  };
+}
+
 // GET /api/reportes/resumen
 // Top clientes, libros más vendidos, proveedor con más ventas vía libros, clientes sin compras
 router.get('/resumen', async (_req, res) => {
@@ -133,8 +216,8 @@ router.get('/resumen', async (_req, res) => {
     let librosMasVendidos = [];
     let mayorProveedor = null;
     try {
-      const ventasDetResult = await pool.request().query(SQL_VENTAS_DETALLE);
-      const porLibro = agregarVentasPorLibro(ventasDetResult.recordset || []);
+      const detalleRows = await pool.request().query(SQL_VENTA_DETALLE_FILAS);
+      const porLibro = agregarVentasPorLibroDesdeFilas(detalleRows.recordset || []);
       const idsLibro = [...porLibro.keys()];
       if (idsLibro.length > 0) {
         const ph = idsLibro.map((_, i) => `@id${i}`).join(', ');
@@ -187,7 +270,7 @@ router.get('/resumen', async (_req, res) => {
         }
       }
     } catch (e) {
-      console.warn('reportes agregación Detalle (JSON en Node):', e.message);
+      console.warn('reportes agregación VentaDetalle:', e.message);
       librosMasVendidos = [];
       mayorProveedor = null;
     }
@@ -203,16 +286,83 @@ router.get('/resumen', async (_req, res) => {
       console.warn('reportes UNION contactos:', e.message);
     }
 
+    let promedioVentasPorMes = { promedioVentasMes: 0, promedioMontoMes: 0, mesesConVentas: 0 };
+    try {
+      const promResult = await pool.request().query(SQL_PROMEDIO_VENTAS_MES);
+      const row = promResult.recordset && promResult.recordset[0];
+      if (row) promedioVentasPorMes = mapPromedioVentasMesRow(row);
+    } catch (e) {
+      console.warn('reportes promedio ventas por mes:', e.message);
+    }
+
+    let ventasPorMes = [];
+    try {
+      const porMesResult = await pool.request().query(SQL_VENTAS_POR_MES);
+      ventasPorMes = (porMesResult.recordset || []).map(mapVentaPorMesRow);
+    } catch (e) {
+      console.warn('reportes ventas por mes:', e.message);
+    }
+
+    let librosAgotados = [];
+    try {
+      const agotadosResult = await pool.request().query(SQL_LIBROS_AGOTADOS);
+      librosAgotados = (agotadosResult.recordset || []).map(mapLibroAgotadoRow);
+    } catch (e) {
+      console.warn('reportes libros agotados:', e.message);
+    }
+
     return res.json({
       topClientes,
       librosMasVendidos,
       mayorProveedor,
       clientesSinCompras,
       contactosUnificados,
+      promedioVentasPorMes,
+      ventasPorMes,
+      librosAgotados,
     });
   } catch (err) {
     console.error('Error en GET /api/reportes/resumen:', err);
     return res.status(500).json({ error: err.message || 'No se pudieron cargar los reportes.' });
+  }
+});
+
+// GET /api/reportes/clientes-sin-compras-except
+router.get('/clientes-sin-compras-except', async (_req, res) => {
+  try {
+    const pool = await db.getPool();
+    const result = await pool.request().query(SQL_CLIENTES_SIN_COMPRAS_EXCEPT);
+    const clientes = (result.recordset || []).map(mapClienteSinCompraRow);
+    return res.json({ clientes });
+  } catch (err) {
+    console.error('Error en GET /api/reportes/clientes-sin-compras-except:', err);
+    return res.status(500).json({ error: err.message || 'No se pudo obtener el reporte EXCEPT.' });
+  }
+});
+
+// GET /api/reportes/libros-vendidos-y-favoritos
+router.get('/libros-vendidos-y-favoritos', async (_req, res) => {
+  try {
+    const pool = await db.getPool();
+    const result = await pool.request().query(SQL_LIBROS_VENDIDOS_Y_FAVORITOS_INTERSECT);
+    const libros = (result.recordset || []).map(mapLibroSimpleRow);
+    return res.json({ libros });
+  } catch (err) {
+    console.error('Error en GET /api/reportes/libros-vendidos-y-favoritos:', err);
+    return res.status(500).json({ error: err.message || 'No se pudo obtener el reporte INTERSECT.' });
+  }
+});
+
+// GET /api/reportes/libros-agotados
+router.get('/libros-agotados', async (_req, res) => {
+  try {
+    const pool = await db.getPool();
+    const result = await pool.request().query(SQL_LIBROS_AGOTADOS);
+    const libros = (result.recordset || []).map(mapLibroAgotadoRow);
+    return res.json({ libros });
+  } catch (err) {
+    console.error('Error en GET /api/reportes/libros-agotados:', err);
+    return res.status(500).json({ error: err.message || 'No se pudo obtener el reporte de libros agotados.' });
   }
 });
 

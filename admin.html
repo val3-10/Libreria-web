@@ -318,6 +318,24 @@ header h1 {
       <p class="reporte-vacio">Cargando…</p>
     </div>
 
+    <h3>Promedio de ventas por mes</h3>
+    <div id="bloquePromedioVentasMes" class="reporte-mayor-proveedor">
+      <p class="reporte-vacio">Cargando…</p>
+    </div>
+
+    <h3>Libros agotados (stock en 0)</h3>
+    <table id="tablaLibrosAgotados">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Título</th>
+          <th>Autor</th>
+          <th>Stock</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
     <h3>Clientes registrados sin ninguna compra</h3>
     <table id="tablaSinCompras">
       <thead>
@@ -325,6 +343,29 @@ header h1 {
           <th>Nombre</th>
           <th>Correo</th>
           <th>Usuario</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Clientes sin compras (EXCEPT)</h3>
+    <table id="tablaSinComprasExcept">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Usuario</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Libros vendidos y favoritos (INTERSECT)</h3>
+    <table id="tablaVendidosFavoritos">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Título</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -338,8 +379,6 @@ header h1 {
   let libros = [];
   /** Id del libro en edición (PUT); redundante al hidden #libroEditId para no perder el modo edición. */
   let libroEditandoId = null;
-  /** EstadoCatalogo al editar (disponible/venta); altas nuevas usan 'disponible'. */
-  let libroEstadoCatalogo = 'disponible';
   /** Ventas desde dbo.Ventas (GET /api/ventas) */
   let ventasBd = [];
   let proveedores = [];
@@ -473,12 +512,20 @@ header h1 {
     const tbCli = document.querySelector("#tablaTopClientes tbody");
     const tbLib = document.querySelector("#tablaLibrosVendidos tbody");
     const tbSin = document.querySelector("#tablaSinCompras tbody");
+    const tbAgotados = document.querySelector("#tablaLibrosAgotados tbody");
+    const tbSinExcept = document.querySelector("#tablaSinComprasExcept tbody");
+    const tbInter = document.querySelector("#tablaVendidosFavoritos tbody");
     const bloqueProv = document.getElementById("bloqueMayorProveedor");
+    const bloquePromMes = document.getElementById("bloquePromedioVentasMes");
     if (tbUnion) tbUnion.innerHTML = '<tr><td colspan="3">Cargando…</td></tr>';
     if (tbCli) tbCli.innerHTML = '<tr><td colspan="5">Cargando…</td></tr>';
     if (tbLib) tbLib.innerHTML = '<tr><td colspan="5">Cargando…</td></tr>';
     if (tbSin) tbSin.innerHTML = '<tr><td colspan="3">Cargando…</td></tr>';
+    if (tbAgotados) tbAgotados.innerHTML = '<tr><td colspan="4">Cargando…</td></tr>';
+    if (tbSinExcept) tbSinExcept.innerHTML = '<tr><td colspan="3">Cargando…</td></tr>';
+    if (tbInter) tbInter.innerHTML = '<tr><td colspan="2">Cargando…</td></tr>';
     if (bloqueProv) bloqueProv.innerHTML = '<p class="reporte-vacio">Cargando…</p>';
+    if (bloquePromMes) bloquePromMes.innerHTML = '<p class="reporte-vacio">Cargando…</p>';
 
     try {
       const res = await fetch(`${API_BASE}/api/reportes/resumen`);
@@ -524,7 +571,7 @@ header h1 {
         tbLib.innerHTML = "";
         if (libros.length === 0) {
           tbLib.innerHTML =
-            '<tr><td colspan="5" style="text-align:center;">Sin líneas en ventas o detalle vacío. Revisa <code>Ventas.Detalle</code> en la BD.</td></tr>';
+            '<tr><td colspan="5" style="text-align:center;">Sin líneas en ventas o detalle vacío.</td></tr>';
         } else {
           libros.forEach((L, i) => {
             tbLib.innerHTML += `<tr>
@@ -552,6 +599,55 @@ header h1 {
         }
       }
 
+      if (bloquePromMes) {
+        const pm = data.promedioVentasPorMes || {};
+        const detalleMeses = Array.isArray(data.ventasPorMes) ? data.ventasPorMes : [];
+        const meses = Number(pm.mesesConVentas) || 0;
+        if (meses <= 0) {
+          bloquePromMes.innerHTML = '<p class="reporte-vacio">Aún no hay ventas para calcular promedio mensual.</p>';
+        } else {
+          const promVentas = Number(pm.promedioVentasMes) || 0;
+          const promMonto = Number(pm.promedioMontoMes) || 0;
+          const detalleHtml = detalleMeses.length
+            ? detalleMeses
+                .map((m) => {
+                  const mesTxt = escapeHtml(m.mesLabel || "N/A");
+                  const numV = Number(m.numVentas) || 0;
+                  const totalM = Number(m.totalMes) || 0;
+                  return `<li><strong>${mesTxt}</strong>: ${numV} venta(s), $${totalM.toLocaleString("es-CO")}</li>`;
+                })
+                .join("")
+            : '<li>Sin detalle mensual.</li>';
+          bloquePromMes.innerHTML = `
+            <p><strong>Promedio de ventas/mes:</strong> ${promVentas.toLocaleString("es-CO", { maximumFractionDigits: 2 })}</p>
+            <p><strong>Promedio de monto/mes:</strong> $${promMonto.toLocaleString("es-CO", { maximumFractionDigits: 2 })}</p>
+            <p><strong>Meses con ventas analizados:</strong> ${meses}</p>
+            <p><strong>Meses:</strong></p>
+            <ul style="margin:8px 0 0 18px;">
+              ${detalleHtml}
+            </ul>
+          `;
+        }
+      }
+
+      const agotados = Array.isArray(data.librosAgotados) ? data.librosAgotados : [];
+      if (tbAgotados) {
+        tbAgotados.innerHTML = "";
+        if (agotados.length === 0) {
+          tbAgotados.innerHTML =
+            '<tr><td colspan="4" style="text-align:center;">No hay libros agotados actualmente.</td></tr>';
+        } else {
+          agotados.forEach((r, i) => {
+            tbAgotados.innerHTML += `<tr>
+              <td>${i + 1}</td>
+              <td>${escapeHtml(r.titulo)}</td>
+              <td>${escapeHtml(r.autor || "—")}</td>
+              <td>${Number(r.stock)}</td>
+            </tr>`;
+          });
+        }
+      }
+
       const sin = Array.isArray(data.clientesSinCompras) ? data.clientesSinCompras : [];
       if (tbSin) {
         tbSin.innerHTML = "";
@@ -568,6 +664,55 @@ header h1 {
           });
         }
       }
+
+      // Reporte EXCEPT
+      try {
+        const resEx = await fetch(`${API_BASE}/api/reportes/clientes-sin-compras-except`);
+        const dataEx = await resEx.json().catch(() => ({}));
+        if (!resEx.ok) throw new Error(dataEx.error || 'No se pudo cargar reporte EXCEPT');
+        const rowsEx = Array.isArray(dataEx.clientes) ? dataEx.clientes : [];
+        if (tbSinExcept) {
+          tbSinExcept.innerHTML = "";
+          if (rowsEx.length === 0) {
+            tbSinExcept.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin datos</td></tr>';
+          } else {
+            rowsEx.forEach((u) => {
+              tbSinExcept.innerHTML += `<tr>
+                <td>${escapeHtml(u.nombre)}</td>
+                <td>${escapeHtml(u.correo)}</td>
+                <td>${escapeHtml(u.usuarioLogin || "—")}</td>
+              </tr>`;
+            });
+          }
+        }
+      } catch (eEx) {
+        console.warn(eEx);
+        if (tbSinExcept) tbSinExcept.innerHTML = '<tr><td colspan="3">Error</td></tr>';
+      }
+
+      // Reporte INTERSECT
+      try {
+        const resInt = await fetch(`${API_BASE}/api/reportes/libros-vendidos-y-favoritos`);
+        const dataInt = await resInt.json().catch(() => ({}));
+        if (!resInt.ok) throw new Error(dataInt.error || 'No se pudo cargar reporte INTERSECT');
+        const rowsInt = Array.isArray(dataInt.libros) ? dataInt.libros : [];
+        if (tbInter) {
+          tbInter.innerHTML = "";
+          if (rowsInt.length === 0) {
+            tbInter.innerHTML = '<tr><td colspan="2" style="text-align:center;">Sin coincidencias</td></tr>';
+          } else {
+            rowsInt.forEach((r, i) => {
+              tbInter.innerHTML += `<tr>
+                <td>${i + 1}</td>
+                <td>${escapeHtml(r.titulo)}</td>
+              </tr>`;
+            });
+          }
+        }
+      } catch (eInt) {
+        console.warn(eInt);
+        if (tbInter) tbInter.innerHTML = '<tr><td colspan="2">Error</td></tr>';
+      }
     } catch (e) {
       console.error(e);
       mostrarMensaje("error", e.message || "Error al cargar indicadores");
@@ -575,7 +720,11 @@ header h1 {
       if (tbCli) tbCli.innerHTML = '<tr><td colspan="5">Error</td></tr>';
       if (tbLib) tbLib.innerHTML = '<tr><td colspan="5">Error</td></tr>';
       if (tbSin) tbSin.innerHTML = '<tr><td colspan="3">Error</td></tr>';
+      if (tbAgotados) tbAgotados.innerHTML = '<tr><td colspan="4">Error</td></tr>';
+      if (tbSinExcept) tbSinExcept.innerHTML = '<tr><td colspan="3">Error</td></tr>';
+      if (tbInter) tbInter.innerHTML = '<tr><td colspan="2">Error</td></tr>';
       if (bloqueProv) bloqueProv.innerHTML = '<p class="reporte-vacio">Error al cargar.</p>';
+      if (bloquePromMes) bloquePromMes.innerHTML = '<p class="reporte-vacio">Error al cargar.</p>';
     }
   }
 
@@ -697,7 +846,6 @@ header h1 {
 
   function cancelarEdicionLibro() {
     libroEditandoId = null;
-    libroEstadoCatalogo = 'disponible';
     document.getElementById('libroEditId').value = '';
     const btnG = document.getElementById('btnGuardarLibro');
     if (btnG) delete btnG.dataset.libroId;
@@ -735,7 +883,6 @@ header h1 {
     if (hid) hid.value = String(libroEditandoId);
     const btnG = document.getElementById('btnGuardarLibro');
     if (btnG) btnG.dataset.libroId = String(libroEditandoId);
-    libroEstadoCatalogo = libro.estadoCatalogo === 'venta' ? 'venta' : 'disponible';
 
     mostrarSeccion('libros');
     document.getElementById('titulo').value = libro.titulo || '';
@@ -761,7 +908,6 @@ header h1 {
     const saga = document.getElementById("saga").value.trim();
     const editIdPre = resolverIdEdicionLibro();
     const esEdicionPre = editIdPre != null;
-    const estado = esEdicionPre ? libroEstadoCatalogo : 'disponible';
     const stockInput = document.getElementById("stock").value.trim();
     const precioInput = document.getElementById("precio").value.trim();
     const proveedorSel = document.getElementById("proveedorLibroId");
@@ -814,7 +960,6 @@ header h1 {
         titulo,
         autor,
         saga,
-        estado,
         stock,
         precio,
         caratula: caratulaUrl || null,
@@ -838,7 +983,6 @@ header h1 {
     }
 
     libroEditandoId = null;
-    libroEstadoCatalogo = 'disponible';
     if (libroEditIdEl) libroEditIdEl.value = "";
     const btnGuardarFin = document.getElementById('btnGuardarLibro');
     if (btnGuardarFin) delete btnGuardarFin.dataset.libroId;

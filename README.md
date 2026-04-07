@@ -22,7 +22,7 @@ flowchart LR
 ```
 
 - **Frontend:** páginas HTML en la raíz del repo; la URL base de la API es `window.API_BASE`, definida en `config.js` (por defecto `http://localhost:3000`). Las llamadas van a `/api/...` (ver sección [API: rutas, archivos y uso en el frontend](#api-rutas-archivos-y-uso-en-el-frontend)).
-- **Backend:** carpeta `server/` — **Express** escucha en el puerto configurado (por defecto **3000**), usa **CORS** y **JSON** en el body.
+- **Backend:** carpeta `server/` — **Express** escucha en el puerto configurado (por defecto **3000**).
 - **Datos:** el paquete **mssql** abre un pool contra SQL Server; las consultas viven en `server/src/config/database.js` y en cada archivo de rutas.
 
 Estructura relevante:
@@ -39,13 +39,9 @@ Estructura relevante:
 | `server/src/routes/carrito.js` | Carrito por usuario (`dbo.Carrito`): agregar, cantidad, vaciar, eliminar línea |
 | `server/src/routes/favoritos.js` | Favoritos por usuario en BD |
 | `server/src/routes/ventas.js` | Listado de ventas y checkout (`dbo.Ventas`, stock en `dbo.Libros`) |
-| `server/src/routes/reportes.js` | Resumen para panel admin (clientes + proveedores) |
-| `server/scripts/create-database.sql` | Esquema inicial (tablas `Usuarios`, `Libros`, `Documento`, `Categorias`, etc.) |
-| `server/scripts/migrate-evolucion-booknest.sql` | Migración desde esquemas antiguos (ventas, categorías, `Estado` calculado desde `EstadoCatalogo` y `Stock`) |
-| `server/scripts/migrate-categorias-ampliar.sql` | Añade categorías literarias extra si la BD solo tenía las 6 iniciales |
-| `server/scripts/migrate-libros-saga.sql` | Añade columna opcional `Saga` (serie) en `dbo.Libros` |
-| `server/scripts/insert.sql` | Ejemplo de datos de prueba para `Libros` |
-| `server/scripts/insert-admin-usuario.sql` | Usuario admin de prueba (`admin@booknest.com` / `Abc123`) si no existe |
+| `server/src/routes/reportes.js` | Reportes admin: resumen, promedio mensual, libros agotados, EXCEPT e INTERSECT |
+| `server/scripts/create-database.sql` | DDL único: crea base y estructura completa (`Documento`, `Categorias`, `Proveedores`, `Usuarios`, `Libros`, `Ventas`, `VentaDetalle`, `Carrito`, `Favoritos`) |
+| `server/scripts/insert.sql` | DML único: catálogos, proveedores, libros semilla y usuario admin de prueba (`admin@booknest.com` / `Abc123`) |
 
 ## Modelo entidad-relación (base de datos Booknest)
 
@@ -56,10 +52,11 @@ Definido en `server/scripts/create-database.sql` (SQL Server).
 | **Documento** | Catálogo de tipos de documento de identidad (código + nombre). `Usuarios.DocumentoId` referencia aquí; el número va en `Usuarios.NumeroDocumento`. |
 | **Categorias** | Categorías de libros (nombre único). `Libros.CategoriaId` es opcional (FK). |
 | **Usuarios** | Clientes y empleados (correo y usuario únicos, rol, credenciales). |
-| **Libros** | Catálogo con `EstadoCatalogo` (`disponible` / `venta`) y columna calculada **`Estado`**: si `Stock <= 0` es `agotado`, si no coincide con `EstadoCatalogo`. Campo opcional **`Saga`** (serie o saga). |
-| **Ventas** | Cabecera de venta ligada solo a `UsuarioId` (nombre y correo del cliente vía `JOIN` a `Usuarios`, sin columnas duplicadas). El desglose sigue en `Detalle` (JSON en texto). |
-| **Prestamos** | Préstamo de un libro a un usuario (fechas, estado, cantidad). |
+| **Libros** | Catálogo con columna **`Estado`** mantenida por trigger (`trg_Libros_EstadoPorStock`): si `Stock <= 0` queda `agotado`, si no `disponible`. Campo opcional **`Saga`** (serie o saga). |
+| **Ventas** | Cabecera de venta ligada solo a `UsuarioId` (nombre y correo del cliente vía `JOIN` a `Usuarios`, sin columnas duplicadas). |
+| **VentaDetalle** | Líneas de cada venta (`VentaId`, `LibroId`, `Titulo`, `Cantidad`, `PrecioUnitario`, `Subtotal`), una fila por ítem vendido. |
 | **Carrito** | Líneas de carrito por usuario; restricción única `(UsuarioId, LibroId)`. |
+| **Favoritos** | Relación usuario-libro para el corazón en catálogo (`PK (UsuarioId, LibroId)`). |
 | **Proveedores** | Catálogo de proveedores; `Libros.ProveedorId` referencia esta tabla. |
 
 **Relaciones:**
@@ -67,20 +64,23 @@ Definido en `server/scripts/create-database.sql` (SQL Server).
 - **Documento (1) — (0..N) Usuarios**: `Usuarios.DocumentoId` → `Documento.Id` (opcional).
 - **Categorias (1) — (0..N) Libros**: `Libros.CategoriaId` → `Categorias.Id` (opcional).
 - **Usuarios (1) — (0..N) Ventas**: `Ventas.UsuarioId` → `Usuarios.Id` (obligatorio en el esquema actual; el checkout exige usuario autenticado).
-- **Usuarios (1) — (0..N) Prestamos**: `Prestamos.UsuarioId` → `Usuarios.Id` (nullable en DDL).
-- **Libros (1) — (0..N) Prestamos**: `Prestamos.LibroId` → `Libros.Id` (nullable en DDL).
+- **Ventas (1) — (1..N) VentaDetalle**: `VentaDetalle.VentaId` → `Ventas.Id`.
+- **Libros (1) — (0..N) VentaDetalle**: `VentaDetalle.LibroId` → `Libros.Id`.
 - **Usuarios (1) — (1..N) Carrito**: `Carrito.UsuarioId` NOT NULL.
 - **Libros (1) — (1..N) Carrito**: `Carrito.LibroId` NOT NULL; única por usuario + libro.
+- **Usuarios (1) — (0..N) Favoritos** y **Libros (1) — (0..N) Favoritos**: PK compuesta `(UsuarioId, LibroId)`.
 
 ```mermaid
 erDiagram
   Documento ||--o{ Usuarios : "tipo de identidad"
   Categorias ||--o{ Libros : "clasifica"
   Usuarios ||--o{ Ventas : "realiza"
-  Usuarios ||--o{ Prestamos : "tiene"
+  Ventas ||--|{ VentaDetalle : "detalla"
+  Libros ||--o{ VentaDetalle : "detalle de venta"
   Usuarios ||--o{ Carrito : "posee"
-  Libros ||--o{ Prestamos : "en préstamo"
+  Usuarios ||--o{ Favoritos : "marca"
   Libros ||--o{ Carrito : "en carrito"
+  Libros ||--o{ Favoritos : "favorito"
   Proveedores ||--o{ Libros : "suministra"
 
   Documento {
@@ -115,7 +115,6 @@ erDiagram
     int Id PK
     nvarchar Titulo
     nvarchar Autor
-    nvarchar EstadoCatalogo
     int Stock
     decimal Precio
     nvarchar CaratulaUrl
@@ -131,17 +130,16 @@ erDiagram
     int UsuarioId FK
     datetime2 Fecha
     decimal Total
-    nvarchar Detalle
   }
 
-  Prestamos {
+  VentaDetalle {
     int Id PK
-    int UsuarioId FK
+    int VentaId FK
     int LibroId FK
+    nvarchar Titulo
     int Cantidad
-    datetime2 FechaInicio
-    datetime2 FechaDevolucion
-    nvarchar Estado
+    decimal PrecioUnitario
+    decimal Subtotal
     datetime2 FechaCreacion
   }
 
@@ -154,6 +152,12 @@ erDiagram
     datetime2 FechaActualizacion
   }
 
+  Favoritos {
+    int UsuarioId PK,FK
+    int LibroId PK,FK
+    datetime2 FechaCreacion
+  }
+
   Proveedores {
     int Id PK
     nvarchar Nombre
@@ -161,10 +165,6 @@ erDiagram
     datetime2 FechaCreacion
   }
 ```
-
-**Notas:** No hay tabla de líneas de venta: el desglose va en `Ventas.Detalle` (`NVARCHAR(MAX)`, JSON). **Categoría** del libro: `dbo.Categorias` + `Libros.CategoriaId`. Bases creadas antes de estos cambios deben ejecutar `migrate-evolucion-booknest.sql`. Si ya migraste pero solo tienes seis categorías, ejecuta `migrate-categorias-ampliar.sql` para alinear el catálogo con el formulario del admin.
-
-Variables de entorno del servidor: archivo `server/.env` (servidor, usuario, contraseña, base `Booknest`, puerto, opciones de cifrado). Ver comentarios en `database.js`.
 
 ## Carpetas y archivos del servidor: para qué sirven
 
@@ -254,7 +254,7 @@ Comprobaciones útiles:
 
    - **Titulo** (obligatorio)
    - **Autor** (opcional)
-   - **EstadoCatalogo** (`disponible` o `venta`; la columna **Estado** es calculada según stock)
+   - **Estado** se mantiene automáticamente por trigger según `Stock` (`agotado` o `disponible`)
    - **Stock**, **Precio**
    - **CaratulaUrl** — ruta relativa a la web (ej. `img/BookNest.png`) o URL absoluta; si es `NULL`, el front usa una imagen por defecto.
 
@@ -264,8 +264,8 @@ Ejemplo (también puedes usar o adaptar `server/scripts/insert.sql`):
 USE Booknest;
 GO
 
-INSERT INTO dbo.Libros (Titulo, Autor, EstadoCatalogo, Stock, Precio, CaratulaUrl, CategoriaId)
-VALUES (N'Título del libro', N'Nombre del autor', N'disponible', 10, 29900, N'img/BookNest.png', 1);
+INSERT INTO dbo.Libros (Titulo, Autor, Stock, Precio, CaratulaUrl, CategoriaId)
+VALUES (N'Título del libro', N'Nombre del autor', 10, 29900, N'img/BookNest.png', 1);
 GO
 ```
 
@@ -324,6 +324,9 @@ La columna **Llamada desde** indica qué página HTML (u otra pieza del cliente)
 | **GET** | `/api/ventas` | `server/src/routes/ventas.js` | `admin.html` (todas las ventas); `usuario.html` con `?usuarioId=<id>` (historial del cliente) |
 | **POST** | `/api/ventas/checkout` | `server/src/routes/ventas.js` | `cliente.html` (finalizar compra) |
 | **GET** | `/api/reportes/resumen` | `server/src/routes/reportes.js` | `admin.html` |
+| **GET** | `/api/reportes/libros-agotados` | `server/src/routes/reportes.js` | Disponible para consumo directo (en `admin.html` se muestra vía `/api/reportes/resumen`) |
+| **GET** | `/api/reportes/clientes-sin-compras-except` | `server/src/routes/reportes.js` | `admin.html` |
+| **GET** | `/api/reportes/libros-vendidos-y-favoritos` | `server/src/routes/reportes.js` | `admin.html` |
 
 **Notas de seguridad y datos:** `GET /api/ventas?usuarioId=` y `GET /api/favoritos/:usuarioId` confían en el id enviado por el cliente (adecuado para demo; en producción ligar el id a la sesión o JWT). El panel **Ventas** en `admin.html` y el **historial** en `usuario.html` leen ventas desde la BD, no desde `localStorage`. Las **facturas** en `usuario.html` siguen pudiendo depender de datos locales (`facturas_*`) según la implementación actual del HTML.
 
@@ -355,7 +358,7 @@ Los textos siguientes corresponden a las consultas que usa el código en `server
 | **GET** `/` | `SELECT L.Id, L.Titulo, …, P.Nombre AS ProveedorNombre, C.Nombre AS CategoriaNombre FROM dbo.Libros L LEFT JOIN dbo.Proveedores P … LEFT JOIN dbo.Categorias C …` + `ORDER BY L.Titulo`. Con `?q=`: añade `WHERE L.Titulo LIKE @q1 OR L.Autor LIKE @q2`. |
 | **POST** `/` | Validaciones: `SELECT 1 FROM dbo.Categorias WHERE Id = @Cid`, `SELECT 1 FROM dbo.Proveedores WHERE Id = @Pid` si aplica. **Upsert:** un `MERGE dbo.Libros AS T USING (<subconsulta con UpsertId y columnas del libro>) AS S ON S.UpsertId IS NOT NULL AND T.Id = S.UpsertId WHEN MATCHED THEN UPDATE SET … WHEN NOT MATCHED BY TARGET THEN INSERT … OUTPUT $action, INSERTED.Id` (detalle en `upsertLibroPostUnaConsulta`; `UpsertId` resuelve por `body.id` o por título+autor). Tras el MERGE: mismo `SELECT` de listado con `WHERE L.Id = @Id`. |
 | **PUT** `/:id` | Comprueba categoría/proveedor/libro: `SELECT 1 … FROM dbo.Categorias` / `dbo.Proveedores` / `dbo.Libros WHERE Id = @Id`. **Update:** `MERGE dbo.Libros AS T USING (SELECT @Id AS Id, @Titulo AS Titulo, …) AS S ON T.Id = S.Id WHEN MATCHED THEN UPDATE SET …` (+ `FechaActualizacion` si existe columna). Luego `SELECT` con joins como en GET y `WHERE L.Id = @Id`. |
-| **DELETE** `/:id` | `DELETE FROM dbo.Carrito WHERE LibroId = @LibroId`; `DELETE FROM dbo.Prestamos WHERE LibroId = @LibroId` (si las tablas existen); `DELETE FROM dbo.Libros WHERE Id = @Id`. |
+| **DELETE** `/:id` | `DELETE FROM dbo.Carrito WHERE LibroId = @LibroId`; `DELETE FROM dbo.Libros WHERE Id = @Id` (puede limpiar tablas relacionadas si existen). |
 
 #### `server/src/routes/proveedores.js`
 
@@ -392,13 +395,16 @@ Los textos siguientes corresponden a las consultas que usa el código en `server
 
 | Ruta | SQL |
 |------|-----|
-| **GET** `/` | `SELECT v.Id, v.UsuarioId, v.Fecha, v.Total, v.Detalle, u.Nombre AS ClienteNombre, u.Correo AS ClienteCorreo FROM dbo.Ventas v INNER JOIN dbo.Usuarios u ON u.Id = v.UsuarioId` + opcional `WHERE v.UsuarioId = @Uid` + `ORDER BY v.Fecha DESC, v.Id DESC`. |
-| **POST** `/checkout` | Transacción: `SELECT TOP 1 Id, Nombre, Correo FROM dbo.Usuarios WHERE Id = @Uid AND Activo = 1`. Por ítem: `SELECT TOP 1 Id, Titulo, Stock, Precio FROM dbo.Libros WITH (UPDLOCK, ROWLOCK) WHERE Id = @Id`; `UPDATE dbo.Libros SET Stock = Stock - @Qty, FechaActualizacion = SYSUTCDATETIME() WHERE Id = @Id AND Stock >= @Qty`. `INSERT INTO dbo.Ventas (UsuarioId, Total, Detalle) OUTPUT INSERTED.Id … VALUES (@UsuarioId, @Total, @Detalle)` (`Detalle` = JSON de líneas). Por libro vendido: `DELETE FROM dbo.Carrito WHERE UsuarioId = @UsuarioId AND LibroId = @LibroId` (si existe tabla). Tras commit: `SELECT Id, Stock FROM dbo.Libros WHERE Id IN (@id0, @id1, …)` para devolver stocks actualizados. |
+| **GET** `/` | `SELECT v.Id, v.UsuarioId, v.Fecha, v.Total, v.Detalle, u.Nombre AS ClienteNombre, u.Correo AS ClienteCorreo FROM dbo.Ventas v INNER JOIN dbo.Usuarios u ON u.Id = v.UsuarioId` + opcional `WHERE v.UsuarioId = @Uid` + `ORDER BY v.Fecha DESC, v.Id DESC`; luego intenta enriquecer con `SELECT VentaId, LibroId, Titulo, Cantidad, PrecioUnitario, Subtotal FROM dbo.VentaDetalle WHERE VentaId IN (...)`. |
+| **POST** `/checkout` | Transacción: `SELECT TOP 1 Id, Nombre, Correo FROM dbo.Usuarios WHERE Id = @Uid AND Activo = 1`. Por ítem: `SELECT TOP 1 Id, Titulo, Stock, Precio FROM dbo.Libros WITH (UPDLOCK, ROWLOCK) WHERE Id = @Id`; `UPDATE dbo.Libros SET Stock = Stock - @Qty, FechaActualizacion = SYSUTCDATETIME() WHERE Id = @Id AND Stock >= @Qty`. `INSERT INTO dbo.Ventas (UsuarioId, Total, Detalle) OUTPUT INSERTED.Id ... VALUES (@UsuarioId, @Total, @Detalle)` y por cada línea `INSERT INTO dbo.VentaDetalle (VentaId, LibroId, Titulo, Cantidad, PrecioUnitario, Subtotal) VALUES (...)`. Por libro vendido: `DELETE FROM dbo.Carrito WHERE UsuarioId = @UsuarioId AND LibroId = @LibroId` (si existe tabla). Tras commit: `SELECT Id, Stock FROM dbo.Libros WHERE Id IN (@id0, @id1, ...)` para devolver stocks actualizados. |
 
 #### `server/src/routes/reportes.js`
 
 | Ruta | SQL |
 |------|-----|
-| **GET** `/resumen` | Constantes en código: **top clientes** — `SELECT TOP 10 … SUM(v.Total) … FROM dbo.Ventas v INNER JOIN dbo.Usuarios u … GROUP BY u.Id, u.Nombre, u.Correo ORDER BY totalCompras DESC`. **Detalle ventas** — `SELECT Detalle FROM dbo.Ventas WHERE Detalle IS NOT NULL AND …` (agregación de unidades por `libroId` en Node). **Libros meta** — `SELECT Id, Titulo, Autor, ProveedorId FROM dbo.Libros WHERE Id IN (…)`. **Proveedor top** — `SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid`. **Clientes sin compras** — `SELECT u.Id, … FROM dbo.Usuarios u WHERE u.Activo = 1 AND … NOT EXISTS (SELECT 1 FROM dbo.Ventas v WHERE v.UsuarioId = u.Id) …`. **Contactos** — `SELECT N'Cliente' AS tipo, u.Nombre, u.Correo … FROM dbo.Usuarios u … UNION ALL SELECT N'Proveedor', p.Nombre, COALESCE(p.Contacto, N'—') FROM dbo.Proveedores p` (**UNION ALL**, no `UNION`). |
+| **GET** `/resumen` | Constantes en código: **top clientes** — `SELECT TOP 10 … SUM(v.Total) … FROM dbo.Ventas v INNER JOIN dbo.Usuarios u … GROUP BY u.Id, u.Nombre, u.Correo ORDER BY totalCompras DESC`. **Detalle ventas** — `SELECT LibroId, Cantidad, Subtotal FROM dbo.VentaDetalle`. **Libros meta** — `SELECT Id, Titulo, Autor, ProveedorId FROM dbo.Libros WHERE Id IN (...)`. **Proveedor top** — `SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid`. **Clientes sin compras** — `LEFT JOIN dbo.Ventas v ... GROUP BY ... HAVING COUNT(v.Id) < 1`. **Contactos** — `SELECT N'Cliente' AS tipo, u.Nombre, u.Correo … FROM dbo.Usuarios u … UNION ALL SELECT N'Proveedor', p.Nombre, COALESCE(p.Contacto, N'—') FROM dbo.Proveedores p` (**UNION ALL**, no `UNION`). **Promedio mensual** — `WITH VentasPorMes AS (...) SELECT AVG(numVentas), AVG(totalMes), COUNT(1)`. **Detalle por mes** — `SELECT DATEFROMPARTS(YEAR(v.Fecha), MONTH(v.Fecha), 1) AS mes, COUNT(v.Id), SUM(v.Total) ... GROUP BY ... ORDER BY mes DESC`. **Libros agotados** — `SELECT Id, Titulo, Autor, Stock FROM dbo.Libros WHERE ISNULL(Stock, 0) <= 0`. |
+| **GET** `/clientes-sin-compras-except` | Devuelve clientes activos sin ventas usando `EXCEPT` entre (clientes activos) y (clientes con al menos una venta). |
+| **GET** `/libros-vendidos-y-favoritos` | Devuelve libros que están en la intersección entre vendidos y favoritos usando `INTERSECT` (`VentaDetalle.LibroId` ∩ `Favoritos.LibroId`). |
+| **GET** `/libros-agotados` | Devuelve los libros con stock agotado (`ISNULL(Stock, 0) <= 0`) ordenados por título. |
 
 Para el texto exacto de cada constante (`SQL_TOP_CLIENTES`, `SQL_UNION_CONTACTOS`, etc.) abre `server/src/routes/reportes.js`.
