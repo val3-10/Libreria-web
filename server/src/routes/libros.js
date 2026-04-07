@@ -152,6 +152,7 @@ async function upsertLibroPostUnaConsulta(pool, bodyId, payload) {
       ? `${MERGE_UPDATE_SET}, T.FechaActualizacion = SYSUTCDATETIME() `
       : `${MERGE_UPDATE_SET} `;
     return (
+      'DECLARE @Out TABLE (MergeAction NVARCHAR(10), Id INT); ' +
       'MERGE dbo.Libros AS T ' +
       'USING (' +
       MERGE_USING_POST_UPSERT +
@@ -162,7 +163,8 @@ async function upsertLibroPostUnaConsulta(pool, bodyId, payload) {
       'WHEN NOT MATCHED BY TARGET THEN ' +
       'INSERT (Titulo, Autor, Saga, Stock, Precio, CaratulaUrl, ProveedorId, CategoriaId) ' +
       'VALUES (S.Titulo, S.Autor, S.Saga, S.Stock, S.Precio, S.CaratulaUrl, S.ProveedorId, S.CategoriaId) ' +
-      'OUTPUT $action AS MergeAction, INSERTED.Id AS Id;'
+      'OUTPUT $action AS MergeAction, INSERTED.Id AS Id INTO @Out; ' +
+      'SELECT TOP 1 MergeAction, Id FROM @Out;'
     );
   };
 
