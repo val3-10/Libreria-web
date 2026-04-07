@@ -32,6 +32,13 @@ function cleanupExpiredResetCodes() {
   }
 }
 
+/** Correo en minúsculas y sin espacios al inicio/final (clave para recuperación / códigos). */
+function emailNorm(s) {
+  return String(s ?? '')
+    .trim()
+    .toLowerCase();
+}
+
 /** Resuelve tipo de documento (texto del formulario) al Id de dbo.Documento */
 async function resolveDocumentoId(pool, tipoDocumento) {
   if (!tipoDocumento || !String(tipoDocumento).trim()) return null;
@@ -322,27 +329,43 @@ router.post('/forgot-password', async (req, res) => {
     if (!trimmed) {
       return res.status(400).json({ error: 'Correo es obligatorio.' });
     }
-    if (!trimmed.endsWith('@booknest.com')) {
+    if (!trimmed.toLowerCase().endsWith('@booknest.com')) {
       return res.status(400).json({ error: 'Solo se permiten correos con el dominio @booknest.com.' });
     }
 
+    const norm = emailNorm(trimmed);
+
     cleanupExpiredResetCodes();
     const pool = await db.getPool();
+    // Coincidencia exacta (como en login) o normalizada; Activo NULL se trata como activo (BD antigua)
     const result = await pool
       .request()
-      .input('Correo', sql.NVarChar, trimmed)
+      .input('CorreoExacto', sql.NVarChar(320), trimmed)
+      .input('CorreoNorm', sql.NVarChar(320), norm)
       .query(
-        'SELECT TOP 1 Id, Correo FROM dbo.Usuarios ' +
-          'WHERE LOWER(LTRIM(RTRIM(Correo))) = LOWER(LTRIM(RTRIM(@Correo))) AND Activo = 1',
+        'SELECT TOP 1 Id, Correo, Activo FROM dbo.Usuarios ' +
+          'WHERE (LTRIM(RTRIM(Correo)) = LTRIM(RTRIM(@CorreoExacto)) ' +
+          '   OR LOWER(LTRIM(RTRIM(ISNULL(Correo, N\'\')))) = @CorreoNorm) ' +
+          'ORDER BY Id',
       );
 
     const row = result.recordset && result.recordset[0];
     if (!row) {
-      return res.status(404).json({ error: 'No existe un usuario con ese correo.' });
+      return res.status(404).json({
+        error:
+          'No hay ninguna cuenta activa con ese correo. Usa el mismo correo con el que inicias sesión (debe terminar en @booknest.com) y comprueba que el servidor apunte a la base Booknest correcta.',
+      });
+    }
+
+    // BIT en SQL Server suele llegar como boolean; 0 en algunos drivers
+    if (row.Activo === false || row.Activo === 0) {
+      return res.status(403).json({
+        error: 'Esa cuenta está desactivada. No se puede recuperar la contraseña desde aquí.',
+      });
     }
 
     const code = String(Math.floor(100000 + Math.random() * 900000));
-    const key = trimmed.toLowerCase();
+    const key = norm;
     resetCodes.set(key, {
       code,
       expires: Date.now() + 15 * 60 * 1000,
@@ -367,11 +390,11 @@ router.post('/reset-password', async (req, res) => {
     if (!trimmed || codigo == null || passwordNueva == null || String(passwordNueva) === '') {
       return res.status(400).json({ error: 'Correo, código y nueva contraseña son obligatorios.' });
     }
-    if (!trimmed.endsWith('@booknest.com')) {
+    if (!trimmed.toLowerCase().endsWith('@booknest.com')) {
       return res.status(400).json({ error: 'Solo se permiten correos con el dominio @booknest.com.' });
     }
 
-    const key = trimmed.toLowerCase();
+    const key = emailNorm(trimmed);
     cleanupExpiredResetCodes();
     const entry = resetCodes.get(key);
     if (!entry || String(codigo).trim() !== String(entry.code)) {
