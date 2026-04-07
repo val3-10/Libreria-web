@@ -345,11 +345,13 @@
       <img src="${libro.caratula || 'img/BookNest.png'}">
       ${sinStock ? '<span class="badge-agotado">Agotado</span>' : ''}
       <h3>${escapeHtml(libro.titulo)}</h3>
-      <p>Autor: ${escapeHtml(libro.autor)}</p>
-      ${libro.categoriaNombre ? `<p>Categoría: ${escapeHtml(libro.categoriaNombre)}</p>` : ''}
-      <p>Estado: ${libro.estado}</p>
-      <p>$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
-      <p>Stock: ${sinStock ? '<strong style="color:red">0</strong>' : libro.stock}</p>
+      <div class="carta-meta">
+        <p>Autor: ${escapeHtml(libro.autor)}</p>
+        ${libro.categoriaNombre ? `<p>Categoría: ${escapeHtml(libro.categoriaNombre)}</p>` : ''}
+        <p>Estado: ${libro.estado}</p>
+        <p class="carta-precio">$${libro.precio ? libro.precio.toLocaleString('es-CO') : '0'}</p>
+        <p class="carta-stock">Stock: ${sinStock ? '<strong style="color:#e53935">0</strong>' : libro.stock}</p>
+      </div>
       <div class="carta-botones" style="justify-content:center; flex-direction:row;">
         <button type="button" onclick="verificarSesionYAgregarCarrito(${libro.id}, '${escapeHtml(libro.titulo).replace(/'/g, "\\'")}')"
           ${sinStock ? 'disabled title="Sin stock disponible"' : ''}>
