@@ -411,7 +411,7 @@
 
   // Funciones de carrito y modal
   async function verificarSesionYAgregarCarrito(libroId, titulo) {
-    const usuarioLogueado = localStorage.getItem('usuarioActual');
+    const usuarioLogueado = localStorage.getItem('usuarioActivo');
     
     if (usuarioLogueado) {
       await agregarAlCarritoDirecto(libroId, titulo);
@@ -424,8 +424,12 @@
 
   async function agregarAlCarritoDirecto(libroId, titulo) {
     try {
-      const usuarioActual = JSON.parse(localStorage.getItem('usuarioActual') || '{}');
-      const userId = usuarioActual.id || 1;
+      const usuarioActivo = JSON.parse(localStorage.getItem('usuarioActivo') || '{}');
+      const userId = Number(usuarioActivo.id);
+      if (!Number.isInteger(userId) || userId <= 0) {
+        mostrarMensaje('error', 'Debes iniciar sesión para agregar al carrito.');
+        return;
+      }
       
       const response = await fetch(`${API_BASE}/api/carrito/agregar`, {
         method: 'POST',
