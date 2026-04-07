@@ -19,6 +19,19 @@ const db = require('../config/database');
 const { sql } = db;
 const router = express.Router();
 
+/**
+ * Códigos de recuperación en memoria (demo). En producción: Redis + envío por correo.
+ * Map: correo normalizado (minúsculas) → { code, expires, userId }
+ */
+const resetCodes = new Map();
+
+function cleanupExpiredResetCodes() {
+  const now = Date.now();
+  for (const [k, v] of resetCodes.entries()) {
+    if (!v || v.expires < now) resetCodes.delete(k);
+  }
+}
+
 /** Resuelve tipo de documento (texto del formulario) al Id de dbo.Documento */
 async function resolveDocumentoId(pool, tipoDocumento) {
   if (!tipoDocumento || !String(tipoDocumento).trim()) return null;
@@ -298,6 +311,97 @@ router.post('/change-password', async (req, res) => {
   } catch (err) {
     console.error('Error en /api/auth/change-password:', err);
     return res.status(500).json({ error: 'Error interno al cambiar la contraseña.' });
+  }
+});
+
+// POST /api/auth/forgot-password  { correo } — comprueba dbo.Usuarios y genera código (demo: se devuelve en JSON)
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { correo } = req.body || {};
+    const trimmed = correo != null ? String(correo).trim() : '';
+    if (!trimmed) {
+      return res.status(400).json({ error: 'Correo es obligatorio.' });
+    }
+    if (!trimmed.endsWith('@booknest.com')) {
+      return res.status(400).json({ error: 'Solo se permiten correos con el dominio @booknest.com.' });
+    }
+
+    cleanupExpiredResetCodes();
+    const pool = await db.getPool();
+    const result = await pool
+      .request()
+      .input('Correo', sql.NVarChar, trimmed)
+      .query(
+        'SELECT TOP 1 Id, Correo FROM dbo.Usuarios ' +
+          'WHERE LOWER(LTRIM(RTRIM(Correo))) = LOWER(LTRIM(RTRIM(@Correo))) AND Activo = 1',
+      );
+
+    const row = result.recordset && result.recordset[0];
+    if (!row) {
+      return res.status(404).json({ error: 'No existe un usuario con ese correo.' });
+    }
+
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const key = trimmed.toLowerCase();
+    resetCodes.set(key, {
+      code,
+      expires: Date.now() + 15 * 60 * 1000,
+      userId: row.Id,
+    });
+
+    return res.json({
+      message: 'Código generado. En producción se enviaría por correo; aquí es solo para pruebas.',
+      codigo: code,
+    });
+  } catch (err) {
+    console.error('Error en /api/auth/forgot-password:', err);
+    return res.status(500).json({ error: 'Error interno al solicitar recuperación.' });
+  }
+});
+
+// POST /api/auth/reset-password  { correo, codigo, passwordNueva }
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { correo, codigo, passwordNueva } = req.body || {};
+    const trimmed = correo != null ? String(correo).trim() : '';
+    if (!trimmed || codigo == null || passwordNueva == null || String(passwordNueva) === '') {
+      return res.status(400).json({ error: 'Correo, código y nueva contraseña son obligatorios.' });
+    }
+    if (!trimmed.endsWith('@booknest.com')) {
+      return res.status(400).json({ error: 'Solo se permiten correos con el dominio @booknest.com.' });
+    }
+
+    const key = trimmed.toLowerCase();
+    cleanupExpiredResetCodes();
+    const entry = resetCodes.get(key);
+    if (!entry || String(codigo).trim() !== String(entry.code)) {
+      return res.status(401).json({ error: 'Código incorrecto o expirado. Solicita uno nuevo.' });
+    }
+    if (Date.now() > entry.expires) {
+      resetCodes.delete(key);
+      return res.status(401).json({ error: 'El código expiró. Solicita uno nuevo.' });
+    }
+
+    const pwd = String(passwordNueva);
+    if (pwd.length < 4) {
+      return res.status(400).json({ error: 'La contraseña nueva debe tener al menos 4 caracteres.' });
+    }
+
+    const pool = await db.getPool();
+    const reqUpdate = pool.request();
+    reqUpdate.input('Id', sql.Int, entry.userId);
+    reqUpdate.input('PasswordHash', sql.NVarChar, pwd);
+    await reqUpdate.query(
+      'UPDATE dbo.Usuarios ' +
+        'SET PasswordHash = @PasswordHash, FechaActualizacion = SYSUTCDATETIME() ' +
+        'WHERE Id = @Id AND Activo = 1',
+    );
+
+    resetCodes.delete(key);
+    return res.json({ message: 'Contraseña actualizada correctamente. Ya puedes iniciar sesión.' });
+  } catch (err) {
+    console.error('Error en /api/auth/reset-password:', err);
+    return res.status(500).json({ error: 'Error interno al restablecer la contraseña.' });
   }
 });
 
