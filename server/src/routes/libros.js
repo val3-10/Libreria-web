@@ -1,5 +1,9 @@
 /**
  * Catálogo de libros desde SQL Server (dbo.Libros + dbo.Proveedores).
+ *
+ * POST /api/libros — una sola sentencia MERGE: COALESCE(Id por body.id, Id por título+autor) como UpsertId;
+ * si hay coincidencia → WHEN MATCHED UPDATE; si no → WHEN NOT MATCHED BY TARGET INSERT.
+ * PUT /:id — MERGE solo actualización por Id (`actualizarLibroPorId`).
  */
 
 const express = require('express');
@@ -86,12 +90,102 @@ function mapRow(row) {
   };
 }
 
-const UPDATE_LIBRO_SET =
-  'UPDATE dbo.Libros SET Titulo=@Titulo, Autor=@Autor, Saga=@Saga, EstadoCatalogo=@EstadoCatalogo, ' +
-  'Stock=@Stock, Precio=@Precio, CaratulaUrl=@CaratulaUrl, ProveedorId=@ProveedorId, CategoriaId=@CategoriaId';
+/** Origen (USING) del MERGE de actualización: una fila con el Id objetivo y los campos a escribir. */
+const MERGE_USING_LIBRO =
+  'SELECT @Id AS Id, @Titulo AS Titulo, @Autor AS Autor, @Saga AS Saga, @EstadoCatalogo AS EstadoCatalogo, ' +
+  '@Stock AS Stock, @Precio AS Precio, @CaratulaUrl AS CaratulaUrl, @ProveedorId AS ProveedorId, @CategoriaId AS CategoriaId';
+
+/** Columnas del destino T que se asignan desde S en el WHEN MATCHED (UPDATE). */
+const MERGE_UPDATE_SET =
+  'T.Titulo = S.Titulo, T.Autor = S.Autor, T.Saga = S.Saga, T.EstadoCatalogo = S.EstadoCatalogo, ' +
+  'T.Stock = S.Stock, T.Precio = S.Precio, T.CaratulaUrl = S.CaratulaUrl, T.ProveedorId = S.ProveedorId, T.CategoriaId = S.CategoriaId';
+
+function bindLibroPayload(req, libroId, { titulo, autor, saga, estadoCatalogo, stockOk, precioOk, caratulaUrl, proveedorId, categoriaId }) {
+  req.input('Id', sql.Int, libroId);
+  req.input('Titulo', sql.NVarChar(300), titulo);
+  req.input('Autor', sql.NVarChar(200), autor || null);
+  req.input('Saga', sql.NVarChar(200), saga);
+  req.input('EstadoCatalogo', sql.NVarChar(50), estadoCatalogo);
+  req.input('Stock', sql.Int, stockOk);
+  req.input('Precio', sql.Decimal(18, 2), precioOk);
+  req.input('CaratulaUrl', sql.NVarChar(500), caratulaUrl || null);
+  req.input('ProveedorId', sql.Int, proveedorId);
+  req.input('CategoriaId', sql.Int, categoriaId);
+}
+
+function bindUpsertPostParams(req, bodyIdParam, { titulo, autor, saga, estadoCatalogo, stockOk, precioOk, caratulaUrl, proveedorId, categoriaId }) {
+  req.input('BodyId', sql.Int, bodyIdParam);
+  req.input('Titulo', sql.NVarChar(300), titulo);
+  req.input('Autor', sql.NVarChar(200), autor || null);
+  req.input('Saga', sql.NVarChar(200), saga);
+  req.input('EstadoCatalogo', sql.NVarChar(50), estadoCatalogo);
+  req.input('Stock', sql.Int, stockOk);
+  req.input('Precio', sql.Decimal(18, 2), precioOk);
+  req.input('CaratulaUrl', sql.NVarChar(500), caratulaUrl || null);
+  req.input('ProveedorId', sql.Int, proveedorId);
+  req.input('CategoriaId', sql.Int, categoriaId);
+}
 
 /**
- * Actualiza un libro por Id (mismos campos que INSERT).
+ * POST: un solo MERGE — si UpsertId resuelve fila → UPDATE; si UpsertId es NULL → INSERT.
+ * @returns {{ id: number, wasUpdate: boolean }}
+ */
+async function upsertLibroPostUnaConsulta(pool, bodyId, payload) {
+  let bodyIdParam = null;
+  if (bodyId != null && bodyId !== '') {
+    const p = parseInt(String(bodyId), 10);
+    if (Number.isFinite(p) && p > 0) bodyIdParam = p;
+  }
+
+  const buildMergeSql = (includeFecha) => {
+    const updateBranch = includeFecha
+      ? `${MERGE_UPDATE_SET}, T.FechaActualizacion = SYSUTCDATETIME() `
+      : `${MERGE_UPDATE_SET} `;
+    return (
+      'MERGE dbo.Libros AS T ' +
+      'USING (' +
+      MERGE_USING_POST_UPSERT +
+      ') AS S ' +
+      'ON S.UpsertId IS NOT NULL AND T.Id = S.UpsertId ' +
+      'WHEN MATCHED THEN UPDATE SET ' +
+      updateBranch +
+      'WHEN NOT MATCHED BY TARGET THEN ' +
+      'INSERT (Titulo, Autor, Saga, EstadoCatalogo, Stock, Precio, CaratulaUrl, ProveedorId, CategoriaId) ' +
+      'VALUES (S.Titulo, S.Autor, S.Saga, S.EstadoCatalogo, S.Stock, S.Precio, S.CaratulaUrl, S.ProveedorId, S.CategoriaId) ' +
+      'OUTPUT $action AS MergeAction, INSERTED.Id AS Id;'
+    );
+  };
+
+  const run = async (includeFecha) => {
+    const req = pool.request();
+    bindUpsertPostParams(req, bodyIdParam, payload);
+    return req.query(buildMergeSql(includeFecha));
+  };
+
+  let out;
+  try {
+    out = await run(true);
+  } catch (eUp) {
+    if (eUp && eUp.message && /Invalid column name 'FechaActualizacion'/i.test(eUp.message)) {
+      out = await run(false);
+    } else {
+      throw eUp;
+    }
+  }
+
+  const row = out.recordset && out.recordset[0];
+  const libroId = row && row.Id != null ? row.Id : null;
+  if (libroId == null) {
+    throw new Error('MERGE POST no devolvió Id.');
+  }
+  const action = row && (row.MergeAction != null ? row.MergeAction : row.mergeaction);
+  const wasUpdate = String(action || '').toUpperCase() === 'UPDATE';
+  return { id: libroId, wasUpdate };
+}
+
+/**
+ * UPDATE en dbo.Libros: MERGE con coincidencia por Id (`ON T.Id = S.Id` → `WHEN MATCHED THEN UPDATE SET …`).
+ * No inserta filas nuevas.
  * @returns {ReturnType<typeof mapRow>}
  */
 async function actualizarLibroPorId(
@@ -100,35 +194,53 @@ async function actualizarLibroPorId(
   { titulo, autor, saga, estadoCatalogo, stockOk, precioOk, caratulaUrl, proveedorId, categoriaId },
 ) {
   const reqUp = pool.request();
-  reqUp.input('Id', sql.Int, libroId);
-  reqUp.input('Titulo', sql.NVarChar(300), titulo);
-  reqUp.input('Autor', sql.NVarChar(200), autor || null);
-  reqUp.input('Saga', sql.NVarChar(200), saga);
-  reqUp.input('EstadoCatalogo', sql.NVarChar(50), estadoCatalogo);
-  reqUp.input('Stock', sql.Int, stockOk);
-  reqUp.input('Precio', sql.Decimal(18, 2), precioOk);
-  reqUp.input('CaratulaUrl', sql.NVarChar(500), caratulaUrl || null);
-  reqUp.input('ProveedorId', sql.Int, proveedorId);
-  reqUp.input('CategoriaId', sql.Int, categoriaId);
+  bindLibroPayload(reqUp, libroId, {
+    titulo,
+    autor,
+    saga,
+    estadoCatalogo,
+    stockOk,
+    precioOk,
+    caratulaUrl,
+    proveedorId,
+    categoriaId,
+  });
+  // UPDATE: solo la rama WHEN MATCHED (fila existente con ese Id).
+  const mergeSql =
+    'MERGE dbo.Libros AS T ' +
+    'USING (' +
+    MERGE_USING_LIBRO +
+    ') AS S ' +
+    'ON T.Id = S.Id ' +
+    'WHEN MATCHED THEN UPDATE SET ' +
+    MERGE_UPDATE_SET +
+    ', T.FechaActualizacion = SYSUTCDATETIME();';
   try {
-    await reqUp.query(
-      `${UPDATE_LIBRO_SET}, FechaActualizacion=SYSUTCDATETIME() WHERE Id=@Id`,
-    );
+    await reqUp.query(mergeSql);
   } catch (eUp) {
     if (eUp && eUp.message && /Invalid column name 'FechaActualizacion'/i.test(eUp.message)) {
-      await pool
-        .request()
-        .input('Id', sql.Int, libroId)
-        .input('Titulo', sql.NVarChar(300), titulo)
-        .input('Autor', sql.NVarChar(200), autor || null)
-        .input('Saga', sql.NVarChar(200), saga)
-        .input('EstadoCatalogo', sql.NVarChar(50), estadoCatalogo)
-        .input('Stock', sql.Int, stockOk)
-        .input('Precio', sql.Decimal(18, 2), precioOk)
-        .input('CaratulaUrl', sql.NVarChar(500), caratulaUrl || null)
-        .input('ProveedorId', sql.Int, proveedorId)
-        .input('CategoriaId', sql.Int, categoriaId)
-        .query(`${UPDATE_LIBRO_SET} WHERE Id=@Id`);
+      const req2 = pool.request();
+      bindLibroPayload(req2, libroId, {
+        titulo,
+        autor,
+        saga,
+        estadoCatalogo,
+        stockOk,
+        precioOk,
+        caratulaUrl,
+        proveedorId,
+        categoriaId,
+      });
+      await req2.query(
+        'MERGE dbo.Libros AS T ' +
+          'USING (' +
+          MERGE_USING_LIBRO +
+          ') AS S ' +
+          'ON T.Id = S.Id ' +
+          'WHEN MATCHED THEN UPDATE SET ' +
+          MERGE_UPDATE_SET +
+          ';',
+      );
     } else {
       throw eUp;
     }
@@ -169,8 +281,9 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/libros — merge: (1) body.id → update si existe; (2) sin id, mismo título+autor (trim, sin distinguir mayúsculas) → update; (3) si no, insert
-// Body: ... , id? , mergePorClave? (default true; false fuerza insert aunque exista duplicado título+autor)
+/**
+ * POST /api/libros — INSERT/UPDATE en una sola sentencia MERGE (`upsertLibroPostUnaConsulta`).
+ */
 router.post('/', async (req, res) => {
   try {
     const body = req.body || {};
@@ -236,8 +349,6 @@ router.post('/', async (req, res) => {
       }
     }
 
-    const updateViaPostId =
-      body.id != null && body.id !== '' ? parseInt(String(body.id), 10) : NaN;
     const payload = {
       titulo,
       autor,
@@ -250,61 +361,17 @@ router.post('/', async (req, res) => {
       categoriaId,
     };
 
-    if (Number.isFinite(updateViaPostId) && updateViaPostId > 0) {
-      const existe = await pool
-        .request()
-        .input('Id', sql.Int, updateViaPostId)
-        .query('SELECT Id FROM dbo.Libros WHERE Id = @Id');
-      if (!existe.recordset || !existe.recordset[0]) {
-        return res.status(404).json({ error: 'Libro no encontrado para actualizar.' });
-      }
-      const book = await actualizarLibroPorId(pool, updateViaPostId, payload);
-      return res.json({ book, merged: true });
-    }
-
-    const mergePorClave = body.mergePorClave !== false;
-    if (mergePorClave) {
-      const autorBusca = autor != null ? autor : '';
-      const dup = await pool
-        .request()
-        .input('Titulo', sql.NVarChar(300), titulo)
-        .input('Autor', sql.NVarChar(200), autorBusca)
-        .query(
-          'SELECT TOP 1 Id FROM dbo.Libros ' +
-            'WHERE LOWER(LTRIM(RTRIM(Titulo))) = LOWER(LTRIM(RTRIM(@Titulo))) ' +
-            "AND LOWER(LTRIM(RTRIM(ISNULL(Autor, N'')))) = LOWER(LTRIM(RTRIM(ISNULL(@Autor, N''))))",
-        );
-      const idDup = dup.recordset && dup.recordset[0] && dup.recordset[0].Id;
-      if (idDup != null) {
-        const book = await actualizarLibroPorId(pool, idDup, payload);
-        return res.json({ book, merged: true });
-      }
-    }
-
-    const request = pool.request();
-    request.input('Titulo', sql.NVarChar(300), titulo);
-    request.input('Autor', sql.NVarChar(200), autor || null);
-    request.input('Saga', sql.NVarChar(200), saga);
-    request.input('EstadoCatalogo', sql.NVarChar(50), estadoCatalogo);
-    request.input('Stock', sql.Int, stockOk);
-    request.input('Precio', sql.Decimal(18, 2), precioOk);
-    request.input('CaratulaUrl', sql.NVarChar(500), caratulaUrl || null);
-    request.input('ProveedorId', sql.Int, proveedorId);
-    request.input('CategoriaId', sql.Int, categoriaId);
-
-    const ins = await request.query(
-      'INSERT INTO dbo.Libros (Titulo, Autor, Saga, EstadoCatalogo, Stock, Precio, CaratulaUrl, ProveedorId, CategoriaId) ' +
-        'OUTPUT INSERTED.Id ' +
-        'VALUES (@Titulo, @Autor, @Saga, @EstadoCatalogo, @Stock, @Precio, @CaratulaUrl, @ProveedorId, @CategoriaId)',
-    );
-
-    const newId = ins.recordset && ins.recordset[0] && ins.recordset[0].Id;
+    const { id: libroId, wasUpdate } = await upsertLibroPostUnaConsulta(pool, body.id, payload);
     const sel = await pool
       .request()
-      .input('Id', sql.Int, newId)
+      .input('Id', sql.Int, libroId)
       .query(SELECT_BASE + 'WHERE L.Id = @Id');
     const row = sel.recordset && sel.recordset[0];
-    return res.status(201).json({ book: mapRow(row) });
+    const book = mapRow(row);
+    if (wasUpdate) {
+      return res.json({ book, merged: true });
+    }
+    return res.status(201).json({ book });
   } catch (err) {
     console.error('Error en POST /api/libros:', err);
     if (err && err.message && err.message.includes('FK_Libros_Proveedor')) {
@@ -338,7 +405,10 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/libros/:id — actualizar libro existente (mismo cuerpo que POST)
+/**
+ * PUT /api/libros/:id — solo UPDATE (`actualizarLibroPorId` / MERGE WHEN MATCHED). No hace INSERT.
+ * Mismo cuerpo de campos que POST; el Id viene de la URL.
+ */
 router.put('/:id', async (req, res) => {
   try {
     const id = Number(req.params.id);

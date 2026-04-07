@@ -1,6 +1,7 @@
 /**
  * Indicadores para administración: ventas desde dbo.Ventas (Detalle en JSON).
  * Incluye un listado con UNION ALL (clientes + proveedores, mismas columnas).
+ * Los SELECT siguen el mismo patrón que categorías/proveedores: query + map sobre recordset.
  */
 
 const express = require('express');
@@ -8,6 +9,55 @@ const db = require('../config/database');
 
 const { sql } = db;
 const router = express.Router();
+
+const SQL_TOP_CLIENTES = `
+  SELECT TOP 10
+    u.Id AS usuarioId,
+    u.Nombre AS nombre,
+    u.Correo AS correo,
+    CAST(SUM(v.Total) AS DECIMAL(18,2)) AS totalCompras,
+    COUNT(v.Id) AS numVentas
+  FROM dbo.Ventas v
+  INNER JOIN dbo.Usuarios u ON u.Id = v.UsuarioId
+  GROUP BY u.Id, u.Nombre, u.Correo
+  ORDER BY totalCompras DESC;
+`;
+
+const SQL_VENTAS_DETALLE = `
+  SELECT Detalle FROM dbo.Ventas WHERE Detalle IS NOT NULL AND LTRIM(RTRIM(CAST(Detalle AS NVARCHAR(MAX)))) <> N''
+`;
+
+const SQL_CLIENTES_SIN_COMPRAS = `
+  SELECT u.Id AS usuarioId, u.Nombre AS nombre, u.Correo AS correo, u.Usuario AS usuarioLogin
+  FROM dbo.Usuarios u
+  WHERE u.Activo = 1
+    AND COALESCE(LOWER(LTRIM(RTRIM(u.Rol))), N'cliente') NOT IN (N'admin', N'administrador', N'empleado')
+    AND NOT EXISTS (SELECT 1 FROM dbo.Ventas v WHERE v.UsuarioId = u.Id)
+  ORDER BY u.Nombre;
+`;
+
+/** Directorio unificado: UNION ALL (no UNION) — mismas columnas; se listan todos los clientes y todos los proveedores. */
+const SQL_UNION_CONTACTOS = `
+  SELECT
+    N'Cliente' AS tipo,
+    u.Nombre AS nombre,
+    u.Correo AS contacto
+  FROM dbo.Usuarios u
+  WHERE u.Activo = 1
+    AND COALESCE(LOWER(LTRIM(RTRIM(u.Rol))), N'cliente') NOT IN (N'admin', N'administrador', N'empleado')
+
+  UNION ALL
+
+  SELECT
+    N'Proveedor' AS tipo,
+    p.Nombre,
+    COALESCE(p.Contacto, N'—')
+  FROM dbo.Proveedores p
+
+  ORDER BY tipo, nombre;
+`;
+
+const SQL_PROVEEDOR_POR_ID = 'SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid';
 
 /** Lee el JSON de Detalle (array de líneas) sin OPENJSON en SQL. */
 function lineasDesdeDetalle(detalle) {
@@ -44,41 +94,55 @@ function agregarVentasPorLibro(ventasConDetalle) {
   return porLibro;
 }
 
+function mapTopClienteRow(r) {
+  return {
+    usuarioId: r.usuarioId,
+    nombre: r.nombre,
+    correo: r.correo,
+    totalCompras: r.totalCompras != null ? Number(r.totalCompras) : 0,
+    numVentas: r.numVentas,
+  };
+}
+
+function mapClienteSinCompraRow(r) {
+  return {
+    usuarioId: r.usuarioId,
+    nombre: r.nombre,
+    correo: r.correo,
+    usuarioLogin: r.usuarioLogin,
+  };
+}
+
+function mapContactoUnionRow(r) {
+  return {
+    tipo: r.tipo,
+    nombre: r.nombre,
+    contacto: r.contacto,
+  };
+}
+
 // GET /api/reportes/resumen
 // Top clientes, libros más vendidos, proveedor con más ventas vía libros, clientes sin compras
 router.get('/resumen', async (_req, res) => {
   try {
     const pool = await db.getPool();
 
-    const topClientesReq = await pool.request().query(`
-      SELECT TOP 10
-        u.Id AS usuarioId,
-        u.Nombre AS nombre,
-        u.Correo AS correo,
-        CAST(SUM(v.Total) AS DECIMAL(18,2)) AS totalCompras,
-        COUNT(v.Id) AS numVentas
-      FROM dbo.Ventas v
-      INNER JOIN dbo.Usuarios u ON u.Id = v.UsuarioId
-      GROUP BY u.Id, u.Nombre, u.Correo
-      ORDER BY totalCompras DESC;
-    `);
+    const topClientesResult = await pool.request().query(SQL_TOP_CLIENTES);
+    const topClientes = (topClientesResult.recordset || []).map(mapTopClienteRow);
 
     let librosMasVendidos = [];
     let mayorProveedor = null;
     try {
-      const ventasDetReq = await pool.request().query(`
-        SELECT Detalle FROM dbo.Ventas WHERE Detalle IS NOT NULL AND LTRIM(RTRIM(CAST(Detalle AS NVARCHAR(MAX)))) <> N''
-      `);
-      const porLibro = agregarVentasPorLibro(ventasDetReq.recordset || []);
+      const ventasDetResult = await pool.request().query(SQL_VENTAS_DETALLE);
+      const porLibro = agregarVentasPorLibro(ventasDetResult.recordset || []);
       const idsLibro = [...porLibro.keys()];
       if (idsLibro.length > 0) {
         const ph = idsLibro.map((_, i) => `@id${i}`).join(', ');
         const metaReq = pool.request();
         idsLibro.forEach((id, i) => metaReq.input(`id${i}`, sql.Int, id));
-        const metaRes = await metaReq.query(
-          `SELECT Id, Titulo, Autor, ProveedorId FROM dbo.Libros WHERE Id IN (${ph})`,
-        );
-        const byId = new Map((metaRes.recordset || []).map((x) => [x.Id, x]));
+        const sqlLibrosMeta = `SELECT Id, Titulo, Autor, ProveedorId FROM dbo.Libros WHERE Id IN (${ph})`;
+        const metaResult = await metaReq.query(sqlLibrosMeta);
+        const byId = new Map((metaResult.recordset || []).map((x) => [x.Id, x]));
 
         const ordenados = [...porLibro.entries()].sort((a, b) => b[1].unidades - a[1].unidades);
         const top10 = ordenados.slice(0, 10);
@@ -107,11 +171,11 @@ router.get('/resumen', async (_req, res) => {
           const [[bestPid, bestVal]] = [...porProveedor.entries()].sort(
             (a, b) => b[1].unidades - a[1].unidades || b[1].ingresos - a[1].ingresos,
           );
-          const nomReq = await pool
+          const nomResult = await pool
             .request()
             .input('Pid', sql.Int, bestPid)
-            .query('SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid');
-          const pn = nomReq.recordset && nomReq.recordset[0];
+            .query(SQL_PROVEEDOR_POR_ID);
+          const pn = nomResult.recordset && nomResult.recordset[0];
           if (pn) {
             mayorProveedor = {
               proveedorId: pn.Id,
@@ -128,60 +192,16 @@ router.get('/resumen', async (_req, res) => {
       mayorProveedor = null;
     }
 
-    const sinReq = await pool.request().query(`
-      SELECT u.Id AS usuarioId, u.Nombre AS nombre, u.Correo AS correo, u.Usuario AS usuarioLogin
-      FROM dbo.Usuarios u
-      WHERE u.Activo = 1
-        AND COALESCE(LOWER(LTRIM(RTRIM(u.Rol))), N'cliente') NOT IN (N'admin', N'administrador', N'empleado')
-        AND NOT EXISTS (SELECT 1 FROM dbo.Ventas v WHERE v.UsuarioId = u.Id)
-      ORDER BY u.Nombre;
-    `);
+    const sinComprasResult = await pool.request().query(SQL_CLIENTES_SIN_COMPRAS);
+    const clientesSinCompras = (sinComprasResult.recordset || []).map(mapClienteSinCompraRow);
 
-    /** Directorio unificado: UNION ALL exige el mismo número y tipo de columnas en cada SELECT. */
     let contactosUnificados = [];
     try {
-      const unionReq = await pool.request().query(`
-        SELECT
-          N'Cliente' AS tipo,
-          u.Nombre AS nombre,
-          u.Correo AS contacto
-        FROM dbo.Usuarios u
-        WHERE u.Activo = 1
-          AND COALESCE(LOWER(LTRIM(RTRIM(u.Rol))), N'cliente') NOT IN (N'admin', N'administrador', N'empleado')
-
-        UNION ALL
-
-        SELECT
-          N'Proveedor' AS tipo,
-          p.Nombre,
-          COALESCE(p.Contacto, N'—')
-        FROM dbo.Proveedores p
-
-        ORDER BY tipo, nombre;
-      `);
-      contactosUnificados = (unionReq.recordset || []).map((r) => ({
-        tipo: r.tipo,
-        nombre: r.nombre,
-        contacto: r.contacto,
-      }));
+      const unionResult = await pool.request().query(SQL_UNION_CONTACTOS);
+      contactosUnificados = (unionResult.recordset || []).map(mapContactoUnionRow);
     } catch (e) {
       console.warn('reportes UNION contactos:', e.message);
     }
-
-    const topClientes = (topClientesReq.recordset || []).map((r) => ({
-      usuarioId: r.usuarioId,
-      nombre: r.nombre,
-      correo: r.correo,
-      totalCompras: r.totalCompras != null ? Number(r.totalCompras) : 0,
-      numVentas: r.numVentas,
-    }));
-
-    const clientesSinCompras = (sinReq.recordset || []).map((r) => ({
-      usuarioId: r.usuarioId,
-      nombre: r.nombre,
-      correo: r.correo,
-      usuarioLogin: r.usuarioLogin,
-    }));
 
     return res.json({
       topClientes,
