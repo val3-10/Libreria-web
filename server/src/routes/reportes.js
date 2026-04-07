@@ -62,6 +62,30 @@ const SQL_UNION_CONTACTOS = `
 
 const SQL_PROVEEDOR_POR_ID = 'SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid';
 
+const SQL_CLIENTES_SIN_COMPRAS_EXCEPT = `
+  SELECT u.Id AS usuarioId, u.Nombre AS nombre, u.Correo AS correo, u.Usuario AS usuarioLogin
+  FROM dbo.Usuarios u
+  WHERE u.Activo = 1
+    AND COALESCE(LOWER(LTRIM(RTRIM(u.Rol))), N'cliente') NOT IN (N'admin', N'administrador', N'empleado')
+  EXCEPT
+  SELECT u.Id AS usuarioId, u.Nombre AS nombre, u.Correo AS correo, u.Usuario AS usuarioLogin
+  FROM dbo.Usuarios u
+  INNER JOIN dbo.Ventas v ON v.UsuarioId = u.Id
+  WHERE u.Activo = 1
+    AND COALESCE(LOWER(LTRIM(RTRIM(u.Rol))), N'cliente') NOT IN (N'admin', N'administrador', N'empleado')
+`;
+
+const SQL_LIBROS_VENDIDOS_Y_FAVORITOS_INTERSECT = `
+  SELECT L.Id AS libroId, L.Titulo AS titulo
+  FROM dbo.Libros L
+  WHERE L.Id IN (
+    SELECT vd.LibroId FROM dbo.VentaDetalle vd
+    INTERSECT
+    SELECT f.LibroId FROM dbo.Favoritos f
+  )
+  ORDER BY L.Titulo
+`;
+
 /** Agrega ventas por libro desde tabla normalizada dbo.VentaDetalle. */
 function agregarVentasPorLibroDesdeFilas(detalles) {
   const porLibro = new Map();
@@ -104,6 +128,13 @@ function mapContactoUnionRow(r) {
     tipo: r.tipo,
     nombre: r.nombre,
     contacto: r.contacto,
+  };
+}
+
+function mapLibroSimpleRow(r) {
+  return {
+    libroId: r.libroId,
+    titulo: r.titulo,
   };
 }
 
@@ -199,6 +230,32 @@ router.get('/resumen', async (_req, res) => {
   } catch (err) {
     console.error('Error en GET /api/reportes/resumen:', err);
     return res.status(500).json({ error: err.message || 'No se pudieron cargar los reportes.' });
+  }
+});
+
+// GET /api/reportes/clientes-sin-compras-except
+router.get('/clientes-sin-compras-except', async (_req, res) => {
+  try {
+    const pool = await db.getPool();
+    const result = await pool.request().query(SQL_CLIENTES_SIN_COMPRAS_EXCEPT);
+    const clientes = (result.recordset || []).map(mapClienteSinCompraRow);
+    return res.json({ clientes });
+  } catch (err) {
+    console.error('Error en GET /api/reportes/clientes-sin-compras-except:', err);
+    return res.status(500).json({ error: err.message || 'No se pudo obtener el reporte EXCEPT.' });
+  }
+});
+
+// GET /api/reportes/libros-vendidos-y-favoritos
+router.get('/libros-vendidos-y-favoritos', async (_req, res) => {
+  try {
+    const pool = await db.getPool();
+    const result = await pool.request().query(SQL_LIBROS_VENDIDOS_Y_FAVORITOS_INTERSECT);
+    const libros = (result.recordset || []).map(mapLibroSimpleRow);
+    return res.json({ libros });
+  } catch (err) {
+    console.error('Error en GET /api/reportes/libros-vendidos-y-favoritos:', err);
+    return res.status(500).json({ error: err.message || 'No se pudo obtener el reporte INTERSECT.' });
   }
 });
 
