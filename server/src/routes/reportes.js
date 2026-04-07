@@ -1,5 +1,5 @@
 /**
- * Indicadores para administración: ventas desde dbo.Ventas (Detalle en JSON).
+ * Indicadores para administración: ventas normalizadas en dbo.VentaDetalle.
  * Incluye un listado con UNION ALL (clientes + proveedores, mismas columnas).
  * Los SELECT siguen el mismo patrón que categorías/proveedores: query + map sobre recordset.
  */
@@ -21,10 +21,6 @@ const SQL_TOP_CLIENTES = `
   INNER JOIN dbo.Usuarios u ON u.Id = v.UsuarioId
   GROUP BY u.Id, u.Nombre, u.Correo
   ORDER BY totalCompras DESC;
-`;
-
-const SQL_VENTAS_DETALLE = `
-  SELECT Detalle FROM dbo.Ventas WHERE Detalle IS NOT NULL AND LTRIM(RTRIM(CAST(Detalle AS NVARCHAR(MAX)))) <> N''
 `;
 
 const SQL_VENTA_DETALLE_FILAS = `
@@ -63,41 +59,6 @@ const SQL_UNION_CONTACTOS = `
 `;
 
 const SQL_PROVEEDOR_POR_ID = 'SELECT TOP 1 Id, Nombre FROM dbo.Proveedores WHERE Id = @Pid';
-
-/** Lee el JSON de Detalle (array de líneas) sin OPENJSON en SQL. */
-function lineasDesdeDetalle(detalle) {
-  if (detalle == null || detalle === '') return [];
-  const s = typeof detalle === 'string' ? detalle : String(detalle);
-  try {
-    const arr = JSON.parse(s);
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Suma cantidad y subtotal por libroId a partir de las filas de Ventas (solo columna Detalle).
- * @returns {Map<number, { unidades: number, subtotal: number }>}
- */
-function agregarVentasPorLibro(ventasConDetalle) {
-  const porLibro = new Map();
-  for (const row of ventasConDetalle) {
-    for (const line of lineasDesdeDetalle(row.Detalle)) {
-      const libroId = Number(line.libroId);
-      if (!Number.isInteger(libroId) || libroId <= 0) continue;
-      const cantidad = Number(line.cantidad);
-      const sub = Number(line.subtotal);
-      const qty = Number.isFinite(cantidad) && cantidad > 0 ? Math.floor(cantidad) : 0;
-      const subtotal = Number.isFinite(sub) && sub >= 0 ? sub : 0;
-      const cur = porLibro.get(libroId) || { unidades: 0, subtotal: 0 };
-      cur.unidades += qty;
-      cur.subtotal += subtotal;
-      porLibro.set(libroId, cur);
-    }
-  }
-  return porLibro;
-}
 
 /** Agrega ventas por libro desde tabla normalizada dbo.VentaDetalle. */
 function agregarVentasPorLibroDesdeFilas(detalles) {
@@ -156,19 +117,8 @@ router.get('/resumen', async (_req, res) => {
     let librosMasVendidos = [];
     let mayorProveedor = null;
     try {
-      let porLibro = new Map();
-      try {
-        const detalleRows = await pool.request().query(SQL_VENTA_DETALLE_FILAS);
-        porLibro = agregarVentasPorLibroDesdeFilas(detalleRows.recordset || []);
-      } catch (eDet) {
-        if (!eDet || !eDet.message || !/Invalid object name 'dbo\.VentaDetalle'/i.test(eDet.message)) {
-          throw eDet;
-        }
-      }
-      if (porLibro.size === 0) {
-        const ventasDetResult = await pool.request().query(SQL_VENTAS_DETALLE);
-        porLibro = agregarVentasPorLibro(ventasDetResult.recordset || []);
-      }
+      const detalleRows = await pool.request().query(SQL_VENTA_DETALLE_FILAS);
+      const porLibro = agregarVentasPorLibroDesdeFilas(detalleRows.recordset || []);
       const idsLibro = [...porLibro.keys()];
       if (idsLibro.length > 0) {
         const ph = idsLibro.map((_, i) => `@id${i}`).join(', ');
@@ -221,7 +171,7 @@ router.get('/resumen', async (_req, res) => {
         }
       }
     } catch (e) {
-      console.warn('reportes agregación Detalle (JSON en Node):', e.message);
+      console.warn('reportes agregación VentaDetalle:', e.message);
       librosMasVendidos = [];
       mayorProveedor = null;
     }
