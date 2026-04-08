@@ -8,16 +8,6 @@ const db = require('../config/database');
 const { sql } = db;
 const router = express.Router();
 
-function parseDetalleJson(detalleRaw) {
-  if (!detalleRaw) return [];
-  try {
-    const parsed = JSON.parse(detalleRaw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
 // GET /api/ventas — listado (JOIN Usuarios). Opcional: ?usuarioId=n solo ventas de ese cliente (perfil).
 router.get('/', async (req, res) => {
   try {
@@ -30,7 +20,6 @@ router.get('/', async (req, res) => {
         v.UsuarioId,
         v.Fecha,
         v.Total,
-        v.Detalle,
         u.Nombre AS ClienteNombre,
         u.Correo AS ClienteCorreo
       FROM dbo.Ventas v
@@ -47,7 +36,7 @@ router.get('/', async (req, res) => {
     sqlText += ' ORDER BY v.Fecha DESC, v.Id DESC';
     const result = await request.query(sqlText);
     const rows = result.recordset || [];
-    const byVentaId = new Map(rows.map((r) => [r.Id, parseDetalleJson(r.Detalle)]));
+    const byVentaId = new Map(rows.map((r) => [r.Id, []]));
 
     try {
       if (rows.length > 0) {
@@ -199,12 +188,11 @@ router.post('/checkout', async (req, res) => {
     const reqIns = new sql.Request(transaction);
     reqIns.input('UsuarioId', sql.Int, userId);
     reqIns.input('Total', sql.Decimal(18, 2), total);
-    reqIns.input('Detalle', sql.NVarChar(sql.MAX), JSON.stringify(detalleLineas));
 
     const ins = await reqIns.query(
-      'INSERT INTO dbo.Ventas (UsuarioId, Total, Detalle) ' +
+      'INSERT INTO dbo.Ventas (UsuarioId, Total) ' +
         'OUTPUT INSERTED.Id AS Id ' +
-        'VALUES (@UsuarioId, @Total, @Detalle)',
+        'VALUES (@UsuarioId, @Total)',
     );
 
     const ventaId = ins.recordset && ins.recordset[0] && ins.recordset[0].Id;
