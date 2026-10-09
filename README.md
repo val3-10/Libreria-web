@@ -142,7 +142,7 @@ erDiagram
     decimal Subtotal
     datetime2 FechaCreacion
   }
-
+#####
   Carrito {
     int Id PK
     int UsuarioId FK
