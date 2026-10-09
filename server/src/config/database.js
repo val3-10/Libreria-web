@@ -17,7 +17,7 @@ const config = {
   port: parseInt(process.env.DB_PORT, 10) || 1433,
   options: {
     encrypt: process.env.DB_ENCRYPT === 'true',
-    trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE !== 'false',
+    trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE=true,
     enableArithAbort: true,
     instanceName: process.env.DB_INSTANCE || undefined,
   },
