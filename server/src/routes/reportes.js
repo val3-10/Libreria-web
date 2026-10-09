@@ -55,7 +55,7 @@ const SQL_UNION_CONTACTOS = `
     N'Proveedor' AS tipo,
     p.Nombre,
     COALESCE(p.Contacto, N'—')
-  FROM dbo.Proveedores p
+                                                                                       FROM dbo.Proveedores p
 
   ORDER BY tipo, nombre;
 `;
