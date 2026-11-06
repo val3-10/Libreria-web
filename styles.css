@@ -952,3 +952,177 @@ tr:nth-child(even) { background: rgba(127,0,255,0.05); }
   .sidebar:not(:hover):not(:focus-within) .buscador-wrapper:hover .buscador-text { max-width: none; opacity: 1; visibility: visible; }
   .main-content { margin-left: 0; width: 100%; max-width: 100%; }
 }
+
+
+/* =====================================
+   TEMA OSCURO GENERAL - BOOKNEST
+   ===================================== */
+
+/* Fondo principal */
+body {
+  background: #1f2937;
+  color: #ffffff;
+}
+
+/* Secciones */
+.seccion {
+  background: #293548 !important;
+  color: #ffffff;
+}
+
+/* Tarjetas de libros */
+.carta-libro {
+  background: #3a424d !important;
+  color: #ffffff !important;
+}
+
+/* Información de libros */
+.carta-libro .carta-meta {
+  background: #454e5b !important;
+}
+
+/* Letras de las tarjetas */
+.carta-libro h3,
+.carta-libro .carta-meta,
+.carta-libro .carta-meta * {
+  color: #ffffff !important;
+}
+
+/* Tablas */
+table {
+  background: #344256 !important;
+  color: #ffffff !important;
+}
+
+/* Encabezados de tablas */
+table th {
+  background: #d4a017 !important;
+  color: #ffffff !important;
+}
+
+/* Filas de tablas */
+table td {
+  background: #344256 !important;
+  color: #ffffff !important;
+}
+
+/* Filas alternadas */
+table tr:nth-child(even) td {
+  background: #293548 !important;
+}
+
+/* Formularios y campos */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  background: #3a424d !important;
+  color: #ffffff !important;
+  border: 1px solid #64748b;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #cbd5e1;
+}
+
+/* Ventanas emergentes */
+.modal-contenido {
+  background: #293548 !important;
+  color: #ffffff !important;
+}
+
+/* Textos generales de las secciones */
+.seccion h1,
+.seccion h2,
+.seccion h3,
+.seccion p,
+.seccion label,
+.seccion td {
+  color: #ffffff !important;
+}
+
+/* ===== REGISTRO - TEMA AZUL NOCHE ===== */
+
+/* Fondo de toda la pantalla */
+body.register-body {
+  background: #1f2937 !important;
+  min-height: 100vh;
+  height: auto;
+}
+
+/* Caja del formulario */
+.registro-box {
+  background: #293548 !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Títulos y etiquetas */
+.registro-box h1,
+.registro-box h2,
+.registro-box h3,
+.registro-box label,
+.registro-box p {
+  color: #ffffff !important;
+}
+
+/* Campos del formulario */
+.registro-box input,
+.registro-box select {
+  background: #3a424d !important;
+  color: #ffffff !important;
+  border: 1px solid #64748b !important;
+}
+
+/* Texto de ejemplo en los campos */
+.registro-box input::placeholder {
+  color: #cbd5e1 !important;
+}
+
+/* Campos al seleccionarlos */
+.registro-box input:focus,
+.registro-box select:focus {
+  border-color: #94a3b8 !important;
+  outline: none;
+}
+
+/* =====================================
+   ICONOS BLANCOS EN TODA LA LIBRERÍA
+   ===================================== */
+
+/* CALENDARIOS */
+input[type="date"] {
+  color-scheme: dark !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: none !important;
+  opacity: 1 !important;
+  cursor: pointer;
+}
+
+/* OJOS DE CONTRASEÑAS */
+.toggle-password svg,
+.icon-eye,
+.icon-eye-slash,
+.password-container svg,
+.password-field button svg {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+}
+
+/* OJOS QUE USAN ICONOS DE LIBRERÍAS */
+.toggle-password i,
+.password-container i,
+.fa-eye,
+.fa-eye-slash,
+.fi-rr-eye,
+.fi-rr-eye-crossed {
+  color: #ffffff !important;
+}
+
+/* CAMPOS DE FECHA */
+input[type="date"] {
+  background-color: #3a424d !important;
+  color: #ffffff !important;
+}
