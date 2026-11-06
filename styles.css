@@ -1126,3 +1126,148 @@ input[type="date"] {
   background-color: #3a424d !important;
   color: #ffffff !important;
 }
+
+/* REGISTRO: recuperar imagen de fondo */
+body.register-body {
+  background:
+    linear-gradient(
+      rgba(15, 23, 42, 0.45),
+      rgba(15, 23, 42, 0.45)
+    ),
+    url("img/register fondo.png") center / cover
+    no-repeat fixed !important;
+
+  min-height: 100vh;
+  height: auto;
+}
+
+/* ==========================================
+   BOOKNEST - AJUSTE DE IMÁGENES
+   ========================================== */
+ 
+/* INICIO DE SESIÓN */
+body.login-body {
+  background-image: url("img/BookNest.png") !important;
+  background-color: #1f2937 !important;
+  background-repeat: no-repeat !important;
+  background-size: auto 95vh !important;
+  background-position: center center !important;
+
+  min-height: 100vh;
+  display: flex;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+/* FORMULARIO CENTRADO, MÁS ABAJO */
+body.login-body .login-box {
+  position: relative;
+  margin: 170px auto 0 !important;
+  width: 320px;
+  max-width: calc(100% - 40px);
+  background: rgba(41, 53, 72, 0.96) !important;
+  box-sizing: border-box;
+}
+
+/* ADAPTACIÓN A CELULARES */
+@media (max-width: 768px) {
+  body.login-body {
+    background-size: contain !important;
+    background-position: center top !important;
+  }
+
+  body.login-body .login-box {
+    margin: 180px auto 20px !important;
+  }
+}
+
+
+/* Formulario de inicio de sesión */
+.login-box {
+  background: rgba(41, 53, 72, 0.94) !important;
+  color: #ffffff !important;
+}
+
+/* REGISTRO */
+body.register-body {
+  background-image: url("img/register fondo.png") !important;
+  background-color: #1f2937 !important;
+  background-repeat: no-repeat !important;
+  background-position: center center !important;
+  background-size: cover !important;
+  background-attachment: fixed;
+  min-height: 100vh;
+  height: auto;
+  padding-top: 50px;
+  padding-bottom: 50px;
+  box-sizing: border-box;
+}
+
+/* Formulario de registro */
+.registro-box {
+  background: rgba(41, 53, 72, 0.95) !important;
+  color: #ffffff !important;
+}
+
+/* RECUPERAR CONTRASEÑA */
+body.contraseña-body {
+  background-image:
+    url("img/fondo restaurar contraseña.png") !important;
+  background-color: #1f2937 !important;
+  background-repeat: no-repeat !important;
+  background-position: center center !important;
+  background-size: cover !important;
+  min-height: 100vh;
+}
+
+/* Formulario de recuperación */
+.forgot-box {
+  background: rgba(41, 53, 72, 0.94) !important;
+  color: #ffffff !important;
+}
+
+.forgot-box h2,
+.forgot-box p,
+.forgot-box label,
+.forgot-box a {
+  color: #ffffff !important;
+}
+
+/* ENCABEZADO DEL ADMINISTRADOR */
+header {
+  background-color: #1f2937;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+/* AJUSTES PARA CELULARES */
+@media (max-width: 768px) {
+  body.login-body,
+  body.register-body,
+  body.contraseña-body {
+    background-position: center center !important;
+    background-size: cover !important;
+  }
+
+  .login-box,
+  .registro-box,
+  .forgot-box {
+    width: calc(100% - 40px);
+    max-width: 350px;
+    box-sizing: border-box;
+  }
+}
+
+/* ENCABEZADO ADMINISTRADOR */
+body:has(#tablaLibrosAdmin) > header {
+  background-image: url("img/BookNest.png") !important;
+  background-color: #1f2937 !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center center !important;
+
+  height: 320px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+}
