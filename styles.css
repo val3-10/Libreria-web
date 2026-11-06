@@ -1363,3 +1363,21 @@ body.login-body .login-box {
   color: #ffffff !important;
   opacity: 1 !important;
 }
+/* LOGIN - POSICIÓN DEL LOGO Y FORMULARIO */
+
+body.login-body {
+  background-image: url("img/BookNest.png") !important;
+  background-size: auto 95vh !important;
+  background-position: center top !important;
+  background-repeat: no-repeat !important;
+
+  min-height: 100vh;
+  height: auto;
+  padding: 20px 15px;
+  box-sizing: border-box;
+}
+
+body.login-body .login-box {
+  margin: 220px auto 30px !important;
+  position: relative;
+}
