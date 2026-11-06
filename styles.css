@@ -1271,3 +1271,95 @@ body:has(#tablaLibrosAdmin) > header {
   margin: 0 !important;
   box-sizing: border-box;
 }
+
+/* ========================================
+   CORRECCIONES PUNTUALES - BOOKNEST
+   ======================================== */
+
+/* 1. LOGIN: subir el logo de fondo */
+body.login-body {
+  background-position: center top !important;
+  background-size: auto 95vh !important;
+}
+
+/* Mantener el formulario centrado */
+body.login-body .login-box {
+  margin: 170px auto 0 !important;
+}
+
+/* 2. PAGO: eliminar fondos blancos */
+#checkout .modal-contenido {
+  background: #293548 !important;
+  color: #ffffff !important;
+}
+
+#checkout .checkout-field-label {
+  color: #ffffff !important;
+}
+
+#checkout .modal-contenido input {
+  background: #3a424d !important;
+  color: #ffffff !important;
+  border: 2px solid #d4a017 !important;
+}
+
+#checkout .modal-contenido input::placeholder {
+  color: #cbd5e1 !important;
+}
+
+/* 3. DETALLE DE COMPRA: letras blancas */
+#modalFactura .modal-contenido,
+#modalFactura .modal-contenido p,
+#modalFactura .modal-contenido strong,
+#modalFactura .modal-contenido span,
+#modalFactura .modal-contenido h4 {
+  color: #ffffff !important;
+}
+
+#modalFactura .modal-contenido h3 {
+  color: #d4a017 !important;
+}
+
+/* 4. INDICADORES: quitar cuadros blancos */
+#reportes .reporte-mayor-proveedor {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+#reportes .reporte-mayor-proveedor p,
+#reportes .reporte-mayor-proveedor li,
+#reportes .reporte-mayor-proveedor strong,
+#reportes .reporte-vacio {
+  color: #ffffff !important;
+}
+
+/* 5. PERFIL: quitar recuadro claro */
+#seccion-cuenta .usuario-perfil-card {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+#seccion-cuenta .usuario-perfil-card p,
+#seccion-cuenta .usuario-perfil-card strong,
+#seccion-cuenta .usuario-perfil-card span {
+  color: #ffffff !important;
+}
+/* CORRECCIÓN: TEXTO DETALLE DE COMPRA */
+
+#modalFactura .modal-contenido {
+  background-color: #293548 !important;
+  color: white !important;
+}
+
+#modalFactura .modal-contenido p,
+#modalFactura .modal-contenido span,
+#modalFactura .modal-contenido strong,
+#modalFactura .modal-contenido td,
+#modalFactura .modal-contenido h4 {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
