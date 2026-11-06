@@ -1377,12 +1377,17 @@ body.login-body {
   box-sizing: border-box;
 }
 
-/* AJUSTE FINAL DEL LOGIN */
+/* LOGIN - FONDO SIN CORTES */
 
 body.login-body {
-  padding: 230px 15px 40px !important;
-}
+  background-image: url("img/BookNest.png") !important;
+  background-color: #1f2937 !important;
 
-body.login-body .login-box {
-  margin: 0 auto 30px !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+
+  min-height: 100vh !important;
+  height: auto !important;
 }
