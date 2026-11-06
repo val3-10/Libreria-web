@@ -1377,7 +1377,6 @@ body.login-body {
   box-sizing: border-box;
 }
 
-body.login-body .login-box {
-  margin: 220px auto 30px !important;
-  position: relative;
+body.login-body {
+  padding: 330px 15px 40px !important;
 }
