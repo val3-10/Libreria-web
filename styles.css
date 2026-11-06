@@ -1377,6 +1377,12 @@ body.login-body {
   box-sizing: border-box;
 }
 
+/* AJUSTE FINAL DEL LOGIN */
+
 body.login-body {
-  padding: 330px 15px 40px !important;
+  padding: 230px 15px 40px !important;
+}
+
+body.login-body .login-box {
+  margin: 0 auto 30px !important;
 }
